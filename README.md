@@ -78,3 +78,4 @@ sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
 
 10、交流及技术支持
 加微信：jamesyhua，备注：进群，我拉你入微信群
+![image](https://github.com/yanhua133/mediasoup-sfu-cpp/blob/main/zuozhe.jpeg?raw=true)
