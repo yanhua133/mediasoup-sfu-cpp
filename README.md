@@ -38,7 +38,7 @@ release/bin 目录下
 .\genvs2019.bat
 生成工程文件即可打开工程编译
 
-7、配置文件拷贝的编译的执行文件所在目录
+8、配置文件拷贝的编译的执行文件所在目录
 配置文件在源码根目录下 demo/config.json 拷贝到 xcode/debug 目录下 或是clion的cmakebuild目录下和执行文件同一个目录
 详细配置可以参考mediasoup官方demo的配置
 配置文件里面的ip地址需要配置对应服务器的内网地址和外网地址
@@ -46,7 +46,7 @@ release/bin 目录下
 "announcedIp" : "192.168.1.192"//公网地址
 
 
-8、问题及解决
+9、问题及解决
 目前整个项目只有下面的调用是c+14标准，其他都是c++11标准，后续如果有嵌入开发标准需求可以改成c++11
 const RtpCapabilities supportedRtpCapabilities =
 
@@ -76,5 +76,5 @@ sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
 #
 
 
-交流及技术支持
+10、交流及技术支持
 加微信：jamesyhua，备注：进群，我拉你入微信群
