@@ -1,0 +1,140 @@
+import os ;
+local webservice = .. ;
+local boost = [ os.environ BOOST_ROOT ] ;
+local json = ../../nlohmann/json ;
+
+searched-lib gtest ;
+searched-lib gtest_main ;
+
+use-project /webservice
+	: $(webservice)
+	;
+
+use-project /boost
+	: $(boost)
+	;
+
+project webservice_test
+	:
+	:
+	requirements <include>.
+
+	<warnings>all
+	<c++-template-depth>1024
+
+	<define>BOOST_HANA_CONFIG_ENABLE_STRING_UDL
+	<define>BOOST_ASIO_HAS_STD_CHRONO
+
+	<toolset>gcc:<cxxflags>-std=c++14
+	<toolset>gcc:<cxxflags>-fconstexpr-depth=1024
+	<toolset>gcc:<cxxflags>-Wall
+	<toolset>gcc:<cxxflags>-Wextra
+	<toolset>gcc:<cxxflags>-Wno-parentheses
+	<toolset>gcc:<linkflags>-lpthread
+	<toolset>gcc:<linkflags>-ldl
+
+	<toolset>clang:<cxxflags>-std=c++14
+	<toolset>clang:<cxxflags>-fconstexpr-depth=1024
+	<toolset>clang:<cxxflags>-Wall
+	<toolset>clang:<cxxflags>-Wextra
+	<toolset>clang:<cxxflags>-Wno-gnu-string-literal-operator-template
+	<toolset>clang:<cxxflags>-stdlib=libc++
+	<toolset>clang:<linkflags>-lpthread
+	<toolset>clang:<linkflags>-ldl
+	<toolset>clang:<linkflags>-lc++abi
+	<toolset>clang:<linkflags>-stdlib=libc++
+
+	<include>../include
+	<include>$(boost)
+	:
+	;
+
+
+exe shared_const_buffer
+	:
+	shared_const_buffer.cpp
+	/webservice//webservice
+	;
+
+exe server_vs_browser
+	:
+	server_vs_browser.cpp
+	/webservice//webservice
+	/boost//system
+	;
+
+exe browser_vs_server
+	:
+	browser_vs_server.cpp
+	/webservice//webservice
+	/boost//system
+	;
+
+exe server_vs_client
+	:
+	server_vs_client.cpp
+	/webservice//webservice
+	/boost//system
+	;
+
+exe server_vs_client_json
+	:
+	server_vs_client_json.cpp
+	/webservice//webservice
+	/boost//system
+	:
+	<include>$(json)/single_include
+	;
+
+exe server_vs_client_json_service
+	:
+	server_vs_client_json_service.cpp
+	/webservice//webservice
+	/boost//system
+	:
+	<include>$(json)/single_include
+	;
+
+exe destruction
+	:
+	destruction.cpp
+	/webservice//webservice
+	/boost//system
+	;
+
+exe extern_destruction
+	:
+	extern_destruction.cpp
+	/webservice//webservice
+	/boost//system
+	;
+
+exe client_terror
+	:
+	client_terror.cpp
+	/webservice//webservice
+	/boost//system
+	;
+
+exe text_ping_pong
+	:
+	text_ping_pong.cpp
+	/webservice//webservice
+	/boost//system
+	;
+
+exe big_binary_ping_pong
+	:
+	big_binary_ping_pong.cpp
+	/webservice//webservice
+	/boost//system
+	;
+
+exe tests
+	:
+	tests.cpp
+	gtest
+	gtest_main
+	/webservice//webservice
+	/boost//system
+	;

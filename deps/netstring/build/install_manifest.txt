@@ -1,0 +1,2 @@
+/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/release/lib/libnetstring.a
+/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/release/include/netstring.h

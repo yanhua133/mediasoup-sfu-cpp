@@ -1,0 +1,92 @@
+<!--
+Copyright (c) 2017 Benjamin Buch
+
+https://github.com/bebuch/http
+
+Distributed under the Boost Software License, Version 1.0. (See accompanying
+file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>Unit test browser vs server</title>
+</head>
+<body style="text-align:center;">
+	WebSocket test.
+	<script>
+		var enc = new TextEncoder("utf-8");
+		var dec = new TextDecoder("utf-8");
+		const text = "test text string";
+		const binary = enc.encode(text);
+
+		var body = document.body;
+
+		console.log("try to open websocket ws://" + window.location.host + '/');
+		var socket = new WebSocket('ws://' + window.location.host + '/');
+		socket.binaryType = 'arraybuffer';
+		socket.onmessage = function(evt){
+			if(typeof(evt.data) === 'string'){
+				if(evt.data == text){
+					let div = document.createElement("div");
+					div.style = "color:lime;background:black;padding:0.5em;";
+					div.innerText = "success: " + evt.data;
+					body.append(div);
+				}else{
+					let div = document.createElement("div");
+					div.style = "color:red;background:black;padding:0.5em;";
+					div.innerText = "fail: expected '" + text + "' but got '"
+						+ evt.data + "'";
+					body.append(div);
+				}
+
+				div = document.createElement("div");
+				div.style = "color:white;background:black;padding:0.5em;";
+				div.innerText = "send binary: " + dec.decode(binary);
+				body.append(div);
+
+				socket.send(binary);
+			}else{
+				if(dec.decode(evt.data) == text){
+					let div = document.createElement("div");
+					div.style = "color:lime;background:black;padding:0.5em;";
+					div.innerText = "success: " + dec.decode(evt.data);
+					body.append(div);
+				}else{
+					let div = document.createElement("div");
+					div.style = "color:red;background:black;padding:0.5em;";
+					div.innerText = "fail: expected '" + dec.decode(binary)
+						+ "' but got '" + dec.decode(evt.data) + "'";
+					body.append(div);
+				}
+				socket.close();
+			}
+		};
+		socket.onopen = function(event){
+			let div = document.createElement("div");
+			div.style = "color:lime;background:black;padding:0.5em;";
+			div.innerText = "onopen: " + JSON.stringify(event);
+			body.append(div);
+
+			div = document.createElement("div");
+			div.style = "color:white;background:black;padding:0.5em;";
+			div.innerText = "send text: " + text;
+			body.append(div);
+
+			socket.send(text);
+		};
+		socket.onerror = function(event){
+			let div = document.createElement("div");
+			div.style = "color:red;background:black;padding:0.5em;";
+			div.innerText = "onerror: " + JSON.stringify(event);
+			body.append(div);
+		};
+		socket.onclose = function(event){
+			let div = document.createElement("div");
+			div.style = "color:white;background:black;padding:0.5em;";
+			div.innerText = "onclose: " + JSON.stringify(event);
+			body.append(div);
+		};
+	</script>
+</body>
+</html>

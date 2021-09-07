@@ -1,0 +1,146 @@
+{
+	"domain" : "localhost",
+	"https"  :
+	{
+		"listenIp"   : "0.0.0.0",
+		"listenPort" : 4443,
+		"tls"        :
+		{
+			"cert" : "fullchain.pem",
+			"key"  : "privkey.pem"
+		}
+	},
+	"http"  :
+	{
+		"listenIp"   : "0.0.0.0",
+		"listenPort" : 8001
+	},
+	"mediasoup" :
+	{
+		"numWorkers"     : 4,
+		"workerSettings" :
+		{
+			"logLevel" : "debug",
+			"logTags"  :
+			[
+				"info",
+				"ice",
+				"dtls",
+				"rtp",
+				"srtp",
+				"rtcp",
+				"rtx",
+				"bwe",
+				"score",
+				"simulcast",
+				"svc",
+				"sctp"
+			],
+			"rtcMinPort" : 20000,
+			"rtcMaxPort" : 21000
+		},
+		"routerOptions" :
+		{
+			"mediaCodecs" :
+			[
+				{
+					"kind"      : "audio",
+					"mimeType"  : "audio/opus",
+					"clockRate" : 48000,
+					"channels"  : 2
+				},
+				{
+					"kind"       : "video",
+					"mimeType"   : "video/h264",
+					"clockRate"  : 90000,
+					"parameters" :
+					{
+						"packetization-mode"      : 1,
+						"profile-level-id"        : "42e01f",
+						"level-asymmetry-allowed" : 1,
+						"x-google-start-bitrate"  : 1000
+					}
+				},
+				{
+					"kind"       : "video",
+					"mimeType"   : "video/h264",
+					"clockRate"  : 90000,
+					"parameters" :
+						{
+							"packetization-mode"      : 1,
+							"profile-level-id"        : "4d0032",
+							"level-asymmetry-allowed" : 1,
+							"x-google-start-bitrate"  : 1000
+						}
+				},
+				{
+					"kind"       : "video",
+					"mimeType"   : "video/h264",
+					"clockRate"  : 90000,
+					"parameters" :
+					{
+						"packetization-mode"      : 1,
+						"profile-level-id"        : "42e034",
+						"level-asymmetry-allowed" : 1,
+						"x-google-start-bitrate"  : 1000
+					}
+				},
+				{
+					"kind"       : "video",
+					"mimeType"   : "video/VP8",
+					"clockRate"  : 90000,
+					"parameters" :
+						{
+							"x-google-start-bitrate" : 1000
+						}
+				},
+				{
+					"kind"       : "video",
+					"mimeType"   : "video/VP9",
+					"clockRate"  : 90000,
+					"parameters" :
+						{
+							"profile-id"             : 2,
+							"x-google-start-bitrate" : 1000
+						}
+				}
+			]
+		},
+		"webRtcTransportOptions" :
+		{
+			"listenIps" :
+			[
+				{
+					"ip"          : "0.0.0.0",
+					"announcedIp" : "192.168.1.192"
+				}
+			],
+			"initialAvailableOutgoingBitrate" : 1000000,
+			"minimumAvailableOutgoingBitrate" : 600000,
+			"maxSctpMessageSize"              : 262144,
+			"maxIncomingBitrate"              : 15000000
+		},
+		"plainTransportOptions" :
+		{
+			"listenIp" :
+			{
+				"ip"          : "192.168.1.192",
+				"announcedIp" : "192.168.1.192"
+			},
+			"maxSctpMessageSize" : 262144
+		}
+	},
+	"rtp" :
+	{
+		"minPort" : 20000,
+		"maxPort" : 29999,
+		"ip" : "127.0.0.1",
+		"signalPort" : 11111
+	},
+	"rtmp" :
+	{
+		"listenIp" : "192.168.1.192",
+		"listenPort" : 1935,
+		"suffix" : "/live"
+	}
+}

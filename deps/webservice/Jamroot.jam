@@ -1,0 +1,48 @@
+import os ;
+local boost = [ os.environ BOOST_ROOT ] ;
+
+use-project /boost
+	: $(boost)
+	;
+
+project webservice
+	:
+	source-location src
+	:
+	requirements <include>include
+
+	<warnings>all
+	<c++-template-depth>1024
+
+	<define>BOOST_HANA_CONFIG_ENABLE_STRING_UDL
+	<define>BOOST_ASIO_HAS_STD_CHRONO
+
+	<toolset>gcc:<cxxflags>-std=c++14
+	<toolset>gcc:<cxxflags>-fconstexpr-depth=1024
+	<toolset>gcc:<cxxflags>-Wall
+	<toolset>gcc:<cxxflags>-Wextra
+	<toolset>gcc:<cxxflags>-Wno-parentheses
+	<toolset>gcc:<linkflags>-lpthread
+
+	<toolset>clang:<cxxflags>-std=c++14
+	<toolset>clang:<cxxflags>-fconstexpr-depth=1024
+	<toolset>clang:<cxxflags>-Wall
+	<toolset>clang:<cxxflags>-Wextra
+	<toolset>clang:<cxxflags>-stdlib=libc++
+	<toolset>clang:<variant>debug:<cxxflags>-fstandalone-debug
+	<toolset>clang:<variant>debug:<cxxflags>-fno-limit-debug-info
+	<toolset>clang:<variant>debug:<define>_LIBCPP_DEBUG
+	<toolset>clang:<linkflags>-lpthread
+	<toolset>clang:<linkflags>-lc++abi
+	<toolset>clang:<linkflags>-stdlib=libc++
+
+	<include>$(boost)
+	:
+	usage-requirements <include>include
+	;
+
+lib webservice
+	:
+	[ glob *.cpp ]
+	/boost//system
+	;
