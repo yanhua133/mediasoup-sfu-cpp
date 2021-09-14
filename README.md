@@ -1,5 +1,5 @@
 项目说明：
-本项目是基于mediasoup的sfu的js版本修改成的c++版本，支持和js版本一样的完整demo功能，但是本项目是直接把worker进程代码集成
+本项目是基于mediasoup v3 版本 webrtc m84版本 的sfu的js版本修改成的c++版本，支持和js版本一样的完整demo功能，但是本项目是直接把worker进程代码集成
 到了demo可以直接代码级别的调用，并可以直接断点调试workder代码
 本项目支持所有跨平台系统 WIN，Linux，Mac，嵌入式arm等系统，国产麒麟系统，支持嵌入式系统编译
 
