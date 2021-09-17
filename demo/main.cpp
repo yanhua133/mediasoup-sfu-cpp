@@ -39,10 +39,10 @@
 // #define MS_LOG_DEV_LEVEL 3
 #include "Server.hpp"
 
-static int ConsumerChannelFd[2];
-static int ProducerChannelFd[2];
-static int PayloadConsumerChannelFd[2];
-static int PayloadProducerChannelFd[2];
+static int ConsumerChannelFd[2]={3,4};
+static int ProducerChannelFd[2]={5,6};
+static int PayloadConsumerChannelFd[2]={7,8};
+static int PayloadProducerChannelFd[2]={9,10};
 extern void * g_uvloop;
 void IgnoreSignals();
 // Channel socket (it will be handled and deleted by the Worker).
@@ -172,11 +172,12 @@ int uv_pipe_test()
 {
   uv_pipe_t pipe_handle;
   uv_pipe_t pipe_handle2;
-  int fd[2];
+  int fd[2]={0,1};
  
   int  ret = 0;
-
+#ifndef WIN32
    pipe(fd);
+#endif
    uv_pipe_init(uv_default_loop(), &pipe_handle, 0);
    uv_pipe_open(&pipe_handle, fd[0]);
     
@@ -189,6 +190,7 @@ int main(int argc, char* argv[])
     Server server;
     Config config;
     config.initConfig();
+#ifndef WIN32
     pipe(ConsumerChannelFd);
     MS_lOGD("pipe Create Pair ConsumerChannelFd[0]=%d ConsumerChannelFd[1]=%d ",ConsumerChannelFd[0],ConsumerChannelFd[1]);
     pipe(ProducerChannelFd);
@@ -197,7 +199,16 @@ int main(int argc, char* argv[])
     MS_lOGD("pipe Create Pair PayloadConsumerChannelFd[0]=%d PayloadConsumerChannelFd[1]=%d ",PayloadConsumerChannelFd[0],PayloadConsumerChannelFd[1]);
     pipe(PayloadProducerChannelFd);
     MS_lOGD("pipe Create Pair PayloadProducerChannelFd[0]=%d PayloadProducerChannelFd[1]=%d ",PayloadProducerChannelFd[0],PayloadProducerChannelFd[1]);
-
+#else
+    
+    MS_lOGD("pipe Create Pair ConsumerChannelFd[0]=%d ConsumerChannelFd[1]=%d ",ConsumerChannelFd[0],ConsumerChannelFd[1]);
+    
+    MS_lOGD("pipe Create Pair ProducerChannelFd[0]=%d ProducerChannelFd[1]=%d ",ProducerChannelFd[0],ProducerChannelFd[1]);
+    
+    MS_lOGD("pipe Create Pair PayloadConsumerChannelFd[0]=%d PayloadConsumerChannelFd[1]=%d ",PayloadConsumerChannelFd[0],PayloadConsumerChannelFd[1]);
+    
+    MS_lOGD("pipe Create Pair PayloadProducerChannelFd[0]=%d PayloadProducerChannelFd[1]=%d ",PayloadProducerChannelFd[0],PayloadProducerChannelFd[1]);
+#endif
     /*
     char str[34]={0};
     strcpy(str,"test");
