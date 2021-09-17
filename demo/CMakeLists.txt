@@ -120,9 +120,6 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
 ELSEIF(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
     set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--export-dynamic")
 ELSEIF(CMAKE_SYSTEM_NAME MATCHES "Windows")
-    target_link_libraries(${PROJECT_NAME}
-        getopt
-    )
     target_include_directories(${PROJECT_NAME}
     PRIVATE
     ../deps/getopt/src
@@ -187,6 +184,7 @@ IF (WIN32)
       ${PROJECT_LIB_DIR}/absl_bad_variant_access.lib
       ${PROJECT_LIB_DIR}/absl_internal_bad_any_cast_impl.lib
       ${PROJECT_LIB_DIR}/sdptransform.lib
+      ${PROJECT_LIB_DIR}/getopt.lib
       mediasoup
       protoo
       
