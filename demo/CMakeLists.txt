@@ -186,11 +186,9 @@ IF (WIN32)
       ${PROJECT_LIB_DIR}/absl_bad_optional_access.lib
       ${PROJECT_LIB_DIR}/absl_bad_variant_access.lib
       ${PROJECT_LIB_DIR}/absl_internal_bad_any_cast_impl.lib
-      dl
       ${PROJECT_LIB_DIR}/sdptransform.lib
       mediasoup
       protoo
-      ${PROJECT_LIB_DIR}/libuv_a.a
       
   )
   
