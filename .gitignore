@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+lib/boost_1_74_0.tar.gz
+build/
+deps/boost/boost_1_74_0/
+release/
+deps/libwebrtc/build/CMakeFiles/CMakeOutput.log
+deps/netstring/build/CMakeFiles/CMakeOutput.log
+deps/boost/boost_1_74_0.tar.gz
