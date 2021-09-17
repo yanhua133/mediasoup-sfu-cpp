@@ -41,7 +41,6 @@ set(sources
   Room.hpp
   Transfmt.cpp
   Transfmt.hpp
-  ${PROJECT_SOURCE_DIR}/deps/json/single_include/nlohmann/json.hpp
 )
 
 add_executable(${PROJECT_NAME} ${sources} )
