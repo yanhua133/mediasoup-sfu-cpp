@@ -228,7 +228,7 @@ int main(int argc, char* argv[])
     g_uvloop =  DepLibUV::GetLoop();
     server.setConfig(config);
 
-    server.init();
+    server.initMediasoup();
 
     MS_lOGD("initWorker ProducerChannelFd[0]=%d,ConsumerChannelFd[1]=%d,PayloadProducerChannelFd[0]=%d,PayloadConsumerChannelFd[1]=%d",ProducerChannelFd[0],ConsumerChannelFd[1],PayloadProducerChannelFd[0],PayloadConsumerChannelFd[1]);
     server.initWorker(ProducerChannelFd[0],ConsumerChannelFd[1],PayloadProducerChannelFd[0],PayloadConsumerChannelFd[1]);

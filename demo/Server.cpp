@@ -85,9 +85,9 @@ Server::~Server()
 int Server::init()
 {
     initMediasoup();
-    createRawWebSocket();
-    runRawWebsocket();
-   createProtooWebSocket();
+   // createRawWebSocket();
+   // runRawWebsocket();
+   //createProtooWebSocket();
     
 
 
@@ -723,7 +723,7 @@ void Server::initMediasoup()
 	for (auto & item : rtpCapabilities.headerExtensions) {
 		//std::cout << "headerExtensions.uri:" << item.uri << std::endl;
 	}
-
+  protooWebsockServer = std::make_shared<WebSocketServer>("0.0.0.0",8001,"");//new WebSocketServer("0.0.0.0",8001,"");
 }
 void Server::initWorker(int consumerFd,int producerFd,int payloadConsumerFd,int payloadProducerFd)
 {

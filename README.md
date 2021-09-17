@@ -52,6 +52,9 @@ https://marketplace.visualstudio.com/items?itemName=LLVMExtensions.llvm-toolchai
 注意：只有正确安装了llvm后才能执行下面的操作，否则会有提示错误无法生成工程
 .\genvs2019.bat
 生成工程文件即可打开工程编译
+然后拷贝  lib\win\x64\libssl-1_1-x64.dll
+        lib\win\x64\libcrypto-1_1-x64.dll
+到执行文件所在Debug目录下即可
 
 8、配置文件拷贝的编译的执行文件所在目录
 配置文件在源码根目录下 demo/config.json 拷贝到 xcode/debug 目录下 或是clion的cmakebuild目录下和执行文件同一个目录
