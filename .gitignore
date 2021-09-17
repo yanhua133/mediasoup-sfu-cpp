@@ -37,3 +37,4 @@ release/
 deps/libwebrtc/build/CMakeFiles/CMakeOutput.log
 deps/netstring/build/CMakeFiles/CMakeOutput.log
 deps/boost/boost_1_74_0.tar.gz
+xcode/

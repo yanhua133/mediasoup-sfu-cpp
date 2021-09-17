@@ -25,6 +25,8 @@ source ./setarmenv.sh
 生成的执行文件生成在 
 release/bin 目录下
 
+参考8描述拷贝配置文件
+
 5、也可以生成xcode，用xcode开发环境编译调试
 ./genxcode.sh
 
@@ -38,6 +40,7 @@ release/bin 目录下
 
 8、配置文件拷贝的编译的执行文件所在目录
 配置文件在源码根目录下 demo/config.json 拷贝到 xcode/debug 目录下 或是clion的cmakebuild目录下和执行文件同一个目录
+vc2019 需要拷贝到对应的Debug目录下，和执行文件同一个目录
 详细配置可以参考mediasoup官方demo的配置
 配置文件里面的ip地址需要配置对应服务器的内网地址和外网地址
 "ip"          : "192.168.1.192",//内网网卡地址
