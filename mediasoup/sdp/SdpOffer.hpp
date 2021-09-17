@@ -25,7 +25,7 @@ namespace mediasoupclient
 		  RtpCapabilities sdpToRecvRtpCapabilities(  json &sdpObject,json &localCaps);
       RtpParameters sdpToSendRtpParameters(json &sdpObject,json &localCaps,std::string &kind);
       DtlsParameters getMediasoupDtlsParameters(json &sdpOffer);
-      json getMediasoupProducerMedias(json &sdpOffer);
+      std::vector<json> getMediasoupProducerMedias(json &sdpOffer);
       RtpParameters getMediasoupRtpParameters(json &sdpOffer, std::string &kind, json localCaps);
       RtpCapabilities getMediasoupRtpCapabilities(json &sdpOffer, json localCaps);
       json createWebrtcSdpOffer(std::shared_ptr<Transport> webRtcTransport,std::vector<std::shared_ptr<Consumer>> &consumers);

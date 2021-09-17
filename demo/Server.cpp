@@ -181,7 +181,8 @@ void Server::processRawSdpMessage(std::string message)
     if(msg["action"] == "SDP_OFFER") {
         auto webRtcTransport = room->getBridgeTransport(bridgeId);
         auto producers = room->getProducersFromBridge(bridgeId);
-        auto producerMedias=mediasoupclient::Sdp::Offer::getMediasoupProducerMedias(sdpAnswer["sdp"]);
+        auto sdp = sdpAnswer["sdp"];
+        auto producerMedias=mediasoupclient::Sdp::Offer::getMediasoupProducerMedias(sdp);
         auto sdpAnswer = mediasoupclient::Sdp::Offer::createWebrtcSdpAnswer(webRtcTransport,producers,producerMedias);
         json payload = {
             {"type","offer"},

@@ -319,9 +319,6 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
 ELSEIF(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
     set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--export-dynamic")
 ELSEIF(CMAKE_SYSTEM_NAME MATCHES "Windows")
-    target_link_libraries(${PROJECT_NAME}
-        getopt
-    )
     target_include_directories(${PROJECT_NAME}
     PRIVATE
     ../deps/getopt/src

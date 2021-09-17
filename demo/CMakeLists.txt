@@ -41,7 +41,7 @@ set(sources
   Room.hpp
   Transfmt.cpp
   Transfmt.hpp
-
+  ${PROJECT_SOURCE_DIR}/deps/json/single_include/nlohmann/json.hpp
 )
 
 add_executable(${PROJECT_NAME} ${sources} )
@@ -180,6 +180,7 @@ IF (WIN32)
       ${PROJECT_LIB_DIR}/absl_internal_throw_delegate.lib
       ${PROJECT_LIB_DIR}/absl_strings.lib
       ${PROJECT_LIB_DIR}/absl_optional.lib
+      ${PROJECT_LIB_DIR}/absl_base.lib
       ${PROJECT_LIB_DIR}/absl_bad_optional_access.lib
       ${PROJECT_LIB_DIR}/absl_bad_variant_access.lib
       ${PROJECT_LIB_DIR}/absl_internal_bad_any_cast_impl.lib
@@ -187,6 +188,8 @@ IF (WIN32)
       ${PROJECT_LIB_DIR}/getopt.lib
       mediasoup
       protoo
+      ws2_32
+      userenv
       
   )
   
