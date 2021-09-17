@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-set(PROJECT_NAME "qrtc_mediaserver_demo")
+set(PROJECT_NAME "demo")
 
 project(${PROJECT_NAME})
 message("\n=========== ${PROJECT_NAME} Build Configuration ===========\n")
