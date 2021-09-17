@@ -162,6 +162,39 @@ LINK_DIRECTORIES(
 )
 
 
+IF (WIN32)
+  target_link_libraries(${PROJECT_NAME}
+      worker
+      libwebrtc
+      ${PROJECT_LIB_DIR}/netstring.lib
+      ${PROJECT_LIB_DIR}/uv_a.lib
+      ${PROJECT_LIB_DIR}/libssl.lib
+      ${PROJECT_LIB_DIR}/libcrypto.lib
+      ${PROJECT_LIB_DIR}/srtp2.lib
+      ${PROJECT_LIB_DIR}/usrsctp.lib
+      ${PROJECT_LIB_DIR}/boost_atomic-vc140-mt.lib
+      ${PROJECT_LIB_DIR}/boost_chrono-vc140-mt.lib
+      ${PROJECT_LIB_DIR}/boost_date_time-vc140-mt.lib
+      ${PROJECT_LIB_DIR}/boost_filesystem-vc140-mt.lib
+      ${PROJECT_LIB_DIR}/boost_random-vc140-mt.lib
+      ${PROJECT_LIB_DIR}/boost_regex-vc140-mt.lib
+      ${PROJECT_LIB_DIR}/boost_system-vc140-mt.lib
+      ${PROJECT_LIB_DIR}/boost_thread-vc140-mt.lib
+      ${PROJECT_LIB_DIR}/absl_internal_throw_delegate.lib
+      ${PROJECT_LIB_DIR}/absl_strings.lib
+      ${PROJECT_LIB_DIR}/absl_optional.lib
+      ${PROJECT_LIB_DIR}/absl_bad_optional_access.lib
+      ${PROJECT_LIB_DIR}/absl_bad_variant_access.lib
+      ${PROJECT_LIB_DIR}/absl_internal_bad_any_cast_impl.lib
+      dl
+      ${PROJECT_LIB_DIR}/sdptransform.lib
+      mediasoup
+      protoo
+      ${PROJECT_LIB_DIR}/libuv_a.a
+      
+  )
+  
+ELSE ()
 
 target_link_libraries(${PROJECT_NAME}
     worker
@@ -193,6 +226,6 @@ target_link_libraries(${PROJECT_NAME}
     ${PROJECT_LIB_DIR}/libuv_a.a
     
 )
-
+ENDIF()
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 
