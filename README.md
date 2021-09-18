@@ -37,7 +37,7 @@ release/bin 目录下
 7、如果用vc2019编译执行
 win下使用llvm编译
 LLVM下载链接地址
-https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/LLVM-10.0.0-win64.exe
+https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.0/LLVM-12.0.0-win64.exe
 
 visual studio使用clang
 https://blog.csdn.net/weixin_42707943/article/details/85119329?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-2.channel_param&depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-2.channel_param
