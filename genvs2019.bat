@@ -11,5 +11,5 @@ cd %CURRENT_DIR%%PROJECT_NAME%
 
 set OPENSSL_ROOT_DIR="C:\Program Files\OpenSSL-Win64"
 rem Generate VS2019 project.
-cmake ../ -G "Visual Studio 16 2019"  -T llvm
+cmake ../ -G "Visual Studio 16 2019"
 pause

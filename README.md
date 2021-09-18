@@ -36,21 +36,12 @@ release/bin 目录下
 
 7、如果用vc2019编译执行
 win下使用llvm编译
-LLVM下载链接地址
-https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.0/LLVM-12.0.0-win64.exe
-
-visual studio使用clang
-https://blog.csdn.net/weixin_42707943/article/details/85119329?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-2.channel_param&depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-2.channel_param
-安装插件
-llvm compile toolchain 插件
-安装好后重启软件，项目属性常规工具集改成LLVM，一般到这就可以使用了
-
-如果下载不了可以通过这个网址下载插件
-https://marketplace.visualstudio.com/items?itemName=LLVMExtensions.llvm-toolchain
 
 
 注意：只有正确安装了llvm后才能执行下面的操作，否则会有提示错误无法生成工程
 .\genvs2019.bat
+注意：所有工程右键选择属性，选择编译器为 LLVM-clang-cl 编译器进行编译
+
 生成工程文件即可打开工程编译
 然后拷贝  lib\win\x64\libssl-1_1-x64.dll
         lib\win\x64\libcrypto-1_1-x64.dll
