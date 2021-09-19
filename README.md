@@ -56,7 +56,11 @@ vc2019 需要拷贝到对应的Debug目录下，和执行文件同一个目录
 "announcedIp" : "192.168.1.192"//公网地址
 
 
-9、问题及解决
+9、测试客户端输入地址
+ip地址改成自己的本机地址
+ws://192.168.3.19:8001/
+
+10、问题及解决
 目前整个项目只有下面的调用是c+14标准，其他都是c++11标准，后续如果有嵌入开发标准需求可以改成c++11
 const RtpCapabilities supportedRtpCapabilities =
 
@@ -84,6 +88,9 @@ sudo xcode-select --switch /Applications/Xcode.app/
 sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
 重试时记得清空build下的文件
 #
+
+效果图
+![image](https://github.com/yanhua133/mediasoup-sfu-cpp/blob/main/demp.jpg?raw=true)
 
 
 10、交流及技术支持
