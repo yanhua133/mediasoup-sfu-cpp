@@ -203,17 +203,17 @@ int main(int argc, char* argv[])
     MS_lOGD("pipe Create Pair PayloadProducerChannelFd[0]=%d PayloadProducerChannelFd[1]=%d ",PayloadProducerChannelFd[0],PayloadProducerChannelFd[1]);
 #else
     uv_fs_t file_req;
-    ConsumerChannelFd[0] = uv_fs_open((uv_loop_t*)g_uvloop, &file_req, "\\\\.\\Pipe\\ConsumerChannelFd0", O_CREAT | O_RDWR, 0644, NULL);
-    ConsumerChannelFd[1] = uv_fs_open((uv_loop_t*)g_uvloop, &file_req, "\\\\.\\Pipe\\ConsumerChannelFd1", O_CREAT | O_RDWR, 0644, NULL);
+    ConsumerChannelFd[0] = uv_fs_open((uv_loop_t*)g_uvloop, &file_req, ".\\Pipe\\ConsumerChannelFd0", O_CREAT | O_RDWR, 0644, NULL);
+    ConsumerChannelFd[1] = uv_fs_open((uv_loop_t*)g_uvloop, &file_req, ".\\Pipe\\ConsumerChannelFd1", O_CREAT | O_RDWR, 0644, NULL);
     MS_lOGD("pipe Create Pair ConsumerChannelFd[0]=%d ConsumerChannelFd[1]=%d ",ConsumerChannelFd[0],ConsumerChannelFd[1]);
-    ProducerChannelFd[0] = uv_fs_open((uv_loop_t*)g_uvloop, &file_req, "\\\\.\\Pipe\\ProducerChannelFd0", O_CREAT | O_RDWR, 0644, NULL);
-    ProducerChannelFd[1] = uv_fs_open((uv_loop_t*)g_uvloop, &file_req, "\\\\.\\Pipe\\ProducerChannelFd1", O_CREAT | O_RDWR, 0644, NULL);
+    ProducerChannelFd[0] = uv_fs_open((uv_loop_t*)g_uvloop, &file_req, ".\\Pipe\\ProducerChannelFd0", O_CREAT | O_RDWR, 0644, NULL);
+    ProducerChannelFd[1] = uv_fs_open((uv_loop_t*)g_uvloop, &file_req, ".\\Pipe\\ProducerChannelFd1", O_CREAT | O_RDWR, 0644, NULL);
     MS_lOGD("pipe Create Pair ProducerChannelFd[0]=%d ProducerChannelFd[1]=%d ",ProducerChannelFd[0],ProducerChannelFd[1]);
-    PayloadConsumerChannelFd[0] = uv_fs_open((uv_loop_t*)g_uvloop, &file_req, "\\\\.\\Pipe\\PayloadConsumerChannelFd0", O_CREAT | O_RDWR, 0644, NULL);
-    PayloadConsumerChannelFd[1] = uv_fs_open((uv_loop_t*)g_uvloop, &file_req, "\\\\.\\Pipe\\PayloadConsumerChannelFd1", O_CREAT | O_RDWR, 0644, NULL);
+    PayloadConsumerChannelFd[0] = uv_fs_open((uv_loop_t*)g_uvloop, &file_req, ".\\Pipe\\PayloadConsumerChannelFd0", O_CREAT | O_RDWR, 0644, NULL);
+    PayloadConsumerChannelFd[1] = uv_fs_open((uv_loop_t*)g_uvloop, &file_req, ".\\Pipe\\PayloadConsumerChannelFd1", O_CREAT | O_RDWR, 0644, NULL);
     MS_lOGD("pipe Create Pair PayloadConsumerChannelFd[0]=%d PayloadConsumerChannelFd[1]=%d ",PayloadConsumerChannelFd[0],PayloadConsumerChannelFd[1]);
-    PayloadProducerChannelFd[0] = uv_fs_open((uv_loop_t*)g_uvloop, &file_req, "\\\\.\\Pipe\\PayloadProducerChannelFd0", O_CREAT | O_RDWR, 0644, NULL);
-    PayloadProducerChannelFd[1] = uv_fs_open((uv_loop_t*)g_uvloop, &file_req, "\\\\.\\Pipe\\PayloadProducerChannelFd1", O_CREAT | O_RDWR, 0644, NULL);
+    PayloadProducerChannelFd[0] = uv_fs_open((uv_loop_t*)g_uvloop, &file_req, ".\\Pipe\\PayloadProducerChannelFd0", O_CREAT | O_RDWR, 0644, NULL);
+    PayloadProducerChannelFd[1] = uv_fs_open((uv_loop_t*)g_uvloop, &file_req, ".\\Pipe\\PayloadProducerChannelFd1", O_CREAT | O_RDWR, 0644, NULL);
     MS_lOGD("pipe Create Pair PayloadProducerChannelFd[0]=%d PayloadProducerChannelFd[1]=%d ",PayloadProducerChannelFd[0],PayloadProducerChannelFd[1]);
 #endif
     /*
