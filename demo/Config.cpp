@@ -6,6 +6,11 @@
 #include <iostream>
 #include <cctype>
 #include "json.hpp"
+#include <stdlib.h>
+#include <stdio.h>
+#ifdef _WIN32
+#include "windows.h"
+#endif
 using namespace std;
 using json = nlohmann::json;
 Config::Config()
