@@ -190,6 +190,9 @@ UVPipeWrapper * ChannelAgent::GetConsumer() {
 
 
 void ChannelAgent::OnRead(UVPipeWrapper * pipe, uint8_t * data, size_t len) {
+    if(data != 0) {
+        data[len] = 0;
+    }
     MS_lOGD("ChannelAgent::OnRead: rawdata = %s", (char*)data);
     MS_lOGD("ChannelAgent::OnRead:m_readBuf left =%s", m_readBuf.c_str());
     m_readBuf.append((char*)data, len);

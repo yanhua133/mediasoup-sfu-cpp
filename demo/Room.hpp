@@ -1460,7 +1460,8 @@ public:
 				// 	...this->_bridges
 				// ];
                 std::unordered_map<std::string,std::shared_ptr<Peer>> joinedPeers;
-                joinedPeers.insert(this->_getJoinedPeersMap().begin(), this->_getJoinedPeersMap().end());
+                std::unordered_map<std::string, shared_ptr<Peer>> joinPeers = this->_getJoinedPeersMap();
+                joinedPeers.insert(joinPeers.begin(), joinPeers.end());
                 joinedPeers.insert(this->_broadcasters.begin(), this->_broadcasters.end());
                 joinedPeers.insert(this->_bridges.begin(), this->_bridges.end());
 
@@ -1809,7 +1810,8 @@ public:
 				// 		...this->_broadcasters
 				// 	];
                   std::unordered_map<std::string,std::shared_ptr<Peer>> joinedPeers;
-                  joinedPeers.insert(this->_getJoinedPeersMap(peer).begin(), this->_getJoinedPeersMap(peer).end());
+                  std::unordered_map<std::string, shared_ptr<Peer>> joinPeers = this->_getJoinedPeersMap(peer);
+                  joinedPeers.insert(joinPeers.begin(), joinPeers.end());
                   joinedPeers.insert(this->_broadcasters.begin(), this->_broadcasters.end());
 
 				// Optimization: Create a server-side Consumer for each Peer.
