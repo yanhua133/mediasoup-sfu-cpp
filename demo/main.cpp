@@ -38,7 +38,13 @@
 #define MS_CLASS "mediasoup-worker"
 // #define MS_LOG_DEV_LEVEL 3
 #include "Server.hpp"
+#ifndef _WIN32
+# include <unistd.h>  /* close */
 
+#else
+#include <fcntl.h>
+#include <io.h>
+#endif
 static int ConsumerChannelFd[2]={3,4};
 static int ProducerChannelFd[2]={5,6};
 static int PayloadConsumerChannelFd[2]={7,8};
@@ -194,7 +200,7 @@ int createWinPipe(int readonly) {
     if(readonly == 1) {
         readfd = _open_osfhandle((intptr_t)readh, _O_RDONLY);
     } else {
-        readfd = _open_osfhandle((intptr_t)readh, _O_WRONLY);
+        readfd = _open_osfhandle((intptr_t)writeh, _O_WRONLY);
     }
    
     return readfd;

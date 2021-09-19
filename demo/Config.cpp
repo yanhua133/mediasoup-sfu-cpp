@@ -82,7 +82,26 @@ string Config::TrimStringForJson(string res)
 
 void Config::initConfig()
 {
+#ifdef _WIN32
+    TCHAR exeFullPath[MAX_PATH]; // Full path
+    GetModuleFileName(NULL, exeFullPath, MAX_PATH);
+    char path[255] = { 0 };
+    char path_buffer[_MAX_PATH];
+    char drive[_MAX_DRIVE];
+    char dir[_MAX_DIR];
+    char fname[_MAX_FNAME];
+    char ext[_MAX_EXT];
+
+    //TcharToChar(exeFullPath, path);
+    _splitpath(exeFullPath, drive, dir, fname, ext);
+    strcat(path, drive);
+    strcat(path, dir);
+    strcat(path, "config.json");
+    this->filename = path;
+#else
     this->filename = "config.json";
+#endif
+
     ifstream configfile(filename);
     //ofstream outfile("G:\\C++ project\\Read\\out.txt", ios::app);
     string line;
