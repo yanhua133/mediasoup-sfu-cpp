@@ -90,7 +90,7 @@ sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
 #
 
 效果图
-![image](https://github.com/yanhua133/mediasoup-sfu-cpp/blob/main/demp.jpg?raw=true)
+![image](https://raw.githubusercontent.com/yanhua133/mediasoup-sfu-cpp/main/demo.jpg)
 
 
 10、交流及技术支持
