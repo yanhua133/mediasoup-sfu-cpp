@@ -57,12 +57,25 @@ vc2019 需要拷贝到对应的Debug目录下，和执行文件同一个目录
 
 
 9、测试客户端输入地址
-ip地址改成自己的本机地址
+目前客户端代码还没整理好暂未开源后续会陆续开源
+测试客户端下载地址
+win下载地址：
+http://quickrtc.cn:8012/latest/sft-demo-client-1.0.1.win.zip
+
+mac下载地址：
+http://quickrtc.cn:8012/latest/sft-demo-client-1.0.1.mac.zip
+
+会议号输入任意数字比如 
+会议号：123456
+用户名任意： 测试1
+地址栏修改为:ip地址改成自己的本机地址
 ws://192.168.3.19:8001/
 
 10、问题及解决
 目前整个项目只有下面的调用是c+14标准，其他都是c++11标准，后续如果有嵌入开发标准需求可以改成c++11
 const RtpCapabilities supportedRtpCapabilities =
+
+
 
 使用cmake生成xcode的项目
 
@@ -88,6 +101,7 @@ sudo xcode-select --switch /Applications/Xcode.app/
 sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
 重试时记得清空build下的文件
 #
+
 
 效果图
 ![image](https://raw.githubusercontent.com/yanhua133/mediasoup-sfu-cpp/main/demo.jpg)
