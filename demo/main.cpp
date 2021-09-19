@@ -191,22 +191,37 @@ int uv_pipe_test()
    uv_pipe_open(&pipe_handle2, fd[1]);
 
 }
-#ifdef WIN32
-int createWinPipe(int readonly) {
-    HANDLE readh, writeh;
-    int readfd;
-    int r;
-    r = CreatePipe(&readh, &writeh, NULL, 65536);
-    if(readonly == 1) {
-        readfd = _open_osfhandle((intptr_t)readh, _O_RDONLY);
-    } else {
-        readfd = _open_osfhandle((intptr_t)writeh, _O_WRONLY);
-    }
-   
-    return readfd;
+
+#ifndef _WIN32
+static int mpipe(int *fds) {
+  if (pipe(fds) == -1)
+    return -1;
+  if (fcntl(fds[0], F_SETFD, FD_CLOEXEC) == -1 ||
+      fcntl(fds[1], F_SETFD, FD_CLOEXEC) == -1) {
+    close(fds[0]);
+    close(fds[1]);
+    return -1;
+  }
+  return 0;
 }
-
-
+#else
+static int mpipe(int *fds) {
+  SECURITY_ATTRIBUTES attr;
+  HANDLE readh, writeh;
+  attr.nLength = sizeof(attr);
+  attr.lpSecurityDescriptor = NULL;
+  attr.bInheritHandle = FALSE;
+  if (!CreatePipe(&readh, &writeh, &attr, 0))
+    return -1;
+  fds[0] = _open_osfhandle((intptr_t)readh, 0);
+  fds[1] = _open_osfhandle((intptr_t)writeh, 0);
+  if (fds[0] == -1 || fds[1] == -1) {
+    CloseHandle(readh);
+    CloseHandle(writeh);
+    return -1;
+  }
+  return 0;
+}
 #endif
 int main(int argc, char* argv[])
 {
@@ -215,31 +230,14 @@ int main(int argc, char* argv[])
     config.initConfig();
     DepLibUV::ClassInit();
     g_uvloop =  DepLibUV::GetLoop();
-#ifndef WIN32
-    pipe(ConsumerChannelFd);
+    mpipe(ConsumerChannelFd);
     MS_lOGD("pipe Create Pair ConsumerChannelFd[0]=%d ConsumerChannelFd[1]=%d ",ConsumerChannelFd[0],ConsumerChannelFd[1]);
-    pipe(ProducerChannelFd);
+    mpipe(ProducerChannelFd);
     MS_lOGD("pipe Create Pair ProducerChannelFd[0]=%d ProducerChannelFd[1]=%d ",ProducerChannelFd[0],ProducerChannelFd[1]);
-    pipe(PayloadConsumerChannelFd);
+    mpipe(PayloadConsumerChannelFd);
     MS_lOGD("pipe Create Pair PayloadConsumerChannelFd[0]=%d PayloadConsumerChannelFd[1]=%d ",PayloadConsumerChannelFd[0],PayloadConsumerChannelFd[1]);
-    pipe(PayloadProducerChannelFd);
+    mpipe(PayloadProducerChannelFd);
     MS_lOGD("pipe Create Pair PayloadProducerChannelFd[0]=%d PayloadProducerChannelFd[1]=%d ",PayloadProducerChannelFd[0],PayloadProducerChannelFd[1]);
-#else
-   
-    uv_fs_t file_req;
-    ConsumerChannelFd[0] = createWinPipe(1);
-    ConsumerChannelFd[1] = createWinPipe(0);
-    MS_lOGD("pipe Create Pair ConsumerChannelFd[0]=%d ConsumerChannelFd[1]=%d ",ConsumerChannelFd[0],ConsumerChannelFd[1]);
-    ProducerChannelFd[0] = createWinPipe(1);
-    ProducerChannelFd[1] = createWinPipe(0);
-    MS_lOGD("pipe Create Pair ProducerChannelFd[0]=%d ProducerChannelFd[1]=%d ",ProducerChannelFd[0],ProducerChannelFd[1]);
-    PayloadConsumerChannelFd[0] = createWinPipe(1);
-    PayloadConsumerChannelFd[1] = createWinPipe(0);
-    MS_lOGD("pipe Create Pair PayloadConsumerChannelFd[0]=%d PayloadConsumerChannelFd[1]=%d ",PayloadConsumerChannelFd[0],PayloadConsumerChannelFd[1]);
-    PayloadProducerChannelFd[0] = createWinPipe(1);
-    PayloadProducerChannelFd[1] = createWinPipe(0);
-    MS_lOGD("pipe Create Pair PayloadProducerChannelFd[0]=%d PayloadProducerChannelFd[1]=%d ",PayloadProducerChannelFd[0],PayloadProducerChannelFd[1]);
-#endif
     /*
     char str[34]={0};
     strcpy(str,"test");
