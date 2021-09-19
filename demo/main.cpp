@@ -190,6 +190,7 @@ int main(int argc, char* argv[])
     Server server;
     Config config;
     config.initConfig();
+    DepLibUV::ClassInit();
     g_uvloop =  DepLibUV::GetLoop();
 #ifndef WIN32
     pipe(ConsumerChannelFd);
@@ -230,8 +231,7 @@ int main(int argc, char* argv[])
 //    };
 //    MS_lOGD("response = %s",response.dump().c_str());
     // Initialize libuv stuff (we need it for the Channel).
-    DepLibUV::ClassInit();
-   
+  
     server.setConfig(config);
 
     server.initMediasoup();
