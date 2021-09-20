@@ -8,18 +8,11 @@ https://jaist.dl.sourceforge.net/project/boost/boost/1.74.0/boost_1_74_0.tar.gz
 1)、默认mac下用的是clang编译，ubuntu用的是gcc编译，按照系统默认安装编译器就行，gcc版本至少支持c++11版本大于 >= gcc-6.1
 3)、其他的都是通过deps目录的源码进行编译的，再没有其他依赖库
 
-2、arm平台变量设置
-如果是跨平台编译，下述脚本只在对应平台执行一次即可（编译后的include和lib都自动安装到了release目录下用主程序调用）
-跨平台编译需要先执行
-x64位平台需要操作，可以忽略
-
-source ./setarmenv.sh
-
-3、依赖库编译（只编译一次）
+2、依赖库编译（只编译一次）
 
 ./builddeps.sh 
 
-4、编译主程序
+3、编译主程序
 ./build.sh
 
 生成的执行文件生成在 
@@ -27,14 +20,14 @@ release/bin 目录下
 
 参考8描述拷贝配置文件
 
-5、也可以生成xcode，用xcode开发环境编译调试
+4、也可以生成xcode，用xcode开发环境编译调试
 ./genxcode.sh
 
-6、也可以用clion编译调试
+5、也可以用clion编译调试
 注意有时候更新后clion会有残留信息导致无法编译成功，此时需要删除cmake_debug目录，然后通过file执行invalidate，重启clion，然后重新导入工程，编译就行了
 直接打开项目源码目录即可
 
-7、如果用vc2019编译执行
+6、如果用vc2019编译执行
 win下使用vc2019自带安装的编译器 LLVM-clang-cl编译
 .\genvs2019.bat
 注意：所有工程右键选择属性，选择编译器为vc2019自带安装的编译器 LLVM-clang-cl 编译器进行编译
@@ -44,7 +37,7 @@ win下使用vc2019自带安装的编译器 LLVM-clang-cl编译
         lib\win\x64\libcrypto-1_1-x64.dll
 到执行文件所在Debug目录下即可
 
-8、配置文件拷贝的编译的执行文件所在目录
+7、配置文件拷贝的编译的执行文件所在目录
 配置文件在源码根目录下 demo/config.json 拷贝到 xcode/debug 目录下 或是clion的cmakebuild目录下和执行文件同一个目录
 vc2019 需要拷贝到对应的Debug目录下，和执行文件同一个目录
 详细配置可以参考mediasoup官方demo的配置
@@ -53,7 +46,7 @@ vc2019 需要拷贝到对应的Debug目录下，和执行文件同一个目录
 "announcedIp" : "192.168.1.192"//公网地址
 
 
-9、测试客户端输入地址
+8、测试客户端输入地址
 目前客户端代码还没整理好暂未开源后续会陆续开源
 测试客户端下载地址
 win下载地址：
@@ -68,11 +61,16 @@ http://quickrtc.cn:8012/latest/sft-demo-client-1.0.1.mac.zip
 地址栏修改为:ip地址改成自己的本机地址
 ws://192.168.3.19:8001/
 
-10、问题及解决
+9、问题及解决
 目前整个项目只有下面的调用是c+14标准，其他都是c++11标准，后续如果有嵌入开发标准需求可以改成c++11
 const RtpCapabilities supportedRtpCapabilities =
 
+10、arm平台变量设置
+如果是跨平台编译，下述脚本只在对应平台执行一次即可（编译后的include和lib都自动安装到了release目录下用主程序调用）
+跨平台编译需要先执行
+x64位平台需要操作，可以忽略
 
+source ./setarmenv.sh
 
 使用cmake生成xcode的项目
 
