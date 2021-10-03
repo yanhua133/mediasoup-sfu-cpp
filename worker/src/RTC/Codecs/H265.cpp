@@ -88,7 +88,7 @@ namespace RTC
                     case 20://idrnlp
                     case 21://cra
                     {
-                        payloadDescriptor->isKeyFrame = true;
+                        //payloadDescriptor->isKeyFrame = true;
                         break;
                     }
                     // VPS
@@ -109,12 +109,14 @@ namespace RTC
                     case 34:
                     {
                         // do nothing
+                        break;
                     }
                     // SEI
                     case 39:
                     case 40:
                     {
                         // do nothing
+                        break;
                     }
                     // aggregated packet (AP) - with two or more NAL units.
                     case 48:
@@ -128,7 +130,7 @@ namespace RTC
                         {
                             auto naluSize  = Utils::Byte::Get2Bytes(data, offset);
                             uint8_t subnal = (*(data + offset + sizeof(naluSize)) & 0x7E) >> 1;
-                            bool subnal_isKeyFrame = (subnal >= 19 && subnal <= 21); //|| subnal == 32 || subnal == 31);
+                            bool subnal_isKeyFrame = (subnal == 32 || subnal == 33); //|| subnal == 32 || subnal == 31);
                             if (subnal_isKeyFrame)
                             {
                                 payloadDescriptor->isKeyFrame = true;
@@ -147,12 +149,32 @@ namespace RTC
                     }
 
                     // fragmentation unit (FU).
+                        // 4.4.3. Fragmentation Units (p29)
+                        /*
+                         0               1               2               3
+                         0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+                        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                        |     PayloadHdr (Type=49)      |    FU header  |  DONL (cond)  |
+                        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-|
+                        |  DONL (cond)  |                                               |
+                        |-+-+-+-+-+-+-+-+                                               |
+                        |                           FU payload                          |
+                        |                                                               |
+                        |                               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                        |                               :    ...OPTIONAL RTP padding    |
+                        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                        +---------------+
+                        |0|1|2|3|4|5|6|7|
+                        +-+-+-+-+-+-+-+-+
+                        |S|E|   FuType  |
+                        +---------------+
+                        */
                     case 49:
                     {
                         uint8_t subnal   = *(data + 1) & 0x3F;
-                        uint8_t startBit = *(data + 1) & 0x80;
+                        uint8_t startBit = *(data + 1) & 0x80;//S bit==1 means nal begin
                         uint8_t endBit = *(data + 1) & 0x40;
-                        bool subnal_isKeyFrame = (subnal >= 19 && subnal <= 21); //|| subnal == 32 || subnal == 31);
+                        bool subnal_isKeyFrame = (subnal == 32 || subnal == 33); //|| subnal == 32 || subnal == 31);
                         // TODO: startBit == 128 suitabke for 265??
                         if (subnal_isKeyFrame && startBit == 128)
                             payloadDescriptor->isKeyFrame = true;
