@@ -113,7 +113,7 @@ IF(WIN32)
 #add_subdirectory(deps/getopt)
 ENDIF()
 
-
+add_subdirectory(deps/oatpp)
 add_subdirectory(deps/libwebrtc)
 #add_subdirectory(deps/webservice)
 add_subdirectory(protoo)

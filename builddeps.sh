@@ -5,6 +5,7 @@ cd script
 ./buildopenssl.sh
 #./buildboringssl.sh
 ./buildboost.sh
+./buildoatpp.sh
 #./buildspdlog.sh
 ./builduv.sh
 ./buildjson.sh

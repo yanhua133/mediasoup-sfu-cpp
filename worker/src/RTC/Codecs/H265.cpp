@@ -78,7 +78,7 @@ namespace RTC
             if (!frameMarking || !payloadDescriptor->isKeyFrame)
             {
                 //H265 nal should between [0 63], now lower than 50
-                uint8_t nal = (*data & 0x7E) >> 1
+                uint8_t nal = (*data & 0x7E) >> 1;
                 
                 switch (nal)
                 {
