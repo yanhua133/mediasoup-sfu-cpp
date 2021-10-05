@@ -162,6 +162,7 @@ IF (WIN32)
   target_link_libraries(${PROJECT_NAME}
       worker
       libwebrtc
+      oatpp
       ${PROJECT_LIB_DIR}/netstring.lib
       ${PROJECT_LIB_DIR}/uv_a.lib
       ${PROJECT_LIB_DIR}/libssl.lib
