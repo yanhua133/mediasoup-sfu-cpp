@@ -12,6 +12,15 @@ echo "main_dir = ${main_dir}"
 
 mkdir build
 cd build
-cmake -DCMAKE_INSTALL_PREFIX=${main_dir}/release ..
+cmake -DCMAKE_INSTALL_PREFIX=${main_dir}/release \
+      -DOATPP_DIR_SRC=${main_dir}/deps/oatpp/src        \
+      -DOATPP_DIR_LIB=${main_dir}/release/lib   \
+      -DLIBRESSL_INCLUDE_DIR=${main_dir}/release/include  \
+      -DLIBRESSL_TLS_LIBRARY=${main_dir}/release/lib/libtls.a  \
+      -DLIBRESSL_SSL_LIBRARY=${main_dir}/release/lib/libssl.a  \
+      -DLIBRESSL_CRYPTO_LIBRARY=${main_dir}/release/lib/libcrypto.a  \
+      -DLIBRESSL_LIBRARIES=${main_dir}/release/lib  \
+      -DLIBRESSL_VERSION=3.4.0  \
+      ..
 make
 make install

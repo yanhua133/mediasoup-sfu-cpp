@@ -22,8 +22,15 @@ option(OATPP_DIR_SRC "Path to oatpp module directory (sources)")
 option(OATPP_DIR_LIB "Path to directory with liboatpp (directory containing ex: liboatpp.so or liboatpp.dynlib)")
 option(OATPP_BUILD_TESTS "Build tests for this module" OFF)
 option(OATPP_INSTALL "Install module binaries" ON)
+option(LIBRESSL_INCLUDE_DIR "Path to oatpp module directory (LIBRESSL_INCLUDE_DIR)")
+option(LIBRESSL_TLS_LIBRARY "Path to oatpp module directory (LIBRESSL_TLS_LIBRARY)")
+option(LIBRESSL_SSL_LIBRARY "Path to oatpp module directory (LIBRESSL_SSL_LIBRARY)")
+option(LIBRESSL_CRYPTO_LIBRARY "Path to oatpp module directory (LIBRESSL_CRYPTO_LIBRARY)")
+option(LIBRESSL_LIBRARIES "Path to oatpp module directory (LIBRESSL_LIBRARIES)")
+option(LIBRESSL_VERSION "Path to oatpp module directory (LIBRESSL_VERSION)")
 
-set(OATPP_MODULES_LOCATION "INSTALLED" CACHE STRING "Location where to find oatpp modules. can be [INSTALLED|EXTERNAL|CUSTOM]")
+message("LIBRESSL_INCLUDE_DIR=${LIBRESSL_INCLUDE_DIR}")
+set(OATPP_MODULES_LOCATION "CUSTOM" CACHE STRING "Location where to find oatpp modules. can be [INSTALLED|EXTERNAL|CUSTOM]")
 
 ###################################################################################################
 ## get oatpp main module in specified location

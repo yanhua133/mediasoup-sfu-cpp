@@ -27,13 +27,19 @@ endif()
 target_link_oatpp(${OATPP_THIS_MODULE_NAME})
 
 target_include_directories(${OATPP_THIS_MODULE_NAME}
-        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR} 
+        ${LIBRESSL_INCLUDE_DIR} >
 )
-
+message("LIBRESSL_INCLUDE_DIR=${LIBRESSL_INCLUDE_DIR}")
+message("LIBRESSL_TLS_LIBRARY=${LIBRESSL_TLS_LIBRARY}")
+message("LIBRESSL_SSL_LIBRARY=${LIBRESSL_SSL_LIBRARY}")
+message("LIBRESSL_CRYPTO_LIBRARY=${LIBRESSL_CRYPTO_LIBRARY}")
+message("LIBRESSL_LIBRARIES=${LIBRESSL_LIBRARIES}")
+message("LIBRESSL_VERSION=${LIBRESSL_VERSION}")
 target_link_libraries(${OATPP_THIS_MODULE_NAME}
-        PUBLIC LibreSSL::TLS
-        PUBLIC LibreSSL::SSL
-        PUBLIC LibreSSL::Crypto
+        #PUBLIC LibreSSL::TLS
+        #PUBLIC LibreSSL::SSL
+        #PUBLIC LibreSSL::Crypto
 )
 
 #######################################################################################################

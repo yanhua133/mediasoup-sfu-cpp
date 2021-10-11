@@ -12,6 +12,9 @@ echo "main_dir = ${main_dir}"
 
 mkdir build
 cd build
-cmake -DCMAKE_INSTALL_PREFIX=${main_dir}/release ..
+cmake -DCMAKE_INSTALL_PREFIX=${main_dir}/release \
+      -DOATPP_DIR_SRC=${main_dir}/deps/oatpp/src        \
+      -DOATPP_DIR_LIB=${main_dir}/release/lib   \
+      ..
 make
 make install
