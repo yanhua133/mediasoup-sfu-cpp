@@ -37,7 +37,6 @@ set(sources
   Config.cpp
   Transfmt.cpp
   Transfmt.hpp
-  controller/RoomsController.cpp
   controller/RoomsController.hpp
   dto/Config.hpp
   dto/DTOs.hpp
