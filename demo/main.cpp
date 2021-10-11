@@ -1,10 +1,5 @@
 #include <stdio.h>
 #include <iostream>
-#include <boost/beast/core.hpp>
-#include <boost/beast/http.hpp>
-#include <boost/beast/version.hpp>
-#include <boost/asio/connect.hpp>
-#include <boost/asio/ip/tcp.hpp>
 #include "Config.hpp"
 
 #include "common.hpp"
@@ -35,6 +30,12 @@
 #include "IWorker.hpp"
 #include "Log.hpp"
 #include "Consumer.hpp"
+
+#include "controller/StatisticsController.hpp"
+#include "controller/RoomsController.hpp"
+#include "./AppComponent.hpp"
+#include "oatpp/network/Server.hpp"
+
 #define MS_CLASS "mediasoup-worker"
 // #define MS_LOG_DEV_LEVEL 3
 #include "Server.hpp"
@@ -223,6 +224,68 @@ static int mpipe(int *fds) {
   return 0;
 }
 #endif
+
+void run(const oatpp::base::CommandLineArguments& args) {
+
+  /* Register Components in scope of run() method */
+  AppComponent components(args);
+
+  /* Get router component */
+  OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router);
+
+  /* Create RoomsController and add all of its endpoints to router */
+  auto roomsController = std::make_shared<RoomsController>();
+  roomsController->addEndpointsToRouter(router);
+
+  auto staticController = std::make_shared<StaticController>();
+  staticController->addEndpointsToRouter(router);
+
+  auto fileController = std::make_shared<FileController>();
+  fileController->addEndpointsToRouter(router);
+
+  auto statisticsController = std::make_shared<StatisticsController>();
+  statisticsController->addEndpointsToRouter(router);
+
+  /* Get connection handler component */
+  OATPP_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>, connectionHandler, "http");
+
+  /* Get connection provider component */
+  OATPP_COMPONENT(std::shared_ptr<oatpp::network::ServerConnectionProvider>, connectionProvider);
+
+  /* Create server which takes provided TCP connections and passes them to HTTP connection handler */
+  oatpp::network::Server server(connectionProvider, connectionHandler);
+
+  std::thread serverThread([&server]{
+    server.run();
+  });
+
+  std::thread pingThread([]{
+    OATPP_COMPONENT(std::shared_ptr<Server>, server);
+    server->runPingLoop(std::chrono::seconds(30));
+  });
+
+  std::thread statThread([]{
+    OATPP_COMPONENT(std::shared_ptr<Statistics>, statistics);
+    statistics->runStatLoop();
+  });
+
+  OATPP_COMPONENT(oatpp::Object<ConfigDto>, appConfig);
+
+  if(appConfig->useTLS) {
+    OATPP_LOGI("canchat", "clients are expected to connect at https://%s:%d/", appConfig->host->c_str(), *appConfig->port);
+  } else {
+    OATPP_LOGI("canchat", "clients are expected to connect at http://%s:%d/", appConfig->host->c_str(), *appConfig->port);
+  }
+
+  OATPP_LOGI("canchat", "canonical base URL=%s", appConfig->getCanonicalBaseUrl()->c_str());
+  OATPP_LOGI("canchat", "statistics URL=%s", appConfig->getStatsUrl()->c_str());
+
+  serverThread.join();
+  pingThread.join();
+  statThread.join();
+
+}
+
 int main(int argc, char* argv[])
 {
     Server server;
@@ -238,21 +301,6 @@ int main(int argc, char* argv[])
     MS_lOGD("pipe Create Pair PayloadConsumerChannelFd[0]=%d PayloadConsumerChannelFd[1]=%d ",PayloadConsumerChannelFd[0],PayloadConsumerChannelFd[1]);
     mpipe(PayloadProducerChannelFd);
     MS_lOGD("pipe Create Pair PayloadProducerChannelFd[0]=%d PayloadProducerChannelFd[1]=%d ",PayloadProducerChannelFd[0],PayloadProducerChannelFd[1]);
-    /*
-    char str[34]={0};
-    strcpy(str,"test");
-    write(ProducerChannelFd[1], str, sizeof(str));
-    char buf[34]={0};
-    read(ProducerChannelFd[0], buf, 34);
-*/
-    
-//    json response = {
-//                   {"response", true},
-//                   {"ok", true},
-//        {"data", json({})}
-//    };
-//    MS_lOGD("response = %s",response.dump().c_str());
-    // Initialize libuv stuff (we need it for the Channel).
   
     server.setConfig(config);
 
@@ -261,17 +309,19 @@ int main(int argc, char* argv[])
     MS_lOGD("initWorker ProducerChannelFd[0]=%d,ConsumerChannelFd[1]=%d,PayloadProducerChannelFd[0]=%d,PayloadConsumerChannelFd[1]=%d",ProducerChannelFd[0],ConsumerChannelFd[1],PayloadProducerChannelFd[0],PayloadConsumerChannelFd[1]);
     server.initWorker(ProducerChannelFd[0],ConsumerChannelFd[1],PayloadProducerChannelFd[0],PayloadConsumerChannelFd[1]);
 
-    std::thread t1([&]() {
-        server.run();
-    });
-    t1.detach();
+    // std::thread t1([&]() {
+    //     server.run();
+    // });
+    // t1.detach();
 
 
     worker_init(argc,argv);
    
    
-    
-    getchar();
+    oatpp::base::Environment::init();
+	run(oatpp::base::CommandLineArguments(argc, argv));
+	oatpp::base::Environment::destroy();
+    //getchar();
 
 }
 

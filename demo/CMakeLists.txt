@@ -35,12 +35,20 @@ set(sources
   Server.cpp
   Config.hpp
   Config.cpp
-  Peer.cpp
-  Peer.hpp
-  Room.cpp
-  Room.hpp
   Transfmt.cpp
   Transfmt.hpp
+  controller/RoomsController.cpp
+  controller/RoomsController.hpp
+  dto/Config.hpp
+  dto/DTOs.hpp
+  rooms/Lobby.cpp
+  rooms/Lobby.hpp
+  rooms/Peer.cpp
+  rooms/Peer.hpp
+  rooms/Room.cpp
+  rooms/Room.cpp
+  utils/Statistics.cpp
+  utils/Statistics.hpp 
 )
 
 add_executable(${PROJECT_NAME} ${sources} )

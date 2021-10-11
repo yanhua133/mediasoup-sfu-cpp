@@ -85,13 +85,11 @@ Server::~Server()
 int Server::init()
 {
     initMediasoup();
-   // createRawWebSocket();
-   // runRawWebsocket();
-   //createProtooWebSocket();
-    
-
-
+    createRawWebSocket();
+    runRawWebsocket();
+   createProtooWebSocket();
 }
+
 void Server::run()
 {
     runProtooWebSocketServer();
@@ -181,8 +179,7 @@ void Server::processRawSdpMessage(std::string message)
     if(msg["action"] == "SDP_OFFER") {
         auto webRtcTransport = room->getBridgeTransport(bridgeId);
         auto producers = room->getProducersFromBridge(bridgeId);
-        auto sdp = sdpAnswer["sdp"];
-        auto producerMedias=mediasoupclient::Sdp::Offer::getMediasoupProducerMedias(sdp);
+        auto producerMedias=mediasoupclient::Sdp::Offer::getMediasoupProducerMedias(sdpAnswer["sdp"]);
         auto sdpAnswer = mediasoupclient::Sdp::Offer::createWebrtcSdpAnswer(webRtcTransport,producers,producerMedias);
         json payload = {
             {"type","offer"},
@@ -692,28 +689,48 @@ void Server::runProtooWebSocketServer()
 /**
  * Get a Room instance (or create one if it does not exist).
  */
-std::shared_ptr<Room> Server::getOrCreateRoom(std::string roomId)
+std::shared_ptr<Room> Server::getOrCreateRoom(const oatpp::String& roomId) 
 {
-	auto room = rooms[roomId];
+	std::lock_guard<std::mutex> lock(m_roomsMutex);
+	std::shared_ptr<Room> &room = m_rooms[roomId];
 
 	// If the Room does not exist create a new one.
 	if (!room)
 	{
-		MS_lOGD("creating a new Room [roomId:%s]", roomId.c_str());
-
 		auto mediasoupWorker = getMediasoupWorker();
-    //room->setConfig(config);
-		room = Room::create( mediasoupWorker, roomId );
-   
-		rooms[roomId] = room;
-		room->on("close",[&]()
-        {
-			MS_lOGD("getOrCreateRoom rooms delete [roomId:%s]", roomId.c_str());
-			rooms.erase(roomId);
-		});
+        //read mediasoup mediacodec config
+		Config config;
+        config.initConfig();
+        MS_lOGI("create() config.mediasoup.routerOptions=%s", config.mediasoup.routerOptions.dump().c_str());
+        json mediaCodecs = config.mediasoup.routerOptions["mediaCodecs"];
+        // Create a mediasoup Router.   
+        RouterOptions routerOptions;
+        routerOptions.mediaCodecs = mediaCodecs.get<std::vector<RtpCodecCapability>>();       
+        auto mediasoupRouter =  mediasoupWorker->createRouter(routerOptions);
+        // Create room instance
+		room = std::make_shared<Room>(roomId, mediasoupRouter);
+		//add to room map
+		m_rooms[roomId] = room;		
 	}
-
 	return room;
+
+	// if (!room)
+	// {
+	// 	MS_lOGD("creating a new Room [roomId:%s]", roomId.c_str());
+
+	// 	auto mediasoupWorker = getMediasoupWorker();
+    // //room->setConfig(config);
+	// 	room = Room::create( mediasoupWorker, roomId );
+   
+	// 	rooms[roomId] = room;
+	// 	room->on("close",[&]()
+    //     {
+	// 		MS_lOGD("getOrCreateRoom rooms delete [roomId:%s]", roomId.c_str());
+	// 		rooms.erase(roomId);
+	// 	});
+	// }
+
+	// return room;
 }
 void Server::initMediasoup()
 {
@@ -723,7 +740,7 @@ void Server::initMediasoup()
 	for (auto & item : rtpCapabilities.headerExtensions) {
 		//std::cout << "headerExtensions.uri:" << item.uri << std::endl;
 	}
-  protooWebsockServer = std::make_shared<WebSocketServer>("0.0.0.0",8001,"");//new WebSocketServer("0.0.0.0",8001,"");
+
 }
 void Server::initWorker(int consumerFd,int producerFd,int payloadConsumerFd,int payloadProducerFd)
 {
@@ -740,66 +757,114 @@ json Server::getStringFromBase64(std::string payload)
     auto dec = base.Decode(payload.c_str(),payload.length());
     return json::parse(dec);
 }
-void Server::testProtoo()
-{
-    MS_lOGD("running protoo WebSocketServer...");
-    // Handle connections from clients.
-   // protooWebsockServer->on("connectionrequest", [&](std::string& roomid, std::string& peerid, WebSocketTransport* transport)
-    if(true)
-    {
-        MS_lOGD("[server] on connectionrequest info=${JSON.stringify(info)}")
-        // The client indicates the roomId and peerId in the URL query.
-        //auto u = url.parse(info.request.url, true);
-        std::string roomId = "1234569";//roomid;//u.query["roomId"];
-        std::string peerId = "edu123";//peerid;//u.query["peerId"];
-        
-        //WebSocketTransport* transport = new WebSocketTransport();
-        auto dvr = true;//u.query["dvr"];
-        
-        if (roomId.empty() || peerId.empty())
-        {
-            //reject(400, "Connection request without roomId and/or peerId");
 
-            return;
-        }
+void Server::runPingLoop(const std::chrono::duration<v_int64, std::micro>& interval) {
 
-        MS_lOGD(
-            "protoo connection request [roomId:%s, peerId:%s]",
-            roomId.c_str(), peerId.c_str());
+  while(true) {
 
-        // Serialize this code into the queue to avoid that two peers connecting at
-        // the same time with the same roomId create two separate rooms with same
-        // roomId.
-        auto room = getOrCreateRoom(roomId );
-          if(dvr)  {
-            room->dvr = true;
-          }
-            
+    std::chrono::duration<v_int64, std::micro> elapsed = std::chrono::microseconds(0);
+    auto startTime = std::chrono::system_clock::now();
 
-        // Accept the protoo WebSocket connection.
-       // auto protooWebSocketTransport = accept(json({}));
+    do {
+      std::this_thread::sleep_for(interval - elapsed);
+      elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - startTime);
+    } while (elapsed < interval);
 
-        room->handleProtooConnection(peerId,nullptr, nullptr);
-        
-//        queue.push(async () =>
-//        {
-//            auto room = getOrCreateRoom(roomId );
-//              if(dvr)  {
-//                room->dvr = true;
-//              }
-//
-//
-//            // Accept the protoo WebSocket connection.
-//            auto protooWebSocketTransport = accept();
-//
-//            room->handleProtooConnection(peerId, protooWebSocketTransport);
-//        })
-//            .catch((error) =>
-//            {
-//                logger.error("room creation or room joining failed:%o", error);
-//
-//                reject(error);
-//            });
+    std::lock_guard<std::mutex> lock(m_roomsMutex);
+    for (const auto &room : m_rooms) {
+      room.second->pingAllPeers();
     }
+
+  }
+
+}
+
+void Server::onAfterCreate_NonBlocking(const std::shared_ptr<AsyncWebSocket>& socket, const std::shared_ptr<const ParameterMap>& params) {
+
+  ++ m_statistics->EVENT_PEER_CONNECTED;
+
+  auto roomId = params->find("roomId")->second;
+  auto peerId = params->find("peerId")->second;
+  auto forceH264 = params->find("forceH264")->second;
+  auto forceVP9 = params->find("forceVP9")->second;
+
+  auto room = getOrCreateRoom(roomId);
+
+  //check whether peerId existed
+   auto existingPeer = room->getPeerById(peerId);
+  if(existingPeer){
+	  MS_lOGW("handleProtooConnection() | there is already a protoo Peer with same peerid(), closing it [peerId:%s]",
+                    peerId.c_str());
+			existingPeer->close();
+	  return;
+  }
+
+  auto peer = std::make_shared<Peer>(socket, room, peerId, obtainNewPeerId());
+  socket->setListener(peer);
+  room->addPeer(peer);
+
+//   protooPeer->on("request", [&, peerId](json request, std::function<void(json data)> const &accept, std::function<void(int errorCode, std::string errorReason)> const &reject)
+// 				 {
+// 					 std::shared_ptr<Peer> peer1 = this->_peers[peerId];
+// 					 MS_lOGD(
+// 						 "protoo Peer  event [method:%s, peerId:%s peer=%x]",
+// 						 request["method"].dump().c_str(), peer1->id.c_str(), peer1.get());
+
+// 					 this->_handleProtooRequest(peer1, request, accept, reject);
+// 				 });
+
+//   protooPeer->on("close", [&]()
+// 				 {
+// 					 if (this->_closed)
+// 						 return;
+
+// 					 MS_lOGD("protoo Peer event [peerId:%s]", peer->id.c_str());
+
+// 					 // If the Peer was joined, notify all Peers.
+// 					 if (peer->data.joined)
+// 					 {
+// 						 for (auto otherPeer : this->_getJoinedPeers(peer))
+// 						 {
+// 							 json data = {{"peerId", peer->id}};
+// 							 otherPeer->notify("peerClosed", data);
+// 						 }
+// 					 }
+
+// 					 // Iterate and close all mediasoup Transport associated to this Peer, so all
+// 					 // its Producers and Consumers will also be closed.
+// 					 for (auto kv : peer->data.transports)
+// 					 {
+// 						 //auto transportId        = kv.first;
+// 						 auto transport = kv.second;
+// 						 transport->close();
+// 					 }
+
+// 					 // If this is the latest Peer in the room, close the room.
+// 					 if (this->_peers.size() == 0)
+// 					 {
+// 						 MS_lOGI(
+// 							 "last Peer in the room left, closing the room [roomId:%s]",
+// 							 this->_roomId.c_str());
+
+// 						 this->close();
+// 					 }
+// 				 });
+}
+
+void Server::onBeforeDestroy_NonBlocking(const std::shared_ptr<AsyncWebSocket>& socket) {
+
+  ++ m_statistics->EVENT_PEER_DISCONNECTED;
+
+  auto peer = std::static_pointer_cast<Peer>(socket->getListener());
+  auto room = peer->getRoom();
+
+  room->removePeerById(peer->getPeerId());
+  room->goodbyePeer(peer);
+  peer->invalidateSocket();
+
+  if(room->isEmpty()) {
+    deleteRoom(room->getName());
+  }
+
 }
                                    
