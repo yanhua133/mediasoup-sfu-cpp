@@ -10,8 +10,8 @@ echo "main_dir = ${main_dir}"
 /bin/rm -rf CMakeCache.txt
 /bin/rm -rf cmake_install.cmake
 
-#mkdir build
-#cd build
-cmake -DCMAKE_INSTALL_PREFIX=${main_dir}/release
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=${main_dir}/release ..
 make
 make install
