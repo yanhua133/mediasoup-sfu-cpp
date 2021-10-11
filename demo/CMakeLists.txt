@@ -171,10 +171,15 @@ IF (WIN32)
       worker
       libwebrtc
       oatpp
+      oatpp-websocket
+      oatpp-libressl
+      ssl
+      crypto
+      tls
       ${PROJECT_LIB_DIR}/netstring.lib
       ${PROJECT_LIB_DIR}/uv_a.lib
-      ${PROJECT_LIB_DIR}/libssl.lib
-      ${PROJECT_LIB_DIR}/libcrypto.lib
+      #${PROJECT_LIB_DIR}/libssl.lib
+      #${PROJECT_LIB_DIR}/libcrypto.lib
       ${PROJECT_LIB_DIR}/srtp2.lib
       ${PROJECT_LIB_DIR}/usrsctp.lib
       ${PROJECT_LIB_DIR}/boost_atomic-vc140-mt.lib
@@ -199,6 +204,10 @@ IF (WIN32)
       ws2_32
       userenv
       
+       # LibreSSL libraries
+      LibreSSL::TLS
+      LibreSSL::SSL
+      LibreSSL::Crypto
   )
   
 ELSE ()
@@ -206,10 +215,15 @@ ELSE ()
 target_link_libraries(${PROJECT_NAME}
     worker
     libwebrtc
+    oatpp-websocket
+    oatpp-libressl
+    ssl
+    crypto
+    tls
     ${PROJECT_LIB_DIR}/libnetstring.a
     ${PROJECT_LIB_DIR}/libuv_a.a
-    ${PROJECT_LIB_DIR}/libssl.a
-    ${PROJECT_LIB_DIR}/libcrypto.a
+    #${PROJECT_LIB_DIR}/libssl.a
+    #${PROJECT_LIB_DIR}/libcrypto.a
     ${PROJECT_LIB_DIR}/libsrtp2.a
     ${PROJECT_LIB_DIR}/libusrsctp.a
     ${PROJECT_LIB_DIR}/libboost_atomic.a
@@ -231,6 +245,11 @@ target_link_libraries(${PROJECT_NAME}
     mediasoup
     protoo
     ${PROJECT_LIB_DIR}/libuv_a.a
+
+     # LibreSSL libraries
+     LibreSSL::TLS
+     LibreSSL::SSL
+     LibreSSL::Crypto
     
 )
 ENDIF()
