@@ -113,6 +113,7 @@ IF(WIN32)
 #add_subdirectory(deps/getopt)
 ENDIF()
 
+add_subdirectory(deps/libressl)
 add_subdirectory(deps/oatpp)
 add_subdirectory(deps/oatpp-libressl)
 add_subdirectory(deps/oatpp-websocket)
