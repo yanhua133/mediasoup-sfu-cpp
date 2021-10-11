@@ -4,7 +4,7 @@ cd script
 #./buildzlib.sh
 ./buildopenssl.sh
 #./buildboringssl.sh
-./buildboost.sh
+#./buildboost.sh
 ./buildoatpp.sh
 #./buildspdlog.sh
 ./builduv.sh

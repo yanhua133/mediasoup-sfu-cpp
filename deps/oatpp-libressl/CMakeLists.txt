@@ -20,7 +20,7 @@ project(${OATPP_THIS_MODULE_NAME}
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 option(OATPP_DIR_SRC "Path to oatpp module directory (sources)")
 option(OATPP_DIR_LIB "Path to directory with liboatpp (directory containing ex: liboatpp.so or liboatpp.dynlib)")
-option(OATPP_BUILD_TESTS "Build tests for this module" ON)
+option(OATPP_BUILD_TESTS "Build tests for this module" OFF)
 option(OATPP_INSTALL "Install module binaries" ON)
 
 set(OATPP_MODULES_LOCATION "INSTALLED" CACHE STRING "Location where to find oatpp modules. can be [INSTALLED|EXTERNAL|CUSTOM]")
@@ -98,7 +98,7 @@ message("## ${OATPP_THIS_MODULE_NAME} module. Resolving dependencies...\n")
 include(FindPkgConfig)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/module")
 
-find_package(LibreSSL 3.0.0 REQUIRED)
+#find_package(LibreSSL 3.0.0 REQUIRED)
 
 message("LIBRESSL_INCLUDE_DIR=${LIBRESSL_INCLUDE_DIR}")
 message("LIBRESSL_TLS_LIBRARY=${LIBRESSL_TLS_LIBRARY}")

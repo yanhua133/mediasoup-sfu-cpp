@@ -114,6 +114,8 @@ IF(WIN32)
 ENDIF()
 
 add_subdirectory(deps/oatpp)
+add_subdirectory(deps/oatpp-libressl)
+add_subdirectory(deps/oatpp-websocket)
 add_subdirectory(deps/libwebrtc)
 #add_subdirectory(deps/webservice)
 add_subdirectory(protoo)
