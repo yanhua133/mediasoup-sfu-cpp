@@ -170,16 +170,14 @@ IF (WIN32)
   target_link_libraries(${PROJECT_NAME}
       worker
       libwebrtc
-      oatpp
-      oatpp-websocket
-      oatpp-libressl
-      ssl
-      crypto
-      tls
+      ${PROJECT_LIB_DIR}/oatpp.lib
+      ${PROJECT_LIB_DIR}/oatpp-websocket.lib
+      ${PROJECT_LIB_DIR}/oatpp-libressl.lib
+      ${PROJECT_LIB_DIR}/tls-22.lib
       ${PROJECT_LIB_DIR}/netstring.lib
       ${PROJECT_LIB_DIR}/uv_a.lib
-      #${PROJECT_LIB_DIR}/libssl.lib
-      #${PROJECT_LIB_DIR}/libcrypto.lib
+      ${PROJECT_LIB_DIR}/libssl.lib
+      ${PROJECT_LIB_DIR}/libcrypto.lib
       ${PROJECT_LIB_DIR}/srtp2.lib
       ${PROJECT_LIB_DIR}/usrsctp.lib
       ${PROJECT_LIB_DIR}/boost_atomic-vc140-mt.lib
@@ -215,15 +213,14 @@ ELSE ()
 target_link_libraries(${PROJECT_NAME}
     worker
     libwebrtc
-    oatpp-websocket
-    oatpp-libressl
-    ssl
-    crypto
-    tls
+    ${PROJECT_LIB_DIR}/liboatpp.a
+    ${PROJECT_LIB_DIR}/liboatpp-websocket.a
+    ${PROJECT_LIB_DIR}/oatpp-libressl.a
+    ${PROJECT_LIB_DIR}/libtls.a
     ${PROJECT_LIB_DIR}/libnetstring.a
     ${PROJECT_LIB_DIR}/libuv_a.a
-    #${PROJECT_LIB_DIR}/libssl.a
-    #${PROJECT_LIB_DIR}/libcrypto.a
+    ${PROJECT_LIB_DIR}/libssl.a
+    ${PROJECT_LIB_DIR}/libcrypto.a
     ${PROJECT_LIB_DIR}/libsrtp2.a
     ${PROJECT_LIB_DIR}/libusrsctp.a
     ${PROJECT_LIB_DIR}/libboost_atomic.a
