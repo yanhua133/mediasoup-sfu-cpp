@@ -27,7 +27,7 @@
 #ifndef RoomsController_hpp
 #define RoomsController_hpp
 
-#include "utils/Nickname.hpp"
+#include "../utils/Nickname.hpp"
 
 #include "oatpp-websocket/Handshaker.hpp"
 
