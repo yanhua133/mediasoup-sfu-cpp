@@ -1,8 +1,8 @@
-# Install script for directory: /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring
+# Install script for directory: /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/release")
+  set(CMAKE_INSTALL_PREFIX "/Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/release")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -38,7 +38,7 @@ if(NOT DEFINED CMAKE_OBJDUMP)
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/build/libnetstring.a")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "/Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/build/libnetstring.a")
   if(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libnetstring.a" AND
      NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libnetstring.a")
     execute_process(COMMAND "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib" "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libnetstring.a")
@@ -46,7 +46,7 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include" TYPE FILE FILES "/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/netstring.h")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include" TYPE FILE FILES "/Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/netstring.h")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)
@@ -57,5 +57,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

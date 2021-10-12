@@ -6,5 +6,7 @@ C_DEFINES =
 
 C_INCLUDES = 
 
-C_FLAGS =  -Wall -Wno-sign-compare -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.3.sdk
+C_FLAGSx86_64 =  -Wall -Wno-sign-compare -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.3.sdk
+
+C_FLAGS =  -Wall -Wno-sign-compare -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.3.sdk
 

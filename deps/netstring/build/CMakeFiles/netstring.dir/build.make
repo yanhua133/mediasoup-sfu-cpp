@@ -53,19 +53,19 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /usr/local/Cellar/cmake/3.19.1/bin/cmake
+CMAKE_COMMAND = /Applications/CMake.app/Contents/bin/cmake
 
 # The command to remove a file.
-RM = /usr/local/Cellar/cmake/3.19.1/bin/cmake -E rm -f
+RM = /Applications/CMake.app/Contents/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring
+CMAKE_SOURCE_DIR = /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/build
+CMAKE_BINARY_DIR = /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/netstring.dir/depend.make
@@ -78,16 +78,16 @@ include CMakeFiles/netstring.dir/flags.make
 
 CMakeFiles/netstring.dir/netstring.c.o: CMakeFiles/netstring.dir/flags.make
 CMakeFiles/netstring.dir/netstring.c.o: ../netstring.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object CMakeFiles/netstring.dir/netstring.c.o"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/netstring.dir/netstring.c.o -c /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/netstring.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object CMakeFiles/netstring.dir/netstring.c.o"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/netstring.dir/netstring.c.o -c /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/netstring.c
 
 CMakeFiles/netstring.dir/netstring.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/netstring.dir/netstring.c.i"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/netstring.c > CMakeFiles/netstring.dir/netstring.c.i
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/netstring.c > CMakeFiles/netstring.dir/netstring.c.i
 
 CMakeFiles/netstring.dir/netstring.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/netstring.dir/netstring.c.s"
-	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/netstring.c -o CMakeFiles/netstring.dir/netstring.c.s
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/netstring.c -o CMakeFiles/netstring.dir/netstring.c.s
 
 # Object files for target netstring
 netstring_OBJECTS = \
@@ -99,7 +99,7 @@ netstring_EXTERNAL_OBJECTS =
 libnetstring.a: CMakeFiles/netstring.dir/netstring.c.o
 libnetstring.a: CMakeFiles/netstring.dir/build.make
 libnetstring.a: CMakeFiles/netstring.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking C static library libnetstring.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking C static library libnetstring.a"
 	$(CMAKE_COMMAND) -P CMakeFiles/netstring.dir/cmake_clean_target.cmake
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/netstring.dir/link.txt --verbose=$(VERBOSE)
 
@@ -113,6 +113,6 @@ CMakeFiles/netstring.dir/clean:
 .PHONY : CMakeFiles/netstring.dir/clean
 
 CMakeFiles/netstring.dir/depend:
-	cd /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/build /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/build /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/build/CMakeFiles/netstring.dir/DependInfo.cmake --color=$(COLOR)
+	cd /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/build /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/build /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/build/CMakeFiles/netstring.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/netstring.dir/depend
 

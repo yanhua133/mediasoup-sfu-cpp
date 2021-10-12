@@ -5,7 +5,7 @@
 // #include <webservice/server.hpp>
 //#include <boost/lexical_cast.hpp>
 
-#include "rooms/Room.hpp"
+#include "./rooms/Room.hpp"
 #include "IMediasoup.hpp"
 #include "IWorker.hpp"
 //#include "Transport/WebSocketServer.h"

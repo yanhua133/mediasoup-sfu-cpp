@@ -24,11 +24,13 @@
  *
  ***************************************************************************/
 
+#include "Message.h"
 #include "Peer.hpp"
 #include "Room.hpp"
 
 #include "oatpp/network/tcp/Connection.hpp"
 #include "oatpp/encoding/Base64.hpp"
+
 
 void Peer::sendMessageAsync(const oatpp::Object<MessageDto>& message) {
 
@@ -59,7 +61,7 @@ void Peer::sendMessageAsync(const oatpp::Object<MessageDto>& message) {
 
 }
 
-void Peer::requestAsync() {
+void Peer::requestAsync(std::string method, json message) {
     class RequestCoroutine : public oatpp::async::Coroutine<RequestCoroutine> {
     private:
       oatpp::async::Lock* m_lock;
@@ -92,14 +94,80 @@ void Peer::requestAsync() {
     };
 
     if(m_socket) {
-      m_asyncExecutor->execute<RequestCoroutine>(&m_writeLock, m_socket, m_objectMapper->writeToString(message));
+      auto request = Message::createRequest(method, message);
+      m_asyncExecutor->execute<RequestCoroutine>(&m_writeLock, m_socket, oatpp::String(notify));
     }
     
     
 }
 
-void Peer::notifyAsync() {
-    
+void Peer::notifyAsync(std::string method, json message) {
+  class NotifyCoroutine : public oatpp::async::Coroutine<NotifyCoroutine> {
+  private:
+    oatpp::async::Lock* m_lock;
+    std::shared_ptr<AsyncWebSocket> m_websocket;
+    oatpp::String m_message;
+  public:
+
+    NotifyCoroutine(oatpp::async::Lock* lock,
+                         const std::shared_ptr<AsyncWebSocket>& websocket,
+                         const oatpp::String& message)
+      : m_lock(lock)
+      , m_websocket(websocket)
+      , m_message(message)
+    {}
+
+    Action act() override {
+      auto notify = Message::createNotification()
+      return oatpp::async::synchronize(m_lock, m_websocket->sendOneFrameTextAsync(m_message)).next(finish());
+    }
+
+  };
+
+  if(m_socket) {
+    m_asyncExecutor->execute<NotifyCoroutine>(&m_writeLock, m_socket, m_objectMapper->writeToString(message));
+  }    
+}
+
+void Peer::handleRequest(json request){
+  std::function<void(json data)> accept([&, request](json data)
+                                        {
+                                          std::cout << "[Peer] handleRequest accept" << request.dump(4) << endl;
+                                          auto response = Message::createSuccessResponse(request, data);
+                                          sendMessageAsync
+                                          this->m_pTransport->send(response);
+                                        });
+  std::function<void(int errorCode, std::string errorReason)> reject([&, request](int errorCode, std::string errorReason)
+                                                                     {
+                                                                       std::cout << "[Peer] handleRequest accept" << request.dump(4) << endl;
+                                                                       auto response = Message::createErrorResponse(request, errorCode, errorReason);
+                                                                       this->m_pTransport->send(response);
+                                                                     });
+  m_room->handleRequest(request, accept, reject);
+}
+void Peer::handleResponse(json response)
+        // std::shared_ptr<PROTOO_MSG> pmsg(new PROTOO_MSG);
+        // pmsg->message = response;
+
+        // auto sent_element = this->m_sents.find(response["id"].get<int>());
+        // if (sent_element == m_sents.end()) {
+        //     return;
+        // }
+        // auto sent = sent_element->second;
+
+        // if (response.contains("ok"))
+        // {
+        //     if (response["ok"].get<bool>())
+        //         sent->resolve(response["data"]);
+        // }
+        // else
+        // {
+        //     auto error = "error response!";
+        //     sent->reject(error);
+        // }
+}
+void Peer::handleNotification(json notification){
+  m_room->handleNotification(notification);
 }
 
 bool Peer::sendPingAsync() {

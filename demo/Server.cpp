@@ -4,9 +4,6 @@
 // #include <webservice/ws_session.hpp>
 // #include <webservice/server.hpp>
 #include "Log.hpp"
-#include <boost/lexical_cast.hpp>
-#include "Transport/WebSocketServer.h"
-#include "Transport/WebSocketTransport.h"
 #include <iostream>
 #include <csignal>
 #include "RtpParameters.hpp"
@@ -76,11 +73,6 @@ Server::~Server()
       mediasoup::DestroyMediasoup(mediasoup);
   }
 
-  if(protooWebsockServer != nullptr) {
-    //delete protooWebsockServer;
-    protooWebsockServer = nullptr;
-  }
-
 }
 int Server::init()
 {
@@ -118,7 +110,7 @@ int Server::createRawWebSocket()
 }
 int Server::createProtooWebSocket()
 {
-    protooWebsockServer = std::make_shared<WebSocketServer>("0.0.0.0",8001,"");//new WebSocketServer("0.0.0.0",8001,"");
+    //protooWebsockServer = std::make_shared<WebSocketServer>("0.0.0.0",8001,"");//new WebSocketServer("0.0.0.0",8001,"");
     //protooWebsockServer->runWebSocketServer();
    
 }
@@ -130,8 +122,9 @@ void Server::processRawSdpMessage(std::string message)
     auto messagePayload = msg["MessagePayload"];
     auto sdpAnswer = getStringFromBase64(messagePayload);
     MS_lOGD("messagePayload=%s",sdpAnswer.dump().c_str());
-    auto roomId = msg["CorrelationId"];
-    auto room = rooms[roomId];
+    auto roomId = msg["CorrelationId"].get<std::string>();
+    oatpp::String oatppRoomId = roomId.c_str();
+    auto room = m_rooms[oatppRoomId];
     std::string bridgeId = msg["RecipientClientId"];
     auto transportId = room->getBridgeTransportId(bridgeId);
   
@@ -506,7 +499,7 @@ void Server::processHttpRequest(std::string &path,std::string & roomId,std::shar
 		https://r-fd57ec7b.kinesisvideo.us-west-2.amazonaws.com,
 		wss://m-75621fd6.kinesisvideo.us-west-2.amazonaws.com,1607436362
 			* */
-			auto roomId= body["CorrelationId"] ;
+			auto roomId= body["CorrelationId"].get<std::string>() ;
 			auto bridgeId = body["RecipientClientId"];
 			auto MessagePayload = body["MessagePayload"];
 			MS_lOGD("describeSignalingChannel recv data=%s",body.dump().c_str());
@@ -522,9 +515,10 @@ void Server::processHttpRequest(std::string &path,std::string & roomId,std::shar
                     }
 			};
 			//just create the room with roomId
-			getOrCreateRoom(roomId);
+            oatpp::String oatppRoomId = roomId.c_str();
+			getOrCreateRoom(oatppRoomId);
 			// The room must exist for all API requests.
-			if (!rooms[roomId])
+			if (!m_rooms[oatppRoomId])
 			{
 				//auto error = new Error("room with id roomId not found");
 
@@ -532,14 +526,14 @@ void Server::processHttpRequest(std::string &path,std::string & roomId,std::shar
 				//throw error;
 			}
 
-            room = rooms[roomId];
+            room = m_rooms[oatppRoomId];
 
 			try
 			{
 
 				auto sdpOffer = getStringFromBase64(MessagePayload);
 				MS_lOGD("messagePayload=%s",sdpOffer.dump().c_str());
-				auto room = rooms[roomId];
+				auto room = m_rooms[oatppRoomId];
                 auto remoteCaps = mediasoupclient::Sdp::Offer::getMediasoupRtpCapabilities(sdpOffer["sdp"],room->getLocalSdp());
                 json device ={
                     {"name",bridgeId},
@@ -614,7 +608,7 @@ void Server::processHttpRequest(std::string &path,std::string & roomId,std::shar
                     }
                 }
 			};
-			room = rooms["1234569"];
+			room = m_rooms["1234569"];
 			//room->websocket = webSocketClient;
 			//res.status(200).json(IceServerList);
 		}
@@ -626,65 +620,65 @@ void Server::processHttpRequest(std::string &path,std::string & roomId,std::shar
  */
 void Server::runProtooWebSocketServer()
 {
-	MS_lOGD("running protoo WebSocketServer...");
-	// Handle connections from clients.
-
-    protooWebsockServer->on("connectionrequest", [&](std::string&& roomid, std::string&& peerid, WebSocketTransport* transport)
-	{
-        //MS_lOGD("[server] on connectionrequest info=${JSON.stringify(info)}")
-		// The client indicates the roomId and peerId in the URL query.
-		//auto u = url.parse(info.request.url, true);
-        auto roomId = roomid;//u.query["roomId"];
-        auto peerId = peerid;//u.query["peerId"];
-
-    	auto dvr = true;//u.query["dvr"];
-
-		if (roomId.empty() || peerId.empty())
-		{
-			//reject(400, "Connection request without roomId and/or peerId");
-
-			return;
-		}
-
-		MS_lOGD(
-			"protoo connection request [roomId:%s, peerId:%s]",
-			roomId.c_str(), peerId.c_str());
-
-		// Serialize this code into the queue to avoid that two peers connecting at
-		// the same time with the same roomId create two separate rooms with same
-		// roomId.
-        auto room = getOrCreateRoom(roomId );
-          if(dvr)  {
-            room->dvr = true;
-          }
-            
-
-        // Accept the protoo WebSocket connection.
-       // auto protooWebSocketTransport = accept(json({}));
-
-       room->handleProtooConnection(peerId,nullptr, transport);
-        
-//		queue.push(async () =>
+//	MS_lOGD("running protoo WebSocketServer...");
+//	// Handle connections from clients.
+//
+//    protooWebsockServer->on("connectionrequest", [&](std::string&& roomid, std::string&& peerid, WebSocketTransport* transport)
+//	{
+//        //MS_lOGD("[server] on connectionrequest info=${JSON.stringify(info)}")
+//		// The client indicates the roomId and peerId in the URL query.
+//		//auto u = url.parse(info.request.url, true);
+//        auto roomId = roomid;//u.query["roomId"];
+//        auto peerId = peerid;//u.query["peerId"];
+//
+//    	auto dvr = true;//u.query["dvr"];
+//
+//		if (roomId.empty() || peerId.empty())
 //		{
-//			auto room = getOrCreateRoom(roomId );
-//              if(dvr)  {
-//                room->dvr = true;
-//              }
+//			//reject(400, "Connection request without roomId and/or peerId");
+//
+//			return;
+//		}
+//
+//		MS_lOGD(
+//			"protoo connection request [roomId:%s, peerId:%s]",
+//			roomId.c_str(), peerId.c_str());
+//
+//		// Serialize this code into the queue to avoid that two peers connecting at
+//		// the same time with the same roomId create two separate rooms with same
+//		// roomId.
+//        auto room = getOrCreateRoom(roomId );
+//          if(dvr)  {
+//            room->dvr = true;
+//          }
 //
 //
-//			// Accept the protoo WebSocket connection.
-//			auto protooWebSocketTransport = accept();
+//        // Accept the protoo WebSocket connection.
+//       // auto protooWebSocketTransport = accept(json({}));
 //
-//			room->handleProtooConnection(peerId, protooWebSocketTransport);
-//		})
-//			.catch((error) =>
-//			{
-//				logger.error("room creation or room joining failed:%o", error);
+//       room->handleProtooConnection(peerId,nullptr, transport);
 //
-//				reject(error);
-//			});
-	});
-    protooWebsockServer->runWebSocketServer();
+////		queue.push(async () =>
+////		{
+////			auto room = getOrCreateRoom(roomId );
+////              if(dvr)  {
+////                room->dvr = true;
+////              }
+////
+////
+////			// Accept the protoo WebSocket connection.
+////			auto protooWebSocketTransport = accept();
+////
+////			room->handleProtooConnection(peerId, protooWebSocketTransport);
+////		})
+////			.catch((error) =>
+////			{
+////				logger.error("room creation or room joining failed:%o", error);
+////
+////				reject(error);
+////			});
+//	});
+//    protooWebsockServer->runWebSocketServer();
 }
 /**
  * Get a Room instance (or create one if it does not exist).

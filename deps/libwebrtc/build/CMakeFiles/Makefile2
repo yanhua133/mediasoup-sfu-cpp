@@ -54,19 +54,19 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /usr/local/Cellar/cmake/3.19.1/bin/cmake
+CMAKE_COMMAND = /Applications/CMake.app/Contents/bin/cmake
 
 # The command to remove a file.
-RM = /usr/local/Cellar/cmake/3.19.1/bin/cmake -E rm -f
+RM = /Applications/CMake.app/Contents/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/libwebrtc
+CMAKE_SOURCE_DIR = /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/libwebrtc
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/libwebrtc/build
+CMAKE_BINARY_DIR = /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/libwebrtc/build
 
 #=============================================================================
 # Directory level rules for the build root directory
@@ -93,14 +93,14 @@ clean: CMakeFiles/libwebrtc.dir/clean
 CMakeFiles/libwebrtc.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/libwebrtc.dir/build.make CMakeFiles/libwebrtc.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/libwebrtc.dir/build.make CMakeFiles/libwebrtc.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/libwebrtc/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45 "Built target libwebrtc"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/libwebrtc/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45 "Built target libwebrtc"
 .PHONY : CMakeFiles/libwebrtc.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/libwebrtc.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/libwebrtc/build/CMakeFiles 45
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/libwebrtc/build/CMakeFiles 45
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/libwebrtc.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/libwebrtc/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/libwebrtc/build/CMakeFiles 0
 .PHONY : CMakeFiles/libwebrtc.dir/rule
 
 # Convenience name for target.

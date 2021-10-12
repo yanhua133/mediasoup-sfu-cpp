@@ -133,6 +133,15 @@ void Room::addHistoryMessage(const oatpp::Object<MessageDto>& message) {
 
 }
 
+void Room::handleRequest(json request, std::function<void(json data)> const & accept, std::function<void(int errorCode, std::string errorReason)> const & reject){
+
+}
+
+void Room::handleNotification(json notification){
+
+}
+
+
 oatpp::List<oatpp::Object<MessageDto>> Room::getHistory() {
 
   if(!m_appConfig->maxRoomHistoryMessages || *m_appConfig->maxRoomHistoryMessages == 0) {

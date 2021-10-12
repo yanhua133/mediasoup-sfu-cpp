@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/netstring.c" "/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/build/CMakeFiles/netstring.dir/netstring.c.o"
+  "/Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/netstring.c" "/Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/build/CMakeFiles/netstring.dir/netstring.c.o"
   )
 set(CMAKE_C_COMPILER_ID "AppleClang")
 

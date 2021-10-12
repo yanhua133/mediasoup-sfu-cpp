@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/netstring.c
+/Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/netstring.c
 stdio.h
 -
 string.h
@@ -18,9 +18,9 @@ ctype.h
 math.h
 -
 netstring.h
-/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/netstring.h
+/Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/netstring.h
 
-/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/netstring.h
+/Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/netstring.h
 string.h
 -
 

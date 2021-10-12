@@ -38,6 +38,15 @@
 
 #include "Router.hpp"
 
+#include "IMediasoup.hpp"
+#include "IWorker.hpp"
+#include "Log.hpp"
+#include "Consumer.hpp"
+#include "Router.hpp"
+#include "Log.hpp"
+#include "../Config.hpp"
+#include "AudioLevelObserver.hpp"
+
 class Room {
 private:
   oatpp::String m_id;
@@ -52,8 +61,8 @@ private:
 public:
 
   Room(const oatpp::String& id, std::shared_ptr<Router> mediasoupRouter)
-    : m_name(name),
-    : m_mediasoupRouter(mediasoupRouter)
+    : m_id(id)
+    , m_mediasoupRouter(mediasoupRouter)
   {
     ++ m_statistics->EVENT_ROOM_CREATED;
   }
@@ -66,7 +75,7 @@ public:
    * Get room name.
    * @return
    */
-  oatpp::String getName();
+  oatpp::String getId();
 
  
   //Add peer to the room.
@@ -91,7 +100,12 @@ public:
 
   //Add message to history.
   void addHistoryMessage(const oatpp::Object<MessageDto>& message);
+  
+  //when the request from client arrived
+  void HandleRequest(json request, std::function<void(json data)> const & accept, std::function<void(int errorCode, std::string errorReason)> const & reject);
 
+  //handle notification
+  void handleNotification(json notification);
 
   //Get list of history messages.
   oatpp::List<oatpp::Object<MessageDto>> getHistory();
@@ -104,6 +118,94 @@ public:
 
   //Check if room is empty (no peers in the room).
   bool isEmpty();
+
+  void connectBroadcasterTransport(
+			std::string broadcasterId,
+			std::string transportId,
+      DtlsParameters &dtlsParameters
+	){}
+
+  /**
+	 * Create a mediasoup Producer associated to a Broadcaster.
+	 *
+	 * @async
+	 *
+	 * @type {String} broadcasterId
+	 * @type {String} transportId
+	 * @type {String} kind - "audio" or "video" kind for the producer->
+	 * @type {RTCRtpParameters} rtpParameters - RTP parameters for the producer->
+	 */
+	json createBroadcasterProducer(
+		//{
+			std::string broadcasterId,
+			std::string transportId,
+			std::string kind,
+            RtpParameters &rtpParameters
+		//}
+	){}
+
+  json createBroadcasterConsumer(
+		//{
+			std::string broadcasterId,
+			std::string transportId,
+			std::string producerId
+		//}
+	){}
+
+  json createBroadcasterDataConsumer(
+		//{
+            std::string broadcasterId,
+			std::string transportId,
+			std::string dataProducerId
+		//}
+	){}
+
+  json createBroadcasterDataProducer(
+	//	{
+			std::string broadcasterId,
+			std::string transportId,
+			std::string label,
+			std::string protocol,
+      SctpStreamParameters &sctpStreamParameters,
+			json appData
+	//	}
+	){}
+    
+    RtpCapabilities getRouterRtpCapabilities()
+    {
+        return this->m_mediasoupRouter->rtpCapabilities();
+    }
+    
+    json createBridge(std::string id, std::string displayName, json & device, RtpCapabilities &rtpCapabilities)
+    {
+        
+    }
+    
+    json createBridgeTransport(
+                               
+                               std::string  bridgeId,
+                               std::string type,
+                               bool rtcpMux,// = false,
+                               bool comedia,// = true,
+                               SctpCapabilities &sctpCapabilities
+                               )
+    {
+    }
+    
+    std::string getBridgeTransportId(std::string &bridgeId) {}
+    void connectBridgeTransport(
+                                   std::string &bridgeId,
+                                   std::string &transportId,
+                                   DtlsParameters &dtlsParameters
+                                ){}
+    
+    json  getLocalSdp(){}
+    
+    json createBridgeProducer( std::string &bridgeId,
+                              std::string &transportId,
+                              std::string &kind,
+                              RtpParameters &rtpParameters){}
+    std::vector<PeerInfo> createBroadcaster(std::string id, std::string displayName, json  device, RtpCapabilities &rtpCapabilities){}
 
 };
 

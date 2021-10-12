@@ -34,7 +34,7 @@ std::shared_ptr<Room> Lobby::getOrCreateRoom(const oatpp::String& roomName) {
   std::lock_guard<std::mutex> lock(m_roomsMutex);
   std::shared_ptr<Room>& room = m_rooms[roomName];
   if(!room) {
-    room = std::make_shared<Room>(roomName);
+    //room = std::make_shared<Room>(roomName);
   }
   return room;
 }
@@ -103,7 +103,7 @@ void Lobby::onBeforeDestroy_NonBlocking(const std::shared_ptr<AsyncWebSocket>& s
   peer->invalidateSocket();
 
   if(room->isEmpty()) {
-    deleteRoom(room->getName());
+    deleteRoom(room->getId());
   }
 
 }

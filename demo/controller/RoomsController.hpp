@@ -52,15 +52,15 @@ public:
 public:
 
   //this._protooUrl = `ws://192.168.0.106:8001/?roomId=${roomInfo.roomId}&peerId=${roomInfo.userId}&forceH264=true&forceVP9=false`
-  ENDPOINT_ASYNC("GET", "/", WS,
-                 QUERY(String, roomId, "roomId", "123456"),
-                 QUERY(String, peerId, "peerId", "123456"),
-                 QUERY(Bool, forceH264, "forceH264", false),
-                 QUERY(Bool, forceVP9, "forceVP9", false)) {
+  ENDPOINT_ASYNC("GET", "/", WS) {
 
     ENDPOINT_ASYNC_INIT(WS)
 
     Action act() override {
+        auto roomId = request->getQueryParameter("roomId","123456");
+        auto peerId = request->getQueryParameter("peerId","123456");
+        auto forceH264 = request->getQueryParameter("forceH264","false");
+        auto forceVP9 = request->getQueryParameter("forceVP9","false");
       /* Websocket handshake */
       auto response = oatpp::websocket::Handshaker::serversideHandshake(request->getHeaders(), controller->websocketConnectionHandler);
 

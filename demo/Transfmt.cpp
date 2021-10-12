@@ -5,7 +5,7 @@
 #include "Log.hpp"
 #include "Router.hpp"
 #include "Producer.hpp"
-#include "Peer.hpp"
+#include "./rooms/Peer.hpp"
 #include "json.hpp"
 
 std::string& replace_str(std::string& str, const std::string& to_replaced, const std::string& newchars)

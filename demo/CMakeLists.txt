@@ -43,12 +43,16 @@ set(sources
   dto/DTOs.hpp
   rooms/Lobby.cpp
   rooms/Lobby.hpp
+  rooms/Message.cpp
+  rooms/Message.h
   rooms/Peer.cpp
   rooms/Peer.hpp
   rooms/Room.cpp
-  rooms/Room.cpp
+  rooms/Room.hpp
   utils/Statistics.cpp
   utils/Statistics.hpp 
+  utils/util.cpp
+  utils/util.h
 )
 
 add_executable(${PROJECT_NAME} ${sources} )

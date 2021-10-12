@@ -54,19 +54,19 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /usr/local/Cellar/cmake/3.19.1/bin/cmake
+CMAKE_COMMAND = /Applications/CMake.app/Contents/bin/cmake
 
 # The command to remove a file.
-RM = /usr/local/Cellar/cmake/3.19.1/bin/cmake -E rm -f
+RM = /Applications/CMake.app/Contents/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring
+CMAKE_SOURCE_DIR = /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/build
+CMAKE_BINARY_DIR = /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/build
 
 #=============================================================================
 # Directory level rules for the build root directory
@@ -93,14 +93,14 @@ clean: CMakeFiles/netstring.dir/clean
 CMakeFiles/netstring.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/netstring.dir/build.make CMakeFiles/netstring.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/netstring.dir/build.make CMakeFiles/netstring.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/build/CMakeFiles --progress-num=1,2 "Built target netstring"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/build/CMakeFiles --progress-num=1,2 "Built target netstring"
 .PHONY : CMakeFiles/netstring.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/netstring.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/build/CMakeFiles 2
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/netstring.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/netstring/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/deps/netstring/build/CMakeFiles 0
 .PHONY : CMakeFiles/netstring.dir/rule
 
 # Convenience name for target.

@@ -40,9 +40,54 @@
 #include "oatpp/core/data/mapping/ObjectMapper.hpp"
 #include "oatpp/core/macro/component.hpp"
 
+#include "json.hpp"
+#include "Consumer.hpp"
+#include "Producer.hpp"
+#include "DataProducer.hpp"
+#include "DataConsumer.hpp"
+#include "Transport.hpp"
+
 class Room; // FWD
 
+struct _device
+{
+    std::string flag ;//   : "broadcaster",
+    std::string name ;//   : device.name || "Unknown device",
+    std::string version ;//: device.version
+};
+
+struct PeerInfo
+{
+    std::string id;
+    std::string displayName;
+    _device device;
+    json producerInfo;
+    std::vector<json> producers;
+ 
+};
+
+class PeerData
+{
+  public:
+  std::string id;
+
+  bool consume{ true };
+  bool joined{ false };
+  std::string displayName;
+  json device;
+  json rtpCapabilities;
+  json sctpCapabilities;
+
+  std::unordered_map<std::string,std::shared_ptr<Transport> > transports;
+  std::unordered_map<std::string,std::shared_ptr<Producer> > producers;
+  std::unordered_map<std::string,std::shared_ptr<Consumer> > consumers;
+  std::unordered_map<std::string,std::shared_ptr<DataProducer> > dataProducers;
+  std::unordered_map<std::string,std::shared_ptr<DataConsumer> > dataConsumers;
+};
+
 class Peer : public oatpp::websocket::AsyncWebSocket::Listener {
+  public:
+  PeerData data;
 private:
 
   /**
@@ -97,10 +142,9 @@ public:
    * Send message to peer (to user).
    * @param message
    */
-  void sendMessageAsync(const oatpp::Object<MessageDto>& message);
-    
-  void requestAsync();
-  void notifyAsync();
+  void sendMessageAsync(const oatpp::Object<MessageDto>& message);    
+  void requestAsync(const oatpp::Object<MessageDto>& message);
+  void notifyAsync(const oatpp::Object<MessageDto>& message);
 
   /**
    * Send Websocket-Ping.
@@ -139,6 +183,10 @@ public: // WebSocket Listener methods
   CoroutineStarter onClose(const std::shared_ptr<AsyncWebSocket>& socket, v_uint16 code, const oatpp::String& message) override;
   CoroutineStarter readMessage(const std::shared_ptr<AsyncWebSocket>& socket, v_uint8 opcode, p_char8 data, oatpp::v_io_size size) override;
 
+private:
+  void handleRequest(json request);
+  void handleResponse(json response);
+  void handleNotification(json notification);
 };
 
 
