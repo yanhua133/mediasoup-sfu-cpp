@@ -203,9 +203,9 @@ IF (WIN32)
       userenv
       
        # LibreSSL libraries
-      LibreSSL::TLS
-      LibreSSL::SSL
-      LibreSSL::Crypto
+      # LibreSSL::TLS
+      # LibreSSL::SSL
+      # LibreSSL::Crypto
   )
   
 ELSE ()
@@ -244,9 +244,9 @@ target_link_libraries(${PROJECT_NAME}
     ${PROJECT_LIB_DIR}/libuv_a.a
 
      # LibreSSL libraries
-     LibreSSL::TLS
-     LibreSSL::SSL
-     LibreSSL::Crypto
+    #  LibreSSL::TLS
+    #  LibreSSL::SSL
+    #  LibreSSL::Crypto
     
 )
 ENDIF()
