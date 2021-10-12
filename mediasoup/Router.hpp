@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <boost/lockfree/queue.hpp>
+//#include <boost/lockfree/queue.hpp>
 #include <stdexcept>
 #include "Log.hpp"
 #include "ChannelAgent.hpp"

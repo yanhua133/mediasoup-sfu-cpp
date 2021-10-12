@@ -27,7 +27,7 @@
 #ifndef Statistics_hpp
 #define Statistics_hpp
 
-#include "dto/DTOs.hpp"
+#include "../dto/DTOs.hpp"
 #include "oatpp/parser/json/mapping/ObjectMapper.hpp"
 #include "oatpp/core/Types.hpp"
 

@@ -27,9 +27,9 @@
 #ifndef ASYNC_SERVER_ROOMS_PEER_HPP
 #define ASYNC_SERVER_ROOMS_PEER_HPP
 
-#include "dto/DTOs.hpp"
-#include "dto/Config.hpp"
-#include "utils/Statistics.hpp"
+#include "../dto/DTOs.hpp"
+#include "../dto/Config.hpp"
+#include "../utils/Statistics.hpp"
 
 #include "oatpp-websocket/AsyncWebSocket.hpp"
 

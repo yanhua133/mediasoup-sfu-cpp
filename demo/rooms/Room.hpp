@@ -28,8 +28,8 @@
 #define ASYNC_SERVER_ROOMS_ROOM_HPP
 
 #include "./Peer.hpp"
-#include "dto/DTOs.hpp"
-#include "utils/Statistics.hpp"
+#include "../dto/DTOs.hpp"
+#include "../utils/Statistics.hpp"
 
 #include "oatpp/core/macro/component.hpp"
 

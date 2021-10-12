@@ -5,10 +5,11 @@ cd script
 #./buildopenssl.sh
 #./buildboringssl.sh
 #./buildboost.sh
-#./buildlibressl.sh
-#./buildoatpp.sh
-#./buildoatppwebsocket.sh
-#./buildoatppressl.sh
+./buildlibressl.sh
+./buildopenssl.sh
+./buildoatpp.sh
+./buildoatppwebsocket.sh
+./buildoatppressl.sh
 #./buildspdlog.sh
 ./builduv.sh
 ./buildjson.sh
