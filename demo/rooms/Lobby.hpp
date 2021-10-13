@@ -52,7 +52,7 @@ public:
    * Generate id for new user
    * @return
    */
-  v_int64 obtainNewPeerId();
+  std::string obtainNewPeerId();
 
   /**
    * Get room by name or create new one if not exists.

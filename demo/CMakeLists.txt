@@ -184,14 +184,6 @@ IF (WIN32)
       ${PROJECT_LIB_DIR}/libcrypto.lib
       ${PROJECT_LIB_DIR}/srtp2.lib
       ${PROJECT_LIB_DIR}/usrsctp.lib
-      ${PROJECT_LIB_DIR}/boost_atomic-vc140-mt.lib
-      ${PROJECT_LIB_DIR}/boost_chrono-vc140-mt.lib
-      ${PROJECT_LIB_DIR}/boost_date_time-vc140-mt.lib
-      ${PROJECT_LIB_DIR}/boost_filesystem-vc140-mt.lib
-      ${PROJECT_LIB_DIR}/boost_random-vc140-mt.lib
-      ${PROJECT_LIB_DIR}/boost_regex-vc140-mt.lib
-      ${PROJECT_LIB_DIR}/boost_system-vc140-mt.lib
-      ${PROJECT_LIB_DIR}/boost_thread-vc140-mt.lib
       ${PROJECT_LIB_DIR}/absl_internal_throw_delegate.lib
       ${PROJECT_LIB_DIR}/absl_strings.lib
       ${PROJECT_LIB_DIR}/absl_optional.lib
@@ -202,7 +194,6 @@ IF (WIN32)
       ${PROJECT_LIB_DIR}/sdptransform.lib
       ${PROJECT_LIB_DIR}/getopt.lib
       mediasoup
-      protoo
       ws2_32
       userenv
       
@@ -219,7 +210,7 @@ target_link_libraries(${PROJECT_NAME}
     libwebrtc
     ${PROJECT_LIB_DIR}/liboatpp.a
     ${PROJECT_LIB_DIR}/liboatpp-websocket.a
-    ${PROJECT_LIB_DIR}/oatpp-libressl.a
+    ${PROJECT_LIB_DIR}/liboatpp-libressl.a
     ${PROJECT_LIB_DIR}/libtls.a
     ${PROJECT_LIB_DIR}/libnetstring.a
     ${PROJECT_LIB_DIR}/libuv_a.a
@@ -227,14 +218,6 @@ target_link_libraries(${PROJECT_NAME}
     ${PROJECT_LIB_DIR}/libcrypto.a
     ${PROJECT_LIB_DIR}/libsrtp2.a
     ${PROJECT_LIB_DIR}/libusrsctp.a
-    ${PROJECT_LIB_DIR}/libboost_atomic.a
-    ${PROJECT_LIB_DIR}/libboost_chrono.a
-    ${PROJECT_LIB_DIR}/libboost_date_time.a
-    ${PROJECT_LIB_DIR}/libboost_filesystem.a
-    ${PROJECT_LIB_DIR}/libboost_random.a
-    ${PROJECT_LIB_DIR}/libboost_regex.a
-    ${PROJECT_LIB_DIR}/libboost_system.a
-    ${PROJECT_LIB_DIR}/libboost_thread.a
     ${PROJECT_LIB_DIR}/libabsl_internal_throw_delegate.a
     ${PROJECT_LIB_DIR}/libabsl_strings.a
     ${PROJECT_LIB_DIR}/libabsl_optional.a
@@ -244,7 +227,6 @@ target_link_libraries(${PROJECT_NAME}
     dl
     ${PROJECT_LIB_DIR}/libsdptransform.a
     mediasoup
-    protoo
     ${PROJECT_LIB_DIR}/libuv_a.a
 
      # LibreSSL libraries

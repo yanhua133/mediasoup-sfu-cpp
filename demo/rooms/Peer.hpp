@@ -104,7 +104,7 @@ private:
   std::shared_ptr<AsyncWebSocket> m_socket;
   std::shared_ptr<Room> m_room;
   oatpp::String m_nickname;
-  v_int64 m_peerId;
+  std::string m_peerId;
 private:
   std::atomic<v_int32> m_pingPoingCounter;
 private:
@@ -123,14 +123,14 @@ private:
 
 private:
     
-  oatpp::async::CoroutineStarter handleMessage(const oatpp::Object<MessageDto>& message);
+  oatpp::async::CoroutineStarter handleMessage(const json& message);
 
 public:
 
   Peer(const std::shared_ptr<AsyncWebSocket>& socket,
        const std::shared_ptr<Room>& room,
        const oatpp::String& nickname,
-       v_int64 peerId)
+       std::string& peerId)
     : m_socket(socket)
     , m_room(room)
     , m_nickname(nickname)
@@ -142,9 +142,10 @@ public:
    * Send message to peer (to user).
    * @param message
    */
-  void sendMessageAsync(const oatpp::Object<MessageDto>& message);    
-  void requestAsync(const oatpp::Object<MessageDto>& message);
-  void notifyAsync(const oatpp::Object<MessageDto>& message);
+  //void sendMessageAsync(const oatpp::Object<MessageDto>& message);
+    void sendMessageAsync(json message);
+  void requestAsync(std::string method, json message);
+  void notifyAsync(std::string method, json message);
 
   /**
    * Send Websocket-Ping.
@@ -169,7 +170,7 @@ public:
    * Get peer peerId.
    * @return
    */
-  v_int64 getPeerId();
+  std::string getPeerId();
 
   /**
    * Remove circle `std::shared_ptr` dependencies

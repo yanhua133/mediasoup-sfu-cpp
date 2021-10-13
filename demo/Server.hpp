@@ -16,7 +16,23 @@
 #include <unordered_map>
 #include <mutex>
 
-class MyWorkerObserver : public mediasoup::IWorker::Observer, public oatpp::websocket::AsyncConnectionHandler::SocketInstanceListener {
+class Base64{
+private:
+    std::string _base64_table;
+    static const char base64_pad = '=';public:
+    Base64()
+    {
+        _base64_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; /*这是Base64编码使用的标准字典*/
+    }
+    /**
+     * 这里必须是unsigned类型，否则编码中文的时候出错
+     */
+    std::string Encode(const unsigned char * str,int bytes);
+    std::string Decode(const char *str,int bytes);
+    void Debug(bool open = true);
+};
+
+class MyWorkerObserver : public mediasoup::IWorker::Observer {
 public:
     MyWorkerObserver() {}
     void OnSuccess() override {
@@ -30,8 +46,11 @@ public:
     }
 };
 
-class Server
+class Server : public oatpp::websocket::AsyncConnectionHandler::SocketInstanceListener
 {
+private:
+  OATPP_COMPONENT(oatpp::Object<ConfigDto>, m_appConfig);
+  OATPP_COMPONENT(std::shared_ptr<Statistics>, m_statistics);
 public:
     Server();
     ~Server();
@@ -61,6 +80,9 @@ public:
     json getStringFromBase64(std::string payload);
     void processRawSdpMessage(std::string message);
     void testProtoo();
+    
+private:
+    void deleteRoom(const oatpp::String& roomId);
 
 public:
     //Websocket-Ping all peers in the loop. Each time `interval`.

@@ -116,79 +116,79 @@ int Server::createProtooWebSocket()
 }
 void Server::processRawSdpMessage(std::string message)
 {
-    auto msg = json::parse(message); //根据请求过来的数据来更新。
-    MS_lOGD("raw websocket recv message %s", msg.dump().c_str());
-    auto recipientClientId = msg["RecipientClientId"];
-    auto messagePayload = msg["MessagePayload"];
-    auto sdpAnswer = getStringFromBase64(messagePayload);
-    MS_lOGD("messagePayload=%s",sdpAnswer.dump().c_str());
-    auto roomId = msg["CorrelationId"].get<std::string>();
-    oatpp::String oatppRoomId = roomId.c_str();
-    auto room = m_rooms[oatppRoomId];
-    std::string bridgeId = msg["RecipientClientId"];
-    auto transportId = room->getBridgeTransportId(bridgeId);
-  
-    
-
-    try
-    {
-        auto dtlsParameters = mediasoupclient::Sdp::Offer::getMediasoupDtlsParameters(sdpAnswer["sdp"]);
-        json jdtlsParameters = dtlsParameters;
-        MS_lOGD("dtlsParameters=%s",jdtlsParameters.dump().c_str());
-        room->connectBridgeTransport(
-            
-                bridgeId,
-                transportId,
-                dtlsParameters
-        );
-
-
-
-        std::string kind = "audio";
-        
-        auto rtpParameters = mediasoupclient::Sdp::Offer::getMediasoupRtpParameters(sdpAnswer["sdp"],kind,room->getLocalSdp());
-        room->createBridgeProducer(
-            
-                bridgeId,
-                transportId,
-                kind,
-                rtpParameters
-            );
-
-         kind = "video";
-         rtpParameters = mediasoupclient::Sdp::Offer::getMediasoupRtpParameters(sdpAnswer["sdp"],kind,room->getLocalSdp());
-        room->createBridgeProducer(
-
-                bridgeId,
-                transportId,
-                kind,
-                rtpParameters
-            );
-    }
-    catch (...)
-    {
-        MS_lOGE("error");
-    }
-    if(msg["action"] == "SDP_OFFER") {
-        auto webRtcTransport = room->getBridgeTransport(bridgeId);
-        auto producers = room->getProducersFromBridge(bridgeId);
-        auto producerMedias=mediasoupclient::Sdp::Offer::getMediasoupProducerMedias(sdpAnswer["sdp"]);
-        auto sdpAnswer = mediasoupclient::Sdp::Offer::createWebrtcSdpAnswer(webRtcTransport,producers,producerMedias);
-        json payload = {
-            {"type","offer"},
-            {"sdp",sdpAnswer}
-        };
-        Base64 base;
-        auto msgpayload = base.Encode((const unsigned char*)payload.dump().c_str(),payload.dump().length());
-        //auto b = new Buffer.from(JSON.stringify(payload));
-       // auto msgpayload = b.toString("base64");
-        json jsonmsg = {
-            {"action","SDP_OFFER"},
-            {"RecipientClientId","peerId"},
-            {"MessagePayload",msgpayload}
-        };
-        //ws.send(JSON.stringify(jsonmsg));
-    }
+//    auto msg = json::parse(message); //根据请求过来的数据来更新。
+//    MS_lOGD("raw websocket recv message %s", msg.dump().c_str());
+//    auto recipientClientId = msg["RecipientClientId"];
+//    auto messagePayload = msg["MessagePayload"];
+//    auto sdpAnswer = getStringFromBase64(messagePayload);
+//    MS_lOGD("messagePayload=%s",sdpAnswer.dump().c_str());
+//    auto roomId = msg["CorrelationId"].get<std::string>();
+//    oatpp::String oatppRoomId = roomId.c_str();
+//    auto room = m_rooms[oatppRoomId];
+//    std::string bridgeId = msg["RecipientClientId"];
+//    auto transportId = room->getBridgeTransportId(bridgeId);
+//
+//
+//
+//    try
+//    {
+//        auto dtlsParameters = mediasoupclient::Sdp::Offer::getMediasoupDtlsParameters(sdpAnswer["sdp"]);
+//        json jdtlsParameters = dtlsParameters;
+//        MS_lOGD("dtlsParameters=%s",jdtlsParameters.dump().c_str());
+//        room->connectBridgeTransport(
+//
+//                bridgeId,
+//                transportId,
+//                dtlsParameters
+//        );
+//
+//
+//
+//        std::string kind = "audio";
+//
+//        auto rtpParameters = mediasoupclient::Sdp::Offer::getMediasoupRtpParameters(sdpAnswer["sdp"],kind,room->getLocalSdp());
+//        room->createBridgeProducer(
+//
+//                bridgeId,
+//                transportId,
+//                kind,
+//                rtpParameters
+//            );
+//
+//         kind = "video";
+//         rtpParameters = mediasoupclient::Sdp::Offer::getMediasoupRtpParameters(sdpAnswer["sdp"],kind,room->getLocalSdp());
+//        room->createBridgeProducer(
+//
+//                bridgeId,
+//                transportId,
+//                kind,
+//                rtpParameters
+//            );
+//    }
+//    catch (...)
+//    {
+//        MS_lOGE("error");
+//    }
+//    if(msg["action"] == "SDP_OFFER") {
+//        auto webRtcTransport = room->getBridgeTransport(bridgeId);
+//        auto producers = room->getProducersFromBridge(bridgeId);
+//        auto producerMedias=mediasoupclient::Sdp::Offer::getMediasoupProducerMedias(sdpAnswer["sdp"]);
+//        auto sdpAnswer = mediasoupclient::Sdp::Offer::createWebrtcSdpAnswer(webRtcTransport,producers,producerMedias);
+//        json payload = {
+//            {"type","offer"},
+//            {"sdp",sdpAnswer}
+//        };
+//        Base64 base;
+//        auto msgpayload = base.Encode((const unsigned char*)payload.dump().c_str(),payload.dump().length());
+//        //auto b = new Buffer.from(JSON.stringify(payload));
+//       // auto msgpayload = b.toString("base64");
+//        json jsonmsg = {
+//            {"action","SDP_OFFER"},
+//            {"RecipientClientId","peerId"},
+//            {"MessagePayload",msgpayload}
+//        };
+//        //ws.send(JSON.stringify(jsonmsg));
+//    }
 }
 void Server::runRawWebsocket() 
 {
@@ -273,7 +273,7 @@ void Server::processHttpRequest(std::string &path,std::string & roomId,std::shar
                         cap
 					);
 
-				respdata = data ;
+				//respdata = data ;
 			}
 			catch (...)
 			{
@@ -289,7 +289,7 @@ void Server::processHttpRequest(std::string &path,std::string & roomId,std::shar
 		{
 			auto broadcasterId = params["broadcasterId"];
 
-			room->deleteBroadcaster( broadcasterId );
+			//room->deleteBroadcaster( broadcasterId );
 
 			//res.status(200).send("broadcaster deleted");
     }else
@@ -312,16 +312,16 @@ void Server::processHttpRequest(std::string &path,std::string & roomId,std::shar
 			try
 			{
                 SctpCapabilities sctp = sctpCapabilities;
-				auto data = room->createBroadcasterTransport(
-					
-						broadcasterId,
-						type,
-						rtcpMux,
-						comedia, 
-                        sctp
-					);
-
-				respdata = data ;
+//				auto data = room->createBroadcasterTransport(
+//
+//						broadcasterId,
+//						type,
+//						rtcpMux,
+//						comedia,
+//                        sctp
+//					);
+//
+//				respdata = data ;
 			}
 			catch (...)
 			{
@@ -785,17 +785,18 @@ void Server::onAfterCreate_NonBlocking(const std::shared_ptr<AsyncWebSocket>& so
   auto room = getOrCreateRoom(roomId);
 
   //check whether peerId existed
-   auto existingPeer = room->getPeerById(peerId);
+   auto existingPeer = room->getPeerById(peerId->std_str());
   if(existingPeer){
 	  MS_lOGW("handleProtooConnection() | there is already a protoo Peer with same peerid(), closing it [peerId:%s]",
-                    peerId.c_str());
-			existingPeer->close();
+              peerId->std_str().c_str());
+            // TODO:should close
+			//existingPeer->close();
 	  return;
   }
-
-  auto peer = std::make_shared<Peer>(socket, room, peerId, obtainNewPeerId());
-  socket->setListener(peer);
-  room->addPeer(peer);
+ //TODO: uncomment below 3 lines
+  //auto peer = std::make_shared<Peer>(socket, room, oatpp::String(peerId), peerId->std_str());
+  //socket->setListener(peer);
+  //room->addPeer(peer);
 
 //   protooPeer->on("request", [&, peerId](json request, std::function<void(json data)> const &accept, std::function<void(int errorCode, std::string errorReason)> const &reject)
 // 				 {
@@ -857,8 +858,13 @@ void Server::onBeforeDestroy_NonBlocking(const std::shared_ptr<AsyncWebSocket>& 
   peer->invalidateSocket();
 
   if(room->isEmpty()) {
-    deleteRoom(room->getName());
+    deleteRoom(room->getId());
   }
 
+}
+
+void Server::deleteRoom(const oatpp::String& roomId){
+    std::lock_guard<std::mutex> lock(m_roomsMutex);
+      m_rooms.erase(roomId);
 }
                                    

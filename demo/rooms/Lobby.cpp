@@ -26,8 +26,8 @@
 
 #include "Lobby.hpp"
 
-v_int64 Lobby::obtainNewPeerId() {
-  return m_peerIdCounter ++;
+std::string Lobby::obtainNewPeerId() {
+  return std::to_string(m_peerIdCounter ++);
 }
 
 std::shared_ptr<Room> Lobby::getOrCreateRoom(const oatpp::String& roomName) {
@@ -82,12 +82,12 @@ void Lobby::onAfterCreate_NonBlocking(const std::shared_ptr<AsyncWebSocket>& soc
   auto nickname = params->find("nickname")->second;
   auto room = getOrCreateRoom(roomName);
 
-  auto peer = std::make_shared<Peer>(socket, room, nickname, obtainNewPeerId());
-  socket->setListener(peer);
-
-  room->welcomePeer(peer);
-  room->addPeer(peer);
-  room->onboardPeer(peer);
+//  auto peer = std::make_shared<Peer>(socket, room, nickname, obtainNewPeerId());
+//  socket->setListener(peer);
+//
+//  room->welcomePeer(peer);
+//  room->addPeer(peer);
+//  room->onboardPeer(peer);
 
 }
 

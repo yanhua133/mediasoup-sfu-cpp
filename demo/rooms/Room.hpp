@@ -51,7 +51,7 @@ class Room {
 private:
   oatpp::String m_id;
   std::shared_ptr<Router> m_mediasoupRouter ;//= mediasoupRouter;
-  std::unordered_map<v_int64, std::shared_ptr<Peer>> m_peerById;
+  std::unordered_map<std::string, std::shared_ptr<Peer>> m_peerById;
   std::list<oatpp::Object<MessageDto>> m_history;
   std::mutex m_peerByIdLock;
   std::mutex m_historyLock;
@@ -91,18 +91,18 @@ public:
   void goodbyePeer(const std::shared_ptr<Peer>& peer);
 
   //Get peer by id.
-  std::shared_ptr<Peer> getPeerById(v_int64 peerId);
+  std::shared_ptr<Peer> getPeerById(std::string peerId);
 
 
   //Remove peer from the room.
-  void removePeerById(v_int64 peerId);
+  void removePeerById(std::string peerId);
 
 
   //Add message to history.
   void addHistoryMessage(const oatpp::Object<MessageDto>& message);
   
   //when the request from client arrived
-  void HandleRequest(json request, std::function<void(json data)> const & accept, std::function<void(int errorCode, std::string errorReason)> const & reject);
+  void handleRequest(json request, std::function<void(json data)> const & accept, std::function<void(int errorCode, std::string errorReason)> const & reject);
 
   //handle notification
   void handleNotification(json notification);
@@ -193,6 +193,7 @@ public:
     }
     
     std::string getBridgeTransportId(std::string &bridgeId) {}
+    std::shared_ptr<Transport> getBridgeTransport(std::string &bridgeId){}
     void connectBridgeTransport(
                                    std::string &bridgeId,
                                    std::string &transportId,
@@ -206,6 +207,7 @@ public:
                               std::string &kind,
                               RtpParameters &rtpParameters){}
     std::vector<PeerInfo> createBroadcaster(std::string id, std::string displayName, json  device, RtpCapabilities &rtpCapabilities){}
+    std::vector<std::shared_ptr<Producer>> getProducersFromBridge(std::string &bridgeId){}
 
 };
 

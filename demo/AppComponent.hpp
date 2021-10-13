@@ -27,9 +27,9 @@
 #ifndef AppComponent_hpp
 #define AppComponent_hpp
 
-#include "rooms/Lobby.hpp"
-#include "dto/Config.hpp"
-#include "utils/Statistics.hpp"
+#include "./rooms/Lobby.hpp"
+#include "./dto/Config.hpp"
+#include "./utils/Statistics.hpp"
 
 #include "oatpp-libressl/server/ConnectionProvider.hpp"
 #include "oatpp-libressl/Config.hpp"
@@ -108,12 +108,12 @@ public:
 
     config->tlsPrivateKeyPath = std::getenv("TLS_FILE_PRIVATE_KEY");
     if(!config->tlsPrivateKeyPath) {
-      config->tlsPrivateKeyPath = m_cmdArgs.getNamedArgumentValue("--tls-key", "" CERT_PEM_PATH);
+      config->tlsPrivateKeyPath = m_cmdArgs.getNamedArgumentValue("--tls-key", "" "../utility/cert/test_key.pem");
     }
 
     config->tlsCertificateChainPath = std::getenv("TLS_FILE_CERT_CHAIN");
     if(!config->tlsCertificateChainPath) {
-      config->tlsCertificateChainPath = m_cmdArgs.getNamedArgumentValue("--tls-chain", "" CERT_CRT_PATH);
+      config->tlsCertificateChainPath = m_cmdArgs.getNamedArgumentValue("--tls-chain", "" "../utility/cert/test_cert.crt");
     }
 
     config->statisticsUrl = std::getenv("URL_STATS_PATH");

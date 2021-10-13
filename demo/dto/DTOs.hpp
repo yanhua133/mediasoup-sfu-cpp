@@ -53,7 +53,7 @@ public:
 
   DTO_INIT(PeerDto, DTO)
 
-  DTO_FIELD(Int64, peerId);
+  DTO_FIELD(String, peerId);
   DTO_FIELD(String, peerName);
 
 };
@@ -63,7 +63,7 @@ public:
 
   DTO_INIT(MessageDto, DTO)
 
-  DTO_FIELD(Int64, peerId);
+  DTO_FIELD(String, peerId);
   DTO_FIELD(String, peerName);
   DTO_FIELD(Enum<MessageCodes>::AsNumber::NotNull, code);
   DTO_FIELD(String, message);

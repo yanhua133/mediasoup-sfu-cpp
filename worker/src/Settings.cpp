@@ -37,7 +37,7 @@ std::map<LogLevel, std::string> Settings::logLevel2String =
 
 /* Class methods. */
 
-void Settings::SetConfiguration(int argc, char* argv[])
+void Settings::SetConfiguration(int argc, const char* argv[])
 {
 	MS_TRACE();
 
@@ -63,7 +63,7 @@ void Settings::SetConfiguration(int argc, char* argv[])
 	/* Parse command line options. */
 
 	opterr = 0; // Don't allow getopt to print error messages.
-	while ((c = getopt_long_only(argc, argv, "", options, &optionIdx)) != -1)
+	while ((c = getopt_long_only(argc, (char**)argv, "", options, &optionIdx)) != -1)
 	{
 		if (!optarg)
 			MS_THROW_TYPE_ERROR("unknown configuration parameter: %s", optarg);

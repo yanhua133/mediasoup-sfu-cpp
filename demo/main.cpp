@@ -58,7 +58,7 @@ Channel::UnixStreamSocket* channel{ nullptr };
 // PayloadChannel socket (it will be handled and deleted by the Worker).
 PayloadChannel::UnixStreamSocket* payloadChannel{ nullptr };
 
-int worker_init(int argc, char* argv[])
+int worker_init(int argc, const char* argv[])
 {
 
     std::string version = "m1";//std::getenv("MEDIASOUP_VERSION");
@@ -237,12 +237,6 @@ void run(const oatpp::base::CommandLineArguments& args) {
   auto roomsController = std::make_shared<RoomsController>();
   roomsController->addEndpointsToRouter(router);
 
-  auto staticController = std::make_shared<StaticController>();
-  staticController->addEndpointsToRouter(router);
-
-  auto fileController = std::make_shared<FileController>();
-  fileController->addEndpointsToRouter(router);
-
   auto statisticsController = std::make_shared<StatisticsController>();
   statisticsController->addEndpointsToRouter(router);
 
@@ -286,7 +280,7 @@ void run(const oatpp::base::CommandLineArguments& args) {
 
 }
 
-int main(int argc, char* argv[])
+int main(int argc, const char* argv[])
 {
     Server server;
     Config config;

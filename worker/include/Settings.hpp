@@ -41,7 +41,7 @@ public:
 	};
 
 public:
-	static void SetConfiguration(int argc, char* argv[]);
+	static void SetConfiguration(int argc, const char* argv[]);
 	static void PrintConfiguration();
 	static void HandleRequest(Channel::Request* request);
 

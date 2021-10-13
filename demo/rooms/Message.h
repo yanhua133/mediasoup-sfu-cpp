@@ -10,7 +10,6 @@
 
 using namespace std;
 using namespace nlohmann;
-namespace protoo {
     class Message{
     public:
         static json parse(string raw);
@@ -19,8 +18,6 @@ namespace protoo {
         static json createErrorResponse(json request,int errorCode,string errorReason);
         static json createNotification(string method, json data);
     };
-
-}
 
 
 #endif //TESTBEASTCLION_MESSAGE_H

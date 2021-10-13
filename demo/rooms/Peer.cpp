@@ -32,7 +32,7 @@
 #include "oatpp/encoding/Base64.hpp"
 
 
-void Peer::sendMessageAsync(const oatpp::Object<MessageDto>& message) {
+void Peer::sendMessageAsync(json message) {
 
   class SendMessageCoroutine : public oatpp::async::Coroutine<SendMessageCoroutine> {
   private:
@@ -56,7 +56,7 @@ void Peer::sendMessageAsync(const oatpp::Object<MessageDto>& message) {
   };
 
   if(m_socket) {
-    m_asyncExecutor->execute<SendMessageCoroutine>(&m_writeLock, m_socket, m_objectMapper->writeToString(message));
+    m_asyncExecutor->execute<SendMessageCoroutine>(&m_writeLock, m_socket, oatpp::String(message.dump().c_str()));
   }
 
 }
@@ -95,7 +95,7 @@ void Peer::requestAsync(std::string method, json message) {
 
     if(m_socket) {
       auto request = Message::createRequest(method, message);
-      m_asyncExecutor->execute<RequestCoroutine>(&m_writeLock, m_socket, oatpp::String(notify));
+      m_asyncExecutor->execute<RequestCoroutine>(&m_writeLock, m_socket, oatpp::String(request.dump().c_str()));
     }
     
     
@@ -118,34 +118,33 @@ void Peer::notifyAsync(std::string method, json message) {
     {}
 
     Action act() override {
-      auto notify = Message::createNotification()
       return oatpp::async::synchronize(m_lock, m_websocket->sendOneFrameTextAsync(m_message)).next(finish());
     }
 
   };
 
   if(m_socket) {
-    m_asyncExecutor->execute<NotifyCoroutine>(&m_writeLock, m_socket, m_objectMapper->writeToString(message));
+      auto notify = Message::createNotification(method, message);
+    m_asyncExecutor->execute<NotifyCoroutine>(&m_writeLock, m_socket, notify.dump().c_str());
   }    
 }
 
 void Peer::handleRequest(json request){
-  std::function<void(json data)> accept([&, request](json data)
-                                        {
-                                          std::cout << "[Peer] handleRequest accept" << request.dump(4) << endl;
-                                          auto response = Message::createSuccessResponse(request, data);
-                                          sendMessageAsync
-                                          this->m_pTransport->send(response);
-                                        });
-  std::function<void(int errorCode, std::string errorReason)> reject([&, request](int errorCode, std::string errorReason)
-                                                                     {
-                                                                       std::cout << "[Peer] handleRequest accept" << request.dump(4) << endl;
-                                                                       auto response = Message::createErrorResponse(request, errorCode, errorReason);
-                                                                       this->m_pTransport->send(response);
-                                                                     });
-  m_room->handleRequest(request, accept, reject);
+    std::function<void(json data)> accept([&, request](json data)
+                                          {
+        std::cout << "[Peer] handleRequest accept" << request.dump(4) << endl;
+        auto response = Message::createSuccessResponse(request, data);
+        sendMessageAsync(response);
+    });
+    std::function<void(int errorCode, std::string errorReason)> reject([&, request](int errorCode, std::string errorReason)
+                                                                       {
+        std::cout << "[Peer] handleRequest accept" << request.dump(4) << endl;
+        auto response = Message::createErrorResponse(request, errorCode, errorReason);
+        sendMessageAsync(response);
+    });
+    m_room->handleRequest(request, accept, reject);
 }
-void Peer::handleResponse(json response)
+void Peer::handleResponse(json response){
         // std::shared_ptr<PROTOO_MSG> pmsg(new PROTOO_MSG);
         // pmsg->message = response;
 
@@ -251,27 +250,27 @@ oatpp::async::CoroutineStarter Peer::onApiError(const oatpp::String& errorMessag
 
 }
 
-oatpp::async::CoroutineStarter Peer::handleMessage(const oatpp::Object<MessageDto>& message) {
+oatpp::async::CoroutineStarter Peer::handleMessage(const json& message) {
 
-  if(!message->code) {
-    return onApiError("No message code provided.");
-  }
+//  if(!message->code) {
+//    return onApiError("No message code provided.");
+//  }
+//
+//  switch(*message->code) {
+//
+//    case MessageCodes::CODE_PEER_MESSAGE:
+//      m_room->addHistoryMessage(message);
+//      m_room->sendMessageAsync(message);
+//      ++ m_statistics->EVENT_PEER_SEND_MESSAGE;
+//      break;
+//
+//    case MessageCodes::CODE_PEER_IS_TYPING:
+//      m_room->sendMessageAsync(message); break;
+//
+//    default:
+//      return onApiError("Invalid client message code.");
 
-  switch(*message->code) {
-
-    case MessageCodes::CODE_PEER_MESSAGE:
-      m_room->addHistoryMessage(message);
-      m_room->sendMessageAsync(message);
-      ++ m_statistics->EVENT_PEER_SEND_MESSAGE;
-      break;
-
-    case MessageCodes::CODE_PEER_IS_TYPING:
-      m_room->sendMessageAsync(message); break;
-          
-    default:
-      return onApiError("Invalid client message code.");
-
-  }
+  //}
 
   return nullptr;
 
@@ -285,7 +284,7 @@ oatpp::String Peer::getNickname() {
   return m_nickname;
 }
 
-v_int64 Peer::getPeerId() {
+std::string Peer::getPeerId() {
   return m_peerId;
 }
 
@@ -320,19 +319,19 @@ oatpp::async::CoroutineStarter Peer::readMessage(const std::shared_ptr<AsyncWebS
     auto wholeMessage = m_messageBuffer.toString();
     m_messageBuffer.clear();
 
-    oatpp::Object<MessageDto> message;
+//    oatpp::Object<MessageDto> message;
+//
+//    try {
+//      message = m_objectMapper->readFromString<oatpp::Object<MessageDto>>(wholeMessage);
+//    } catch (const std::runtime_error& e) {
+//      return onApiError("Can't parse message");
+//    }
+//
+//    message->peerName = m_nickname;
+//    message->peerId = m_peerId;
+//    message->timestamp = oatpp::base::Environment::getMicroTickCount();
 
-    try {
-      message = m_objectMapper->readFromString<oatpp::Object<MessageDto>>(wholeMessage);
-    } catch (const std::runtime_error& e) {
-      return onApiError("Can't parse message");
-    }
-
-    message->peerName = m_nickname;
-    message->peerId = m_peerId;
-    message->timestamp = oatpp::base::Environment::getMicroTickCount();
-
-    return handleMessage(message);
+      return handleMessage(Message::parse(wholeMessage->std_str() ));
 
   } else if(size > 0) { // message frame received
     m_messageBuffer.writeSimple(data, size);
