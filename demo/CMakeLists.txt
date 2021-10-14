@@ -37,6 +37,7 @@ set(sources
   Config.cpp
   Transfmt.cpp
   Transfmt.hpp
+  AppComponent.hpp
   controller/RoomsController.hpp
   controller/StatisticsController.hpp
   dto/Config.hpp
@@ -176,7 +177,7 @@ IF (WIN32)
       libwebrtc
       ${PROJECT_LIB_DIR}/oatpp.lib
       ${PROJECT_LIB_DIR}/oatpp-websocket.lib
-      ${PROJECT_LIB_DIR}/oatpp-libressl.lib
+    # ${PROJECT_LIB_DIR}/oatpp-libressl.lib
       ${PROJECT_LIB_DIR}/tls-22.lib
       ${PROJECT_LIB_DIR}/netstring.lib
       ${PROJECT_LIB_DIR}/uv_a.lib
@@ -210,7 +211,7 @@ target_link_libraries(${PROJECT_NAME}
     libwebrtc
     ${PROJECT_LIB_DIR}/liboatpp.a
     ${PROJECT_LIB_DIR}/liboatpp-websocket.a
-    ${PROJECT_LIB_DIR}/liboatpp-libressl.a
+   # ${PROJECT_LIB_DIR}/liboatpp-libressl.a
     ${PROJECT_LIB_DIR}/libtls.a
     ${PROJECT_LIB_DIR}/libnetstring.a
     ${PROJECT_LIB_DIR}/libuv_a.a

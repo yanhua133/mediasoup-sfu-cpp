@@ -31,8 +31,8 @@
 #include "./dto/Config.hpp"
 #include "./utils/Statistics.hpp"
 
-#include "oatpp-libressl/server/ConnectionProvider.hpp"
-#include "oatpp-libressl/Config.hpp"
+//#include "oatpp-libressl/server/ConnectionProvider.hpp"
+//#include "oatpp-libressl/Config.hpp"
 
 #include "oatpp/web/server/interceptor/RequestInterceptor.hpp"
 #include "oatpp/web/server/AsyncHttpConnectionHandler.hpp"
@@ -143,21 +143,21 @@ public:
 
     if(appConfig->useTLS) {
 
-      OATPP_LOGD("oatpp::libressl::Config", "key_path='%s'", appConfig->tlsPrivateKeyPath->c_str());
-      OATPP_LOGD("oatpp::libressl::Config", "chn_path='%s'", appConfig->tlsCertificateChainPath->c_str());
-
-      auto config = oatpp::libressl::Config::createDefaultServerConfigShared(
-        appConfig->tlsCertificateChainPath->c_str(),
-        appConfig->tlsPrivateKeyPath->c_str()
-      );
-
-      /**
-       * if you see such error:
-       * oatpp::libressl::server::ConnectionProvider:Error on call to 'tls_configure'. ssl context failure
-       * It might be because you have several ssl libraries installed on your machine.
-       * Try to make sure you are using libtls, libssl, and libcrypto from the same package
-       */
-      result = oatpp::libressl::server::ConnectionProvider::createShared(config, {"0.0.0.0", appConfig->port, oatpp::network::Address::IP_4});
+//      OATPP_LOGD("oatpp::libressl::Config", "key_path='%s'", appConfig->tlsPrivateKeyPath->c_str());
+//      OATPP_LOGD("oatpp::libressl::Config", "chn_path='%s'", appConfig->tlsCertificateChainPath->c_str());
+//
+//      auto config = oatpp::libressl::Config::createDefaultServerConfigShared(
+//        appConfig->tlsCertificateChainPath->c_str(),
+//        appConfig->tlsPrivateKeyPath->c_str()
+//      );
+//
+//      /**
+//       * if you see such error:
+//       * oatpp::libressl::server::ConnectionProvider:Error on call to 'tls_configure'. ssl context failure
+//       * It might be because you have several ssl libraries installed on your machine.
+//       * Try to make sure you are using libtls, libssl, and libcrypto from the same package
+//       */
+//      result = oatpp::libressl::server::ConnectionProvider::createShared(config, {"0.0.0.0", appConfig->port, oatpp::network::Address::IP_4});
     } else {
       result = oatpp::network::tcp::server::ConnectionProvider::createShared({"0.0.0.0", appConfig->port, oatpp::network::Address::IP_4});
     }
