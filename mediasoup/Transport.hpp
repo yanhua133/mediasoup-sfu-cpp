@@ -364,7 +364,7 @@ public:
 			producer->transportClosed();
 
 			// Must tell the Router.
-			this->emit("@producerclose", producer);
+			this->emit("@producerclose", producer->id());
 		}
 		this->_producers.clear();
 
@@ -400,7 +400,8 @@ public:
 		}
 		this->_dataConsumers.clear();
 
-		this->emit("@close");
+		
+		this->emit("@close",this->id());
 
 		// Emit observer event.
 		this->_observer->safeEmit("close");
@@ -490,7 +491,7 @@ public:
 	 *
 	 * @abstract
 	 */
-	json getStats()// Promise<any[]>
+	virtual 	json getStats()// Promise<any[]>
 	{
 		// Should not happen.
 		MS_THROW_lOG("method not implemented in the subclass");
@@ -641,10 +642,22 @@ public:
         );
 
 		this->_producers[producer->id()] =  producer;
-		producer->on("@close",[&]()
+		producer->on("@close",[&](std::string &producer1) 
 		{
-			this->_producers.erase(producer->id());
-			this->emit("@producerclose", producer);
+
+			auto cur_producers = this->_producers.find(producer1);
+
+			if (cur_producers != this->_producers.end())
+			{
+				this->emit("@producerclose", cur_producers->second->id());
+			}
+
+			auto del_producers = this->_producers.find(producer1);
+
+			if (del_producers != this->_producers.end())
+			{
+				this->_producers.erase(producer1);
+			}
 		});
 
 		this->emit("@newproducer", producer);
@@ -686,8 +699,12 @@ public:
 		auto  producer = this->_getProducerById(producerId);
 
         if (!producer) {
-            MS_THROW_lOG("Producer with id %s not found",producerId.c_str());
+            //MS_THROW_lOG("Producer with id %s not found",producerId.c_str()); 
         }
+		if (producer == nullptr) {
+			MS_lOGE("consume , get produceer by id , requst return null");
+			return nullptr;
+		}
 			
 
 		// This may throw.
@@ -729,6 +746,12 @@ public:
 
 		json status =
 			this->_channel->request("transport.consume", internal, reqData);
+
+		if (status == nullptr)
+		{
+			MS_lOGE("consume , channel requst return null"); 
+			return nullptr;
+		}
 
 		json data = {
             {"kind" , producer->kind()},
@@ -831,11 +854,11 @@ public:
 
 		json data =
 			this->_channel->request("transport.produceData", internal, reqData);
-        json data1;
+        //json data1; //del by jacky 20211012
         std::shared_ptr<DataProducer> dataProducer = std::make_shared<DataProducer>(
 			//{
 				internal,
-                data1,
+                data,
 				this->_channel,
 				this->_payloadChannel,
 				appData

@@ -22,6 +22,7 @@ namespace protoo {
         void close();
         std::map<string,shared_ptr<Peer>>& getPeers();
         std::shared_ptr<Peer> createPeer(string peerId, WebSocketTransport* transport);
+        void  removePeer(string peerId);//add by jacky 20211013
         bool hasPeer(string peerId);
         shared_ptr<Peer> getPeer(string peerId);
     private:

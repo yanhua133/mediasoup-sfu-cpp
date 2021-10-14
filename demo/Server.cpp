@@ -706,10 +706,22 @@ std::shared_ptr<Room> Server::getOrCreateRoom(std::string roomId)
 		room = Room::create( mediasoupWorker, roomId );
    
 		rooms[roomId] = room;
-		room->on("close",[&]()
+		room->on("close",[&](std::string &closeRoomId) 
         {
-			MS_lOGD("getOrCreateRoom rooms delete [roomId:%s]", roomId.c_str());
-			rooms.erase(roomId);
+
+			MS_lOGD("getOrCreateRoom rooms delete [roomId:%s]", closeRoomId.c_str());
+			auto eraseRoom = rooms.find(closeRoomId); 
+			if (eraseRoom != rooms.end())
+			{
+				int counter = eraseRoom->second.use_count();
+
+				this->m_delRoom = eraseRoom->second; 
+
+				
+				rooms.erase(eraseRoom);
+
+
+			}
 		});
 	}
 

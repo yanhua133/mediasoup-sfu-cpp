@@ -314,7 +314,7 @@ public:
 	 *
 	 * @override
 	 */
-	json getStats()//: Promise<WebRtcTransportStat[]>
+	virtual 	json getStats()//: Promise<WebRtcTransportStat[]>
 	{
 		MS_lOGD("getStats()");
 

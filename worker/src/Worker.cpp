@@ -249,11 +249,12 @@ inline void Worker::OnChannelRequest(Channel::UnixStreamSocket* /*channel*/, Cha
 			// This may throw.
 			RTC::Router* router = GetRouterFromInternal(request->internal);
 
+			MS_DEBUG_DEV("Router closed [id:%s]", router->id.c_str()); //add by jacky 20211013
 			// Remove it from the map and delete it.
 			this->mapRouters.erase(router->id);
 			delete router;
 
-			MS_DEBUG_DEV("Router closed [id:%s]", router->id.c_str());
+			//MS_DEBUG_DEV("Router closed [id:%s]", router->id.c_str()); 
 
 			request->Accept();
 

@@ -99,7 +99,7 @@ json PayloadChannelAgent::request(const char * method, json& internal,const json
    
     
     //发送数据处理异步处理
-    this->m_pPromise.reset(new std::promise<json>);
+	this->m_pPromise.reset(new std::promise<json>()); 
 		//std::promise<json> promise;
 	//	this->m_pTransport->send(request);//just like await
 		//pplx::task_completion_event<json> tce;
@@ -176,7 +176,19 @@ json PayloadChannelAgent::request(const char * method, json& internal,const json
     //需要放到最后发送，不然会出现收到返回信息后还没有加入到队列的问题
     MS_lOGD("request raw data = %s",strreq.c_str());
     Write((const uint8_t*)jsonStart,jsonLen);
-    return this->m_pPromise->get_future().get();
+
+	try {
+		MS_lOGD("request promise get future,start .");
+		auto ret = this->m_pPromise->get_future().get();
+		MS_lOGD("request promise get future,end  .");
+		return ret;
+	}
+	catch (std::exception& e) {
+
+		MS_lOGD("request promise get future,exception caught =%s", e.what());
+
+		return nullptr;
+	}
 }
 
 UVPipeWrapper * PayloadChannelAgent::GetProducer() {

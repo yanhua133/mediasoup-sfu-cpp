@@ -57,7 +57,7 @@ private:
     //private _recvBuffer?: Buffer;
 	  bool m_once = false;
     ChannelTimer mTimer;
-    std::unique_ptr<std::promise<json>> m_pPromise;
+    std::unique_ptr<std::promise<json>> m_pPromise = nullptr; 
 };
 
 }

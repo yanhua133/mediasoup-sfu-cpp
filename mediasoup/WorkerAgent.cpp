@@ -280,12 +280,12 @@ void WorkerAgent::Close() {
 void WorkerAgent::OnExit(int64_t exitStatus, int termSignal) {
 	if (!m_spawnDone && exitStatus == 42) {
 		m_spawnDone = true;
-		MS_lOGE("worker process failed due to wrong settings [pid:{}]", m_pid);
+		MS_lOGE("worker process failed due to wrong settings [pid:%d]", m_pid);
 		NotifyObserver(std::bind(&IWorker::Observer::OnFailure, std::placeholders::_1, "wrong settings"));
 		return;
 	}
 
-	MS_lOGE("worker process died unexpectedly [pid:{}, code:{}, signal:{}]", m_pid, exitStatus, termSignal);
+	MS_lOGE("worker process died unexpectedly [pid:{%d}, code:{%d}, signal:%d]", m_pid, exitStatus, termSignal);
 
 	std::string error = "${ this._pid }, code : ${ code }, signal : ${ signal }]";
 	std::stringstream in(error);

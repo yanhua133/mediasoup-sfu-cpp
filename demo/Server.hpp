@@ -70,4 +70,6 @@ private:
 
     Config config;
     int nextMediasoupWorkerIdx =0;
+public:
+    std::shared_ptr<Room> m_delRoom;
 };

@@ -71,6 +71,8 @@ public:
 		// @type {protoo.Room}
     std::shared_ptr<protoo::Room> _protooRoom;
     std::unordered_map<std::string,shared_ptr<Peer> > _peers;
+
+	shared_ptr<protoo::Peer>  _delPeers;
 		// Map of broadcasters indexed by id. Each Object has:
 		// - {String} id
 		// - {Object} data
@@ -115,6 +117,8 @@ public:
      
         this->config.initConfig();
   }
+	~Room() { 
+	}
 	Room(std::string &roomId, std::shared_ptr<protoo::Room> protooRoom, std::shared_ptr<Router> mediasoupRouter, std::shared_ptr<AudioLevelObserver> audioLevelObserver)
 	{
 		//super();
@@ -238,8 +242,8 @@ public:
 		// Close the Bot.
 		//this->_bot.close();
 
-		// Emit "close" event.
-		this->emit("close");
+		// Emit "close" event.//
+		this->emit("close", this->_roomId);
 
 		// Stop network throttling.
 		if (this->_networkThrottled)
@@ -341,19 +345,20 @@ public:
 //				});
 		});
 
-        protooPeer->on("close",[&]()
+        protooPeer->on("close",[&, peerId](std::string &closePeerId) 
 		{
 			if (this->_closed)
 				return;
+			std::shared_ptr<Peer> peer1 = this->_peers[peerId]; 
 
-			MS_lOGD("protoo Peer event [peerId:%s]", peer->id.c_str());
+			MS_lOGD("protoo Peer event [peerId:%s]", peer1->id.c_str());
 
 			// If the Peer was joined, notify all Peers.
-			if (peer->data.joined)
+			if (peer1->data.joined)
 			{
-				for (auto otherPeer : this->_getJoinedPeers( peer ))
+				for (auto otherPeer : this->_getJoinedPeers(peer1))
 				{
-                    json data = { {"peerId", peer->id} };
+                    json data = { {"peerId", peer1->id} };
                     otherPeer->notify("peerClosed",data );
 						
 				}
@@ -361,12 +366,16 @@ public:
 
 			// Iterate and close all mediasoup Transport associated to this Peer, so all
 			// its Producers and Consumers will also be closed.
-			for (auto kv : peer->data.transports)
+			for (auto kv : peer1->data.transports)
 			{
                 //auto transportId        = kv.first;
                 auto transport   = kv.second;
 				transport->close();
 			}
+			this->_delPeers = this->_protooRoom->getPeer(closePeerId);
+			
+			this->_protooRoom->removePeer(closePeerId);
+			this->_peers.erase(closePeerId);
 
 			// If this is the latest Peer in the room, close the room.
 			if (this->_peers.size() == 0)
@@ -2444,6 +2453,11 @@ public:
               options.rtpCapabilities = consumerPeer->data.rtpCapabilities;
               options.paused          = true;
 			consumer =  transport->consume(options);
+
+			if (consumer == nullptr) { 
+				MS_lOGD("create consumer return null ");
+				return ;
+			}
             MS_lOGD("consumerPeer->data.rtpCapabilities=%s",consumerPeer->data.rtpCapabilities.dump(4).c_str());
 			json jrtpParameters=consumer->rtpParameters();
 			MS_lOGD("consumer->rtpParameters()=%s",jrtpParameters.dump(4).c_str());

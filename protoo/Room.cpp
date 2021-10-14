@@ -46,7 +46,7 @@ namespace protoo {
            std::cout<<"[Room] no transport given"<<std::endl;
            return nullptr;
        }
-       if(m_peers.find(peerId)==m_peers.end())
+       if(m_peers.find(peerId)!=m_peers.end())
        {
            cout<<"there is already a Peer with same peerId:"<<peerId<<endl;
            return nullptr;
@@ -63,7 +63,10 @@ namespace protoo {
         // });
         return peer;
     }
-
+    void  Room::removePeer(string peerId)
+    {
+        this->m_peers.erase(peerId);
+    }
     bool Room::hasPeer(string peerId)
     {
         return this->m_peers.find(peerId)!=m_peers.end();
@@ -71,6 +74,12 @@ namespace protoo {
 
     shared_ptr<Peer> Room::getPeer(string peerId)
     {
+        if (m_peers.find(peerId) == m_peers.end()) //add by jacky 20211014
+        {
+            cout << "get Peer with same = " << peerId << "return null!" << endl;
+            return nullptr;
+        }
+
         return this->m_peers[peerId];
     }
 

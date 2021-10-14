@@ -75,12 +75,14 @@ private:
 	  bool _closed = false;
 	  // Map of pending sent requests.
 	  // _sents: Map<number, Sent> = new Map();
+	std::mutex m_sents_mutex; 
     std::map<size_t,std::shared_ptr<Sent>> m_sents;
 	  // Buffer for reading messages from the worker.
     //private _recvBuffer?: Buffer;
 	  bool m_once = false;
     ChannelTimer mTimer;
     std::unique_ptr<std::promise<json>> m_pPromise;
+
 };
 
 }

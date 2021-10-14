@@ -144,7 +144,7 @@ public:
     std::unordered_map<std::string,std::shared_ptr<Transport> > _transports;
 
     // Producers map.
-    std::unordered_map<std::string,std::shared_ptr<Producer> > _producers;
+    std::unordered_map<std::string,std::shared_ptr<Producer> > _routerProducers;
 
     // RtpObservers map.
     std::unordered_map<std::string,std::shared_ptr<RtpObserver> > _rtpObservers;
@@ -286,7 +286,7 @@ public:
 		this->_transports.clear();
 
 		// Clear the Producers map.
-		this->_producers.clear();
+		this->_routerProducers.clear();
 
 		// Close every RtpObserver.
         for (const auto& kv : this->_rtpObservers)
@@ -338,7 +338,7 @@ public:
 		this->_transports.clear();
 
 		// Clear the Producers map.
-		this->_producers.clear();
+		this->_routerProducers.clear();
 
 		// Close every RtpObserver.
         for (const auto& kv : this->_rtpObservers)
@@ -379,7 +379,7 @@ public:
     
     std::shared_ptr<Producer> &getProducerById(std::string &producerId)
     {
-        return this->_producers[producerId];
+        return this->_routerProducers[producerId];
     }
     
     std::shared_ptr<DataProducer> &getDataProducerById(std::string &dataProducerId)
@@ -485,22 +485,31 @@ public:
         //}
 		this->_transports[transport->id()] = transport;
 		//transport.on('@close', () => this->_transports.delete(transport.id));
-        transport->on("@close",[&](  )
+        transport->on("@close",[&](std::string &transport1) 
         {
-            this->_transports.erase(transport->id());
+			MS_lOGD("createWebRtcTransport transport close id=%s", transport1.c_str());
+
+            this->_transports.erase(transport1);
 
         });
         
         //transport.on('@newproducer', (producer: Producer) => this->_producers.set(producer.id, producer));
         transport->on("@newproducer",[&]( std::shared_ptr<Producer> &producer)
         {
-            this->_producers[producer->id()] = producer;
+            this->_routerProducers[producer->id()] = producer;
 
         });
             //transport.on('@producerclose', (producer: Producer) => this->_producers.delete(producer.id));
-        transport->on("@producerclose",[&](  std::shared_ptr<Producer> &producer)
+        transport->on("@producerclose",[&](  std::string &producer)
         {
-            this->_producers.erase(producer->id());
+
+			auto cur_producers = this->_routerProducers.find(producer); 
+
+			if (cur_producers != this->_routerProducers.end())
+			{
+				this->_routerProducers.erase(cur_producers->second->id());
+			}
+           
 
         });
             //transport.on('@newdataproducer', (dataProducer: DataProducer) => (
@@ -623,13 +632,13 @@ public:
         //transport.on('@newproducer', (producer: Producer) => this->_producers.set(producer.id, producer));
         transport->on("@newproducer",[&]( std::shared_ptr<Producer> &producer)
         {
-            this->_producers[producer->id()] = producer;
+            this->_routerProducers[producer->id()] = producer;
 
         });
             //transport.on('@producerclose', (producer: Producer) => this->_producers.delete(producer.id));
         transport->on("@producerclose",[&](  std::shared_ptr<Producer> &producer)
         {
-            this->_producers.erase(producer->id());
+            this->_routerProducers.erase(producer->id());
 
         });
             //transport.on('@newdataproducer', (dataProducer: DataProducer) => (
@@ -743,13 +752,13 @@ public:
         //transport.on('@newproducer', (producer: Producer) => this->_producers.set(producer.id, producer));
         transport->on("@newproducer",[&]( std::shared_ptr<Producer> &producer)
         {
-            this->_producers[producer->id()] = producer;
+            this->_routerProducers[producer->id()] = producer;
 
         });
             //transport.on('@producerclose', (producer: Producer) => this->_producers.delete(producer.id));
         transport->on("@producerclose",[&](  std::shared_ptr<Producer> &producer)
         {
-            this->_producers.erase(producer->id());
+            this->_routerProducers.erase(producer->id());
 
         });
             //transport.on('@newdataproducer', (dataProducer: DataProducer) => (
@@ -828,13 +837,13 @@ public:
         //transport.on('@newproducer', (producer: Producer) => this->_producers.set(producer.id, producer));
         transport->on("@newproducer",[&]( std::shared_ptr<Producer> &producer)
         {
-            this->_producers[producer->id()] = producer;
+            this->_routerProducers[producer->id()] = producer;
 
         });
             //transport.on('@producerclose', (producer: Producer) => this->_producers.delete(producer.id));
         transport->on("@producerclose",[&](  std::shared_ptr<Producer> &producer)
         {
-            this->_producers.erase(producer->id());
+            this->_routerProducers.erase(producer->id());
 
         });
             //transport.on('@newdataproducer', (dataProducer: DataProducer) => (
@@ -1146,7 +1155,7 @@ public:
         MS_lOGD(
                 "canConsume() | Producer with id %s", producerId.c_str());
 	    return true;
-        auto &producer = this->_producers[producerId];
+        auto &producer = this->_routerProducers[producerId];
 		if (!producer)
 		{
 			MS_lOGE(

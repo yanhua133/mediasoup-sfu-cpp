@@ -36,19 +36,22 @@ void WebSocketTransport::close()
     }
     m_closed = true;
     ws_.close("just close this ws");
-    MS_lOGD("WebSocketTransport::close() ");
+    MS_lOGD("WebSocketTransport::close  ");
     this->emit("close");
 }
 
 void WebSocketTransport::fail(beast::error_code ec, char const* what)
 {
     // Don't report these
-    if( ec == net::error::operation_aborted ||
-        ec == websocket::error::closed)
+    if (ec == net::error::operation_aborted ||
+        ec == websocket::error::closed) {
+        this->emit("close"); 
         return;
+    }
 
     std::cerr << what << ": " << ec.message() << "\n";
     MS_lOGE("WebSocketTransport fail connection err =%s",ec.message().c_str());
+    this->emit("close"); 
 }
 
 void WebSocketTransport::on_accept(beast::error_code ec)
@@ -96,6 +99,9 @@ void WebSocketTransport::on_read(beast::error_code ec, std::size_t)
 
 void WebSocketTransport::send(boost::shared_ptr<std::string const> const& ss)
 {
+    if (m_closed) {
+        return;
+    }
     // Post our work to the strand, this ensures
     // that the members of `this` will not be
     // accessed concurrently.
@@ -109,6 +115,9 @@ void WebSocketTransport::send(boost::shared_ptr<std::string const> const& ss)
 
 void WebSocketTransport::send(json ss)
 {
+    if (m_closed) { 
+        return;
+    }
     // Post our work to the strand, this ensures
     // that the members of `this` will not be
     // accessed concurrently.

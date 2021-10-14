@@ -29,7 +29,7 @@ ChannelAgent::ChannelAgent(ChannelObserver* obs) {
 ChannelAgent::~ChannelAgent() {
 	MS_lOGF();
     this->_closed = true;
-
+	std::lock_guard<std::mutex> lock(this->m_sents_mutex);
 	// Close every pending sent.
 	for (auto  sent : this->m_sents)
 	{
@@ -75,10 +75,10 @@ json ChannelAgent::request(const char * method, json& internal,const json& data)
 
 		auto id = this->_nextId;
 
-		MS_lOGD("request() [method:%s, id:%ld]", method, id);
+		MS_lOGD("Channel Agent, request [method:%s, id:%I64d]", method, id);
 
 		if (this->_closed)
-			MS_lOGE("Channel closed");
+			MS_lOGE("Channel Agent,Channel closed");
 
 		json request = { 
       { "id" , id },
@@ -100,7 +100,9 @@ json ChannelAgent::request(const char * method, json& internal,const json& data)
    
     
     //发送数据处理异步处理
-    this->m_pPromise.reset(new std::promise<json>);
+
+	std::promise<json>* pPromiseJson = new std::promise<json>(); 
+	this->m_pPromise.reset(pPromiseJson);
 		//std::promise<json> promise;
 	//	this->m_pTransport->send(request);//just like await
 		//pplx::task_completion_event<json> tce;
@@ -127,7 +129,15 @@ json ChannelAgent::request(const char * method, json& internal,const json& data)
 			}
 			this->m_sents.erase(sent_element);
 			this->mTimer.stop();
-			this->m_pPromise->set_value(data2);
+			try {
+				this->m_pPromise->set_value(data2);
+			}
+			catch (std::exception&) {
+				this->m_pPromise->set_exception(std::current_exception()); 
+#if PROTOO_LOG_ENABLE
+				std::cout << "[Peer] request resolved m_pPromise set value error." << std::endl;
+#endif
+			}
 		};
 
 		sent->reject = [&, request](std::string errorInfo) {
@@ -153,7 +163,7 @@ json ChannelAgent::request(const char * method, json& internal,const json& data)
 #if PROTOO_LOG_ENABLE
 			std::cout << "[Peer] request request timeout request id=" << request["id"].get<int>() << std::endl;
 #endif
-			
+			std::lock_guard<std::mutex> lock(this->m_sents_mutex);
 			auto sent_element = this->m_sents.find(request["id"].get<int>());
 			if (sent_element == m_sents.end()) {
 #if PROTOO_LOG_ENABLE
@@ -177,7 +187,28 @@ json ChannelAgent::request(const char * method, json& internal,const json& data)
     //需要放到最后发送，不然会出现收到返回信息后还没有加入到队列的问题
     MS_lOGD("request raw data = %s",strreq.c_str());
     Write((const uint8_t*)jsonStart,jsonLen);
-    return this->m_pPromise->get_future().get();
+
+
+	try {
+		MS_lOGD("channel agent,promise get future,start .");
+		if (this->m_pPromise != nullptr) {
+			auto ret = this->m_pPromise->get_future().get();
+			MS_lOGD("channel agent,promise get future,end  .");
+			return ret;
+		}
+		else {
+			MS_lOGD("channel agent,promise get future,end  .promise is  nullptr !");
+			return nullptr;
+		}
+		
+
+	}
+	catch (std::exception& e) {
+
+		MS_lOGD("promise get future,exception caught =%s", e.what());
+
+		return nullptr;
+	}
 }
 
 UVPipeWrapper * ChannelAgent::GetProducer() {
@@ -295,6 +326,7 @@ void ChannelAgent::processMessage(const nlohmann::json& msg) {
     MS_lOGD("ChannelAgent::processMessage: msg=%s",msg.dump().c_str());
     if(msg.contains("id")) 
     {
+		std::lock_guard<std::mutex> lock(this->m_sents_mutex);
         auto sent_element = this->m_sents.find(msg["id"].get<int>());
         if (sent_element == m_sents.end()) {
 
@@ -346,6 +378,8 @@ void ChannelAgent::processMessage(const nlohmann::json& msg) {
     // If a notification emit it to the corresponding entity.
     else if (msg.contains("targetId") && msg.contains("event"))
     {
+		MS_lOGW("process message ,request event is come. ");
+
         if(msg.contains("data"))
             this->emit(msg["targetId"].dump().c_str(), msg["event"].dump().c_str(), msg["data"]);
         else

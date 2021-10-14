@@ -59,7 +59,9 @@ namespace protoo {
     std::future<json> Peer::request(string method, json data) {
         auto request = Message::createRequest(method, data);
         //会进入到uWS的线程发送
-        this->m_pPromise.reset(new std::promise<json>);
+        
+        std::promise<json>* pPromiseJson = new std::promise<json>();
+        this->m_pPromise.reset(pPromiseJson);
         //std::promise<json> promise;
         this->m_pTransport->send(request);//just like await
         //pplx::task_completion_event<json> tce;
@@ -107,6 +109,10 @@ namespace protoo {
         }, timeout);
 
         this->m_sents[request["id"].get<int>()] = sent;
+
+        if (this->m_pPromise == nullptr) { //add by jacky 20211012
+            std::cout << "[Peer] request promise is null ! "  << endl;
+        }
         return this->m_pPromise->get_future();
     }
 
@@ -129,7 +135,8 @@ namespace protoo {
             if (this->m_closed)
                 return;
             this->m_closed = true;
-            this->emit("close");
+           
+            this->emit("close",this->id());
         });
 
         this->m_pTransport->on("message", [&](json message){

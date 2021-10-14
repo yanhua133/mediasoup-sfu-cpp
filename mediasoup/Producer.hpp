@@ -347,8 +347,7 @@ public:
 
 		this->_channel->request("producer.close", this->_internal);
 
-		this->emit("@close");
-
+		this->emit("@close",this->id());
 		// Emit observer event.
 		this->_observer->safeEmit("close");
 	}
