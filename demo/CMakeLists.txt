@@ -211,7 +211,7 @@ target_link_libraries(${PROJECT_NAME}
     ${PROJECT_LIB_DIR}/liboatpp.a
     ${PROJECT_LIB_DIR}/liboatpp-websocket.a
     ${PROJECT_LIB_DIR}/liboatpp-libressl.a
-    ${PROJECT_LIB_DIR}/libtls.a
+    #${PROJECT_LIB_DIR}/libtls.a
     ${PROJECT_LIB_DIR}/libnetstring.a
     ${PROJECT_LIB_DIR}/libuv_a.a
     ${PROJECT_LIB_DIR}/libssl.a

@@ -747,9 +747,10 @@ void Server::initWorker(int consumerFd,int producerFd,int payloadConsumerFd,int 
 }
 json Server::getStringFromBase64(std::string payload)
 {
-    Base64 base;
-    auto dec = base.Decode(payload.c_str(),(int)payload.length());
-    return json::parse(dec);
+    // Base64 base;
+    // auto dec = base.Decode(payload.c_str(),(int)payload.length());
+    // return json::parse(dec);
+    return json();
 }
 
 void Server::runPingLoop(const std::chrono::duration<v_int64, std::micro>& interval) {
