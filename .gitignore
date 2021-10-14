@@ -40,3 +40,5 @@ deps/boost/boost_1_74_0.tar.gz
 xcode/
 vc2019/
 .vscode/settings.json
+deps/libwebrtc/build/
+deps/netstring/build/

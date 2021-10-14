@@ -1,2 +1,0 @@
-/Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/release/lib/libnetstring.a
-/Users/panchenguang/pcgdev/cpp/mediasoup-sfu-cpp/release/include/netstring.h
