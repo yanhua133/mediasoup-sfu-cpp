@@ -28,7 +28,7 @@
 #define AppComponent_hpp
 
 #include "./rooms/Lobby.hpp"
-#include "./dto/Config.hpp"
+#include "./dto/ConfigDto.hpp"
 #include "./utils/Statistics.hpp"
 
 //#include "oatpp-libressl/server/ConnectionProvider.hpp"

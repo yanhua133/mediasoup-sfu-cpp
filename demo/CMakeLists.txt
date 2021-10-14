@@ -40,7 +40,7 @@ set(sources
   AppComponent.hpp
   controller/RoomsController.hpp
   controller/StatisticsController.hpp
-  dto/Config.hpp
+  dto/ConfigDto.hpp
   dto/DTOs.hpp
   rooms/Lobby.cpp
   rooms/Lobby.hpp

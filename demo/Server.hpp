@@ -10,9 +10,12 @@
 #include "IWorker.hpp"
 //#include "Transport/WebSocketServer.h"
 #include "Config.hpp"
+#include "./dto/ConfigDto.hpp"
+#include "./dto/DTOs.hpp"
 
-#include "utils/Statistics.hpp"
+#include "./utils/Statistics.hpp"
 #include "oatpp-websocket/AsyncConnectionHandler.hpp"
+#include "oatpp/core/macro/component.hpp"
 #include <unordered_map>
 #include <mutex>
 
@@ -49,9 +52,6 @@ public:
 
 class Server : public oatpp::websocket::AsyncConnectionHandler::SocketInstanceListener
 {
-private:
-  OATPP_COMPONENT(oatpp::Object<ConfigDto>, m_appConfig);
-  OATPP_COMPONENT(std::shared_ptr<Statistics>, m_statistics);
 public:
     Server();
     ~Server();

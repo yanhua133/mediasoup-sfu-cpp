@@ -24,8 +24,8 @@
  *
  ***************************************************************************/
 
-#ifndef Config_hpp
-#define Config_hpp
+#ifndef ConfigDto_hpp
+#define ConfigDto_hpp
 
 #include "oatpp/core/Types.hpp"
 #include "oatpp/core/macro/codegen.hpp"
@@ -120,4 +120,4 @@ public:
 
 #include OATPP_CODEGEN_END(DTO)
 
-#endif // Config_hpp
+#endif // ConfigDto_hpp

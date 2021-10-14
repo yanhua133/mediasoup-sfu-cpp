@@ -27,7 +27,7 @@
 #ifndef StatisticsController_hpp
 #define StatisticsController_hpp
 
-#include "../dto/Config.hpp"
+#include "../dto/ConfigDto.hpp"
 #include "../utils/Statistics.hpp"
 
 #include "oatpp/web/server/api/ApiController.hpp"

@@ -776,7 +776,7 @@ void Server::runPingLoop(const std::chrono::duration<v_int64, std::micro>& inter
 
 void Server::onAfterCreate_NonBlocking(const std::shared_ptr<AsyncWebSocket>& socket, const std::shared_ptr<const ParameterMap>& params) {
 
-  ++ m_statistics->EVENT_PEER_CONNECTED;
+  //++ m_statistics->EVENT_PEER_CONNECTED;
 
   auto roomId = params->find("roomId")->second;
   auto peerId = params->find("peerId")->second;
@@ -849,7 +849,7 @@ void Server::onAfterCreate_NonBlocking(const std::shared_ptr<AsyncWebSocket>& so
 
 void Server::onBeforeDestroy_NonBlocking(const std::shared_ptr<AsyncWebSocket>& socket) {
 
-  ++ m_statistics->EVENT_PEER_DISCONNECTED;
+  //++ m_statistics->EVENT_PEER_DISCONNECTED;
 
   auto peer = std::static_pointer_cast<Peer>(socket->getListener());
   auto room = peer->getRoom();
