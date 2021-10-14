@@ -24,6 +24,7 @@ private:
     {
         _base64_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; /*这是Base64编码使用的标准字典*/
     }
+public:
     /**
      * 这里必须是unsigned类型，否则编码中文的时候出错
      */
