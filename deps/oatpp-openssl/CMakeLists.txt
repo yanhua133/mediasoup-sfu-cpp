@@ -20,10 +20,12 @@ project(${OATPP_THIS_MODULE_NAME}
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 option(OATPP_DIR_SRC "Path to oatpp module directory (sources)")
 option(OATPP_DIR_LIB "Path to directory with liboatpp (directory containing ex: liboatpp.so or liboatpp.dynlib)")
-option(OATPP_BUILD_TESTS "Build tests for this module" ON)
+option(OATPP_BUILD_TESTS "Build tests for this module" OFF)
 option(OATPP_INSTALL "Install module binaries" ON)
-
-set(OATPP_MODULES_LOCATION "INSTALLED" CACHE STRING "Location where to find oatpp modules. can be [INSTALLED|EXTERNAL|CUSTOM]")
+option(OPENSSL_INCLUDE_DIR "Path to oatpp module directory (OPENSSL_INCLUDE_DIR)")
+option(OPENSSL_LIBRARIES "Path to oatpp module directory (OPENSSL_LIBRARIES)")
+option(OPENSSL_VERSION "Path to oatpp module directory (OPENSSL_VERSION)")
+set(OATPP_MODULES_LOCATION "CUSTOM" CACHE STRING "Location where to find oatpp modules. can be [INSTALLED|EXTERNAL|CUSTOM]")
 
 ###################################################################################################
 ## get oatpp main module in specified location
@@ -95,7 +97,7 @@ message("## ${OATPP_THIS_MODULE_NAME} module. Resolving dependencies...\n")
 ##############################
 ## Find Openssl dependency
 
-find_package(OpenSSL 1.1 REQUIRED)
+#find_package(OpenSSL 1.1 REQUIRED)
 
 message("OPENSSL_INCLUDE_DIR=${OPENSSL_INCLUDE_DIR}")
 message("OPENSSL_LIBRARIES=${OPENSSL_LIBRARIES}")

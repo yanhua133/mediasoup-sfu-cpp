@@ -6,7 +6,6 @@
 #include "MediaSoupErrors.hpp"
 #include "Settings.hpp"
 #include "Utils.hpp"
-#include <openssl/ssl.h>
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
@@ -15,17 +14,6 @@
 #include <uv.h>
 #include <cstdio>  // std::sprintf(), std::fopen()
 #include <cstring> // std::memcpy(), std::strcmp()
-// extern "C" {
-//   //patch openssl 1.1.1 now use libressl=1.0.1
-//   typedef unsigned int (*DTLS_timer_cb)(SSL *s, unsigned int timer_us);
-//   void DTLS_set_timer_cb(SSL *s, DTLS_timer_cb cb)
-//   {
-//     //s->d1->timer_cb = cb;
-//   }
-//   # define DTLS_CTRL_SET_LINK_MTU                  120
-//   # define DTLS_set_link_mtu(ssl, mtu) \
-//           SSL_ctrl((ssl),DTLS_CTRL_SET_LINK_MTU,(mtu),NULL)
-// }
 
 #define LOG_OPENSSL_ERROR(desc)                                                                    \
 	do                                                                                               \
