@@ -55,11 +55,11 @@
 //         << "    " << exec_name << " 0.0.0.0 8080 http_root_directory 1\n";
 // }
 
-Server::Server()
+SfuServer::SfuServer()
 {
     
 }
-Server::~Server()
+SfuServer::~SfuServer()
 {
   // if(rawWebsockServer != nullptr) 
   // {
@@ -74,7 +74,7 @@ Server::~Server()
   }
 
 }
-int Server::init()
+int SfuServer::init()
 {
     initMediasoup();
     createRawWebSocket();
@@ -82,13 +82,13 @@ int Server::init()
    createProtooWebSocket();
 }
 
-void Server::run()
+void SfuServer::run()
 {
     runProtooWebSocketServer();
 
     //testProtoo();
 }
-int Server::createRawWebSocket()
+int SfuServer::createRawWebSocket()
 {
 //    try{
 //        auto address = boost::asio::ip::make_address(this->listenip);
@@ -108,13 +108,13 @@ int Server::createRawWebSocket()
 //    }
     return 0;
 }
-int Server::createProtooWebSocket()
+int SfuServer::createProtooWebSocket()
 {
     //protooWebsockServer = std::make_shared<WebSocketServer>("0.0.0.0",8001,"");//new WebSocketServer("0.0.0.0",8001,"");
     //protooWebsockServer->runWebSocketServer();
    
 }
-void Server::processRawSdpMessage(std::string message)
+void SfuServer::processRawSdpMessage(std::string message)
 {
 //    auto msg = json::parse(message); //根据请求过来的数据来更新。
 //    MS_lOGD("raw websocket recv message %s", msg.dump().c_str());
@@ -190,11 +190,11 @@ void Server::processRawSdpMessage(std::string message)
 //        //ws.send(JSON.stringify(jsonmsg));
 //    }
 }
-void Server::runRawWebsocket() 
+void SfuServer::runRawWebsocket()
 {
 
 }
-void Server::runRawWebsockServer()
+void SfuServer::runRawWebsockServer()
 {
     //std::signal(SIGINT, &on_interrupt);
     //rawWebsockServer->block();
@@ -202,7 +202,7 @@ void Server::runRawWebsockServer()
 /**
  * Get next mediasoup Worker.
  */
-std::shared_ptr<mediasoup::IWorker> Server::getMediasoupWorker()
+std::shared_ptr<mediasoup::IWorker> SfuServer::getMediasoupWorker()
 {
 	auto worker = workers[nextMediasoupWorkerIdx];
 
@@ -211,7 +211,7 @@ std::shared_ptr<mediasoup::IWorker> Server::getMediasoupWorker()
 
 	return worker;
 }
-void Server::processHttpRequest(std::string &path,std::string & roomId,std::shared_ptr<Room> room,json &params,json &query,json & body,json &respdata)
+void SfuServer::processHttpRequest(std::string &path,std::string & roomId,std::shared_ptr<Room> room,json &params,json &query,json & body,json &respdata)
 {
   	/**
 	 * For every API request, verify that the roomId in the path matches and
@@ -618,7 +618,7 @@ void Server::processHttpRequest(std::string &path,std::string & roomId,std::shar
 /**
  * Create a protoo WebSocketServer to allow WebSocket connections from browsers.
  */
-void Server::runProtooWebSocketServer()
+void SfuServer::runProtooWebSocketServer()
 {
 //	MS_lOGD("running protoo WebSocketServer...");
 //	// Handle connections from clients.
@@ -683,7 +683,7 @@ void Server::runProtooWebSocketServer()
 /**
  * Get a Room instance (or create one if it does not exist).
  */
-std::shared_ptr<Room> Server::getOrCreateRoom(const oatpp::String& roomId) 
+std::shared_ptr<Room> SfuServer::getOrCreateRoom(const oatpp::String& roomId)
 {
 	std::lock_guard<std::mutex> lock(m_roomsMutex);
 	std::shared_ptr<Room> &room = m_rooms[roomId];
@@ -726,7 +726,7 @@ std::shared_ptr<Room> Server::getOrCreateRoom(const oatpp::String& roomId)
 
 	// return room;
 }
-void Server::initMediasoup()
+void SfuServer::initMediasoup()
 {
     mediasoup = mediasoup::CreateMediasoup();
     mediasoup->Init();
@@ -736,7 +736,7 @@ void Server::initMediasoup()
 	}
 
 }
-void Server::initWorker(int consumerFd,int producerFd,int payloadConsumerFd,int payloadProducerFd)
+void SfuServer::initWorker(int consumerFd,int producerFd,int payloadConsumerFd,int payloadProducerFd)
 {
     workerSettings.consumerFd=consumerFd;
     workerSettings.producerFd=producerFd;
@@ -745,7 +745,7 @@ void Server::initWorker(int consumerFd,int producerFd,int payloadConsumerFd,int 
   	auto worker = mediasoup->CreateWorker(&myWorkerObserver, workerSettings);
     workers.push_back(worker);
 }
-json Server::getStringFromBase64(std::string payload)
+json SfuServer::getStringFromBase64(std::string payload)
 {
     // Base64 base;
     // auto dec = base.Decode(payload.c_str(),(int)payload.length());
@@ -753,7 +753,7 @@ json Server::getStringFromBase64(std::string payload)
     return json();
 }
 
-void Server::runPingLoop(const std::chrono::duration<v_int64, std::micro>& interval) {
+void SfuServer::runPingLoop(const std::chrono::duration<v_int64, std::micro>& interval) {
 
   while(true) {
 
@@ -774,7 +774,7 @@ void Server::runPingLoop(const std::chrono::duration<v_int64, std::micro>& inter
 
 }
 
-void Server::onAfterCreate_NonBlocking(const std::shared_ptr<AsyncWebSocket>& socket, const std::shared_ptr<const ParameterMap>& params) {
+void SfuServer::onAfterCreate_NonBlocking(const std::shared_ptr<AsyncWebSocket>& socket, const std::shared_ptr<const ParameterMap>& params) {
 
   //++ m_statistics->EVENT_PEER_CONNECTED;
 
@@ -847,7 +847,7 @@ void Server::onAfterCreate_NonBlocking(const std::shared_ptr<AsyncWebSocket>& so
 // 				 });
 }
 
-void Server::onBeforeDestroy_NonBlocking(const std::shared_ptr<AsyncWebSocket>& socket) {
+void SfuServer::onBeforeDestroy_NonBlocking(const std::shared_ptr<AsyncWebSocket>& socket) {
 
   //++ m_statistics->EVENT_PEER_DISCONNECTED;
 
@@ -864,7 +864,7 @@ void Server::onBeforeDestroy_NonBlocking(const std::shared_ptr<AsyncWebSocket>& 
 
 }
 
-void Server::deleteRoom(const oatpp::String& roomId){
+void SfuServer::deleteRoom(const oatpp::String& roomId){
     std::lock_guard<std::mutex> lock(m_roomsMutex);
       m_rooms.erase(roomId);
 }

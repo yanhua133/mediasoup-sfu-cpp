@@ -27,12 +27,12 @@
 #ifndef AppComponent_hpp
 #define AppComponent_hpp
 
-#include "./rooms/Lobby.hpp"
+#include "./Server.hpp"
 #include "./dto/ConfigDto.hpp"
 #include "./utils/Statistics.hpp"
 
-//#include "oatpp-libressl/server/ConnectionProvider.hpp"
-//#include "oatpp-libressl/Config.hpp"
+#include "oatpp-openssl/server/ConnectionProvider.hpp"
+#include "oatpp-openssl/Config.hpp"
 
 #include "oatpp/web/server/interceptor/RequestInterceptor.hpp"
 #include "oatpp/web/server/AsyncHttpConnectionHandler.hpp"
@@ -96,7 +96,7 @@ public:
 
     const char* portText = std::getenv("EXTERNAL_PORT");
     if(!portText) {
-      portText = m_cmdArgs.getNamedArgumentValue("--port", "8443");
+      portText = m_cmdArgs.getNamedArgumentValue("--port", "8001");
     }
 
     bool success;
@@ -203,8 +203,8 @@ public:
   /**
    *  Create chat lobby component.
    */
-  OATPP_CREATE_COMPONENT(std::shared_ptr<Lobby>, lobby)([] {
-    return std::make_shared<Lobby>();
+  OATPP_CREATE_COMPONENT(std::shared_ptr<SfuServer>, sfuServer)([] {
+    return std::make_shared<SfuServer>();
   }());
 
   /**
@@ -212,9 +212,9 @@ public:
    */
   OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>, websocketConnectionHandler)("websocket", [] {
     OATPP_COMPONENT(std::shared_ptr<oatpp::async::Executor>, executor);
-    OATPP_COMPONENT(std::shared_ptr<Lobby>, lobby);
+    OATPP_COMPONENT(std::shared_ptr<SfuServer>, sfuServer);
     auto connectionHandler = oatpp::websocket::AsyncConnectionHandler::createShared(executor);
-    connectionHandler->setSocketInstanceListener(lobby);
+    connectionHandler->setSocketInstanceListener(sfuServer);
     return connectionHandler;
   }());
 

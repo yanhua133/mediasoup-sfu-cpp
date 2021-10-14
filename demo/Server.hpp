@@ -50,11 +50,11 @@ public:
     }
 };
 
-class Server : public oatpp::websocket::AsyncConnectionHandler::SocketInstanceListener
+class SfuServer : public oatpp::websocket::AsyncConnectionHandler::SocketInstanceListener
 {
 public:
-    Server();
-    ~Server();
+    SfuServer();
+    ~SfuServer();
  
 public:
     void set_address(std::string ip,int port) {

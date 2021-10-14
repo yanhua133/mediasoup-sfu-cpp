@@ -225,10 +225,10 @@ static int mpipe(int *fds) {
 }
 #endif
 
-void run(const oatpp::base::CommandLineArguments& args) {
-
+void run(int argc, const char* argv[]) {
+    
   /* Register Components in scope of run() method */
-  AppComponent components(args);
+  AppComponent components(oatpp::base::CommandLineArguments(argc, argv));
 
   /* Get router component */
   OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router);
@@ -252,10 +252,11 @@ void run(const oatpp::base::CommandLineArguments& args) {
   std::thread serverThread([&server]{
     server.run();
   });
-
+    //std::shared_ptr<SfuServer> sfuServer = std::make_shared<SfuServer>();
+  OATPP_COMPONENT(std::shared_ptr<SfuServer>, sfuServer);
   std::thread pingThread([]{
-    OATPP_COMPONENT(std::shared_ptr<Server>, server);
-    server->runPingLoop(std::chrono::seconds(30));
+    OATPP_COMPONENT(std::shared_ptr<SfuServer>, sfuServer);
+    sfuServer->runPingLoop(std::chrono::seconds(30));
   });
 
   std::thread statThread([]{
@@ -266,23 +267,15 @@ void run(const oatpp::base::CommandLineArguments& args) {
   OATPP_COMPONENT(oatpp::Object<ConfigDto>, appConfig);
 
   if(appConfig->useTLS) {
-    OATPP_LOGI("canchat", "clients are expected to connect at https://%s:%d/", appConfig->host->c_str(), *appConfig->port);
+    OATPP_LOGI("main.cpp", "clients are expected to connect at https://%s:%d/", appConfig->host->c_str(), *appConfig->port);
   } else {
-    OATPP_LOGI("canchat", "clients are expected to connect at http://%s:%d/", appConfig->host->c_str(), *appConfig->port);
+    OATPP_LOGI("main.cpp", "clients are expected to connect at http://%s:%d/", appConfig->host->c_str(), *appConfig->port);
   }
 
-  OATPP_LOGI("canchat", "canonical base URL=%s", appConfig->getCanonicalBaseUrl()->c_str());
-  OATPP_LOGI("canchat", "statistics URL=%s", appConfig->getStatsUrl()->c_str());
-
-  serverThread.join();
-  pingThread.join();
-  statThread.join();
-
-}
-
-int main(int argc, const char* argv[])
-{
-    Server server;
+  OATPP_LOGI("main.cpp", "canonical base URL=%s", appConfig->getCanonicalBaseUrl()->c_str());
+  OATPP_LOGI("main.cpp", "statistics URL=%s", appConfig->getStatsUrl()->c_str());
+  
+    //SfuServer server;
     Config config;
     config.initConfig();
     DepLibUV::ClassInit();
@@ -296,25 +289,32 @@ int main(int argc, const char* argv[])
     mpipe(PayloadProducerChannelFd);
     MS_lOGD("pipe Create Pair PayloadProducerChannelFd[0]=%d PayloadProducerChannelFd[1]=%d ",PayloadProducerChannelFd[0],PayloadProducerChannelFd[1]);
   
-    server.setConfig(config);
+    sfuServer->setConfig(config);
 
-    server.initMediasoup();
+    sfuServer->initMediasoup();
 
     MS_lOGD("initWorker ProducerChannelFd[0]=%d,ConsumerChannelFd[1]=%d,PayloadProducerChannelFd[0]=%d,PayloadConsumerChannelFd[1]=%d",ProducerChannelFd[0],ConsumerChannelFd[1],PayloadProducerChannelFd[0],PayloadConsumerChannelFd[1]);
-    server.initWorker(ProducerChannelFd[0],ConsumerChannelFd[1],PayloadProducerChannelFd[0],PayloadConsumerChannelFd[1]);
-
-    // std::thread t1([&]() {
-    //     server.run();
-    // });
-    // t1.detach();
-
-
+    sfuServer->initWorker(ProducerChannelFd[0],ConsumerChannelFd[1],PayloadProducerChannelFd[0],PayloadConsumerChannelFd[1]);
+    
     worker_init(argc,argv);
-   
-   
+
+  serverThread.join();
+  pingThread.join();
+  statThread.join();
+
+}
+
+int main(int argc, const char* argv[])
+{
     oatpp::base::Environment::init();
-	run(oatpp::base::CommandLineArguments(argc, argv));
-	oatpp::base::Environment::destroy();
+    run(argc, argv);
+    oatpp::base::Environment::destroy();
+
+
+    //worker_init(argc,argv);
+   
+   
+    
     //getchar();
 
 }
