@@ -104,7 +104,7 @@ public:
     if(!success || port > 65535) {
       throw std::runtime_error("Invalid port!");
     }
-    config->port = (v_uint16) port;
+      config->port = 8001;//(v_uint16) port;
 
     config->tlsPrivateKeyPath = std::getenv("TLS_FILE_PRIVATE_KEY");
     if(!config->tlsPrivateKeyPath) {

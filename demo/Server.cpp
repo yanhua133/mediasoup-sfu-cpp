@@ -795,9 +795,9 @@ void SfuServer::onAfterCreate_NonBlocking(const std::shared_ptr<AsyncWebSocket>&
 	  return;
   }
  //TODO: uncomment below 3 lines
-  //auto peer = std::make_shared<Peer>(socket, room, oatpp::String(peerId), peerId->std_str());
-  //socket->setListener(peer);
-  //room->addPeer(peer);
+  auto peer = std::make_shared<Peer>(socket, room, peerId, peerId);
+  socket->setListener(peer);
+  room->addPeer(peer);
 
 //   protooPeer->on("request", [&, peerId](json request, std::function<void(json data)> const &accept, std::function<void(int errorCode, std::string errorReason)> const &reject)
 // 				 {

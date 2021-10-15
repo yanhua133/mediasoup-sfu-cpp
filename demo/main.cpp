@@ -256,7 +256,7 @@ void run(int argc, const char* argv[]) {
   OATPP_COMPONENT(std::shared_ptr<SfuServer>, sfuServer);
   std::thread pingThread([]{
     OATPP_COMPONENT(std::shared_ptr<SfuServer>, sfuServer);
-    sfuServer->runPingLoop(std::chrono::seconds(30));
+    //sfuServer->runPingLoop(std::chrono::seconds(30));
   });
 
   std::thread statThread([]{

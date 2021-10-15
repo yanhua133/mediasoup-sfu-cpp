@@ -75,7 +75,7 @@ public:
     if(useTLS) {
       defPort = 443;
     } else {
-      defPort = 8001;
+      defPort = 80;
     }
     stream << host;
     if(!port || defPort != port) {

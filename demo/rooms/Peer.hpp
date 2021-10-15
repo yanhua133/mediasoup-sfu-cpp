@@ -130,11 +130,11 @@ public:
   Peer(const std::shared_ptr<AsyncWebSocket>& socket,
        const std::shared_ptr<Room>& room,
        const oatpp::String& nickname,
-       std::string& peerId)
+       const oatpp::String& peerId)
     : m_socket(socket)
     , m_room(room)
     , m_nickname(nickname)
-    , m_peerId(peerId)
+    , m_peerId(peerId->std_str())
     , m_pingPoingCounter(0)
   {}
 
