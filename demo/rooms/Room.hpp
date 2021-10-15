@@ -102,7 +102,7 @@ public:
   void addHistoryMessage(const oatpp::Object<MessageDto>& message);
   
   //when the request from client arrived
-  void handleRequest(json request, std::function<void(json data)> const & accept, std::function<void(int errorCode, std::string errorReason)> const & reject);
+  void handleRequest(std::shared_ptr<Peer> &peer, json &request, std::function<void(json data)> const & accept, std::function<void(int errorCode, std::string errorReason)> const & reject);
 
   //handle notification
   void handleNotification(json notification);

@@ -142,7 +142,7 @@ void Peer::handleRequest(json request){
         auto response = Message::createErrorResponse(request, errorCode, errorReason);
         sendMessageAsync(response);
     });
-    m_room->handleRequest(request, accept, reject);
+    m_room->handleRequest(this, request, accept, reject);
 }
 void Peer::handleResponse(json response){
         // std::shared_ptr<PROTOO_MSG> pmsg(new PROTOO_MSG);
@@ -251,7 +251,12 @@ oatpp::async::CoroutineStarter Peer::onApiError(const oatpp::String& errorMessag
 }
 
 oatpp::async::CoroutineStarter Peer::handleMessage(const json& message) {
-
+    if (message["request"].is_boolean())
+        this->handleRequest(message);
+    else if (message["response"].is_boolean())
+        this->handleResponse(message);
+    else if (message["notification"].is_boolean())
+        this->handleNotification(message);
 //  if(!message->code) {
 //    return onApiError("No message code provided.");
 //  }

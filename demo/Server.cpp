@@ -855,7 +855,7 @@ void SfuServer::onBeforeDestroy_NonBlocking(const std::shared_ptr<AsyncWebSocket
   auto room = peer->getRoom();
 
   room->removePeerById(peer->getPeerId());
-  room->goodbyePeer(peer);
+  //room->goodbyePeer(peer);
   peer->invalidateSocket();
 
   if(room->isEmpty()) {
