@@ -45,9 +45,15 @@
 #include "Router.hpp"
 #include "Log.hpp"
 #include "../Config.hpp"
+#include "../Transfmt.hpp"
 #include "AudioLevelObserver.hpp"
 
 class Room {
+public:
+    //Config
+    Config config;
+    //record
+    Transfmt transfmt;
 private:
     oatpp::String m_id;
     std::shared_ptr<Router> m_mediasoupRouter ;//= mediasoupRouter;
@@ -77,7 +83,8 @@ public:
      */
     oatpp::String getId();
     
-    
+    //set mediasoup config
+    void setConfig(Config &config1);
     //Add peer to the room.
     void addPeer(const std::shared_ptr<Peer>& peer);
     

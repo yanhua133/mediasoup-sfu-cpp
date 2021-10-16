@@ -50,6 +50,10 @@ void Room::welcomePeer(const std::shared_ptr<Peer>& peer) {
 
 }
 
+void Room::setConfig(Config &config1) {
+    this->config.initConfig();
+}
+
 void Room::onboardPeer(const std::shared_ptr<Peer>& peer) {
 
 //  auto infoMessage = MessageDto::createShared();
