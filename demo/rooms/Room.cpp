@@ -123,7 +123,7 @@ void Room::addHistoryMessage(const oatpp::Object<MessageDto>& message) {
 
 }
 
-void Room::handleRequest(Peer* peer, json &request, std::function<void(json data)> const & accept, std::function<void(int errorCode, std::string errorReason)> const & reject){
+void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::function<void(json data)> const & accept, std::function<void(int errorCode, std::string errorReason)> const & reject){
     std::string method = request["method"];
             //switch (request.method)
             MS_lOGD("_handleProtooRequest request data = %s",request["data"].dump().c_str());
@@ -170,13 +170,13 @@ void Room::handleRequest(Peer* peer, json &request, std::function<void(json data
                     //     ...this->_bridges
                     // ];
                     std::unordered_map<std::string,std::shared_ptr<Peer>> joinedPeers;
-                    std::unordered_map<std::string, shared_ptr<Peer>> joinPeers = this->_getJoinedPeersMap();
+                    std::unordered_map<std::string, shared_ptr<Peer>> joinPeers = this->getJoinedPeersMap();
                     joinedPeers.insert(joinPeers.begin(), joinPeers.end());
                     //joinedPeers.insert(this->_broadcasters.begin(), this->_broadcasters.end());
                     //joinedPeers.insert(this->_bridges.begin(), this->_bridges.end());
 
                             // Reply now the request with the list of joined peers (all but the new one).
-                    auto it = joinedPeers.find(peer->id);
+                    auto it = joinedPeers.find(peer->getPeerId());
                     if ( it != joinedPeers.end())
                     {
                         joinedPeers.erase (it);
@@ -189,7 +189,7 @@ void Room::handleRequest(Peer* peer, json &request, std::function<void(json data
                         auto  &joinedPeer    = kv.second;
 
                         peerInfos.push_back({
-                            {"id"          , joinedPeer->id},
+                            {"id"          , joinedPeer->getPeerId()},
                             {"displayName" , joinedPeer->data.displayName},
                             {"device"      , joinedPeer->data.device}
                         });
@@ -214,8 +214,7 @@ void Room::handleRequest(Peer* peer, json &request, std::function<void(json data
                         for (auto &kv1 : joinedPeer->data.producers)
                         {
                             auto &producer = kv1.second;
-                            this->_createConsumer(
-                                
+                            this->createConsumer(
                                     /*consumerPeer :*/ peer,
                                     /*producerPeer :*/ joinedPeer,
                                     producer
@@ -229,7 +228,7 @@ void Room::handleRequest(Peer* peer, json &request, std::function<void(json data
                             if (dataProducer->label() == "bot")
                                 continue;
 
-                            this->_createDataConsumer(
+                            this->createDataConsumer(
                                     /*dataConsumerPeer :*/ peer,
                                     /*dataProducerPeer :*/ joinedPeer,
                                     dataProducer
@@ -238,7 +237,7 @@ void Room::handleRequest(Peer* peer, json &request, std::function<void(json data
                     }
 
                     // Create DataConsumers for bot dataProducer->
-                    this->_createDataConsumer(
+                    this->createDataConsumer(
                         
                             /*dataConsumerPeer :*/ peer,
                             /*dataProducerPeer :*/ nullptr,
@@ -246,16 +245,16 @@ void Room::handleRequest(Peer* peer, json &request, std::function<void(json data
                         );
 
                     // Notify the new Peer to all other Peers.
-                    for (auto  &otherPeer : this->_getJoinedPeers( peer ))
+                    for (auto  &otherPeer : this->getJoinedPeers( peer ))
                     {
                         if(!otherPeer)
                         {
                             continue;
                         }
-                        otherPeer->notify(
+                        otherPeer->notifyAsync(
                             "newPeer",
                             {
-                                {"id"          , peer->id},
+                                {"id"          , peer->getPeerId()},
                                 {"displayName" , peer->data.displayName},
                                 {"device"      , peer->data.device}
                             });
@@ -309,7 +308,7 @@ void Room::handleRequest(Peer* peer, json &request, std::function<void(json data
                         webRtcTransportOptions.enableTcp = true;
                     }
 
-                    auto transport =  this->_mediasoupRouter->createWebRtcTransport(webRtcTransportOptions);
+                    auto transport =  this->m_mediasoupRouter->createWebRtcTransport(webRtcTransportOptions);
 
                     transport->on("sctpstatechange", [&]( std::string sctpState ) //(sctpState) =>
                     {
@@ -465,7 +464,7 @@ void Room::handleRequest(Peer* peer, json &request, std::function<void(json data
                     // Add peerId into appData to later get the associated Peer during
                     // the "loudest" event of the audioLevelObserver.
                     //appData = { ...appData, peerId: peer->id };
-                    appData["peerId"] = peer->id;
+                    appData["peerId"] = peer->getPeerId();
                     ProducerOptions options;// = {
                         options.kind = kind;
                         options.rtpParameters = rtpParameters;
@@ -487,7 +486,7 @@ void Room::handleRequest(Peer* peer, json &request, std::function<void(json data
                         //     "producer "score" event [producerId:%s, score:%o]",
                         //     producer->id(), score);
 
-                        peer->notify("producerScore", { {"producerId", producer->id()},{ "score",score} });
+                        peer->notifyAsync("producerScore", { {"producerId", producer->id()},{ "score",score} });
                             
                     });
 
@@ -520,9 +519,9 @@ void Room::handleRequest(Peer* peer, json &request, std::function<void(json data
                     //         ...this->_broadcasters
                     //     ];
                       std::unordered_map<std::string,std::shared_ptr<Peer>> joinedPeers;
-                      std::unordered_map<std::string, shared_ptr<Peer>> joinPeers = this->_getJoinedPeersMap(peer);
+                      std::unordered_map<std::string, shared_ptr<Peer>> joinPeers = this->getJoinedPeersMap(peer);
                       joinedPeers.insert(joinPeers.begin(), joinPeers.end());
-                      joinedPeers.insert(this->_broadcasters.begin(), this->_broadcasters.end());
+                      //joinedPeers.insert(this->_broadcasters.begin(), this->_broadcasters.end());
 
                     // Optimization: Create a server-side Consumer for each Peer.
                     if(kind == "audio") {
@@ -839,7 +838,7 @@ void Room::handleRequest(Peer* peer, json &request, std::function<void(json data
                             // Create a server-side DataConsumer for each Peer.
                             for (auto  otherPeer : this->_getJoinedPeers( peer ))
                             {
-                                this->_createDataConsumer(
+                                this->createDataConsumer(
                                     
                                         /*dataConsumerPeer :*/ otherPeer,
                                         /*dataProducerPeer :*/ peer,
@@ -1092,4 +1091,331 @@ void Room::pingAllPeers() {
 
 bool Room::isEmpty() {
   return m_peerById.size() == 0;
+}
+
+/**
+     * Helper to get the list of joined protoo peers.
+     */
+    std::vector<shared_ptr<Peer> > Room::getJoinedPeers(std::shared_ptr<Peer> excludePeer = nullptr)
+    {
+        std::vector<std::shared_ptr<Peer> > peerlist;
+        for (const auto& kv : this->_peers)
+        {
+            auto peerId   = kv.first;
+            auto peer   = kv.second;
+            if(peer->data.joined && peer != excludePeer)
+            {
+                 peerlist.push_back(peer);
+            }
+             
+        }
+        return peerlist;
+        //return this->_protooRoom->peers
+        //    .filter((peer) => peer->data.joined && peer != excludePeer);
+    }
+
+/**
+     * Helper to get the list of joined protoo peers.
+     */
+    std::unordered_map<std::string,shared_ptr<Peer>> Room::getJoinedPeersMap(std::shared_ptr<Peer> excludePeer = nullptr)
+    {
+       std::unordered_map<std::string,shared_ptr<Peer> > peerMap;
+        for (const auto& kv : this->_peers)
+        {
+            auto peerId   = kv.first;
+            auto peer   = kv.second;
+            if(peer->data.joined && peer != excludePeer)
+            {
+                peerMap.insert(kv);
+            }
+             
+        }
+        return peerMap;
+        //return this->_protooRoom->peers
+        //    .filter((peer) => peer->data.joined && peer != excludePeer);
+    }
+
+/**
+ * Creates a mediasoup Consumer for the given mediasoup producer->
+ *
+ * @async
+ */
+void Room::createConsumer(std::shared_ptr<Peer> &consumerPeer, std::shared_ptr<Peer> &producerPeer, std::shared_ptr<Producer>  &producer)
+{
+    // Optimization:
+    // - Create the server-side Consumer in paused mode.
+    // - Tell its Peer about it and wait for its response.
+    // - Upon receipt of the response, resume the server-side consumer->
+    // - If video, this will mean a single key frame requested by the
+    //   server-side Consumer (when resuming it).
+    // - If audio (or video), it will avoid that RTP packets are received by the
+    //   remote endpoint *before* the Consumer is locally created in the endpoint
+    //   (and before the local SDP O/A procedure ends). If that happens (RTP
+    //   packets are received before the SDP O/A is done) the PeerConnection may
+    //   fail to associate the RTP stream.
+
+    // NOTE: Don"t create the Consumer if the remote Peer cannot consume it.
+    RtpCapabilities rtpCapabilities = consumerPeer->data.rtpCapabilities;
+    if (
+        rtpCapabilities.codecs.size() ==0  ||
+        !this->_mediasoupRouter->canConsume(
+                producer->id(),
+                rtpCapabilities
+            )
+    )
+    {
+        MS_lOGW("_createConsumer() | Transport canConsume = false return");
+        return;
+    }
+
+    // Must take the Transport the remote Peer is using for consuming.
+//        auto transport = Array.from(consumerPeer.data.transports)
+//            .find((t) => t.appData.consuming);
+
+    std::shared_ptr<Transport> transport;
+    for(auto &kv : consumerPeer->data.transports)
+    {
+        auto &t = kv.second;
+        if(t->appData()["consuming"].get<bool>() == true) {
+            transport = t;
+            break;
+        }
+    }
+    // This should not happen.
+    if (!transport)
+    {
+        MS_lOGW("_createConsumer() | Transport for consuming not found");
+
+        return;
+    }
+
+    // Create the Consumer in paused mode.
+    std::shared_ptr<Consumer> consumer;
+
+    try
+    {
+          ConsumerOptions options;
+          options.producerId = producer->id();
+          options.rtpCapabilities = consumerPeer->data.rtpCapabilities;
+          options.paused          = true;
+        consumer =  transport->consume(options);
+        MS_lOGD("consumerPeer->data.rtpCapabilities=%s",consumerPeer->data.rtpCapabilities.dump(4).c_str());
+        json jrtpParameters=consumer->rtpParameters();
+        MS_lOGD("consumer->rtpParameters()=%s",jrtpParameters.dump(4).c_str());
+    }
+    catch (const char *error)
+    {
+        MS_lOGW("_createConsumer() | transport->consume():%s", error);
+
+        return;
+    }
+
+    // Store the Consumer into the protoo consumerPeer data Object.
+    consumerPeer->data.consumers[consumer->id()] =  consumer;
+
+    // Set Consumer events.
+    consumer->on("transportclose",[&]( )
+    {
+        // Remove from its map.
+        consumerPeer->data.consumers.erase(consumer->id());
+    });
+
+    consumer->on("producerclose",[&](  )
+    {
+        // Remove from its map.
+        consumerPeer->data.consumers.erase(consumer->id());
+
+        consumerPeer->notify("consumerClosed", { {"consumerId", consumer->id()} });
+    });
+
+    consumer->on("producerpause",[&]()
+    {
+        consumerPeer->notify("consumerPaused", { {"consumerId", consumer->id()} });
+    });
+
+    consumer->on("producerresume",[&](  )
+    {
+        consumerPeer->notify("consumerResumed", { {"consumerId", consumer->id()} });
+    });
+
+    consumer->on("score", [&]( int score ) //(score) =>
+    {
+       
+        // MS_lOGD(
+        //     "consumer "score" event [consumerId:%s, score:%o]",
+        //     consumer->id(), score);
+        
+        consumerPeer->notify("consumerScore", {
+          {"consumerId", consumer->id()},
+          {"score",score}
+          });
+        
+
+    });
+
+    consumer->on("layerschange",[&]( json layers ) // (layers) =>
+    {
+  
+        consumerPeer->notify(
+            "consumerLayersChanged",
+            {
+                {"consumerId"    , consumer->id()},
+                {"spatialLayer"  , layers["spatialLayer"]},
+                {"temporalLayer" , layers["temporalLayer"]}
+            });
+    });
+
+    // NOTE: For testing.
+    //  consumer->enableTraceEvent([ "rtp", "keyframe", "nack", "pli", "fir" ]);
+    //  consumer->enableTraceEvent([ "pli", "fir" ]);
+    //  consumer->enableTraceEvent([ "keyframe" ]);
+
+    consumer->on("trace",[&]( ConsumerTraceEventData & trace ) // (trace) =>
+    {
+        
+        MS_lOGD(
+            "consumer trace event [producerId:%s, trace.type:%s, trace]",
+            consumer->id().c_str(), trace.type.c_str());
+    });
+
+    // Send a protoo request to the remote Peer with Consumer parameters.
+    if(!consumerPeer->isHasRequest) {
+        // consumer->resume();
+        //return;
+    }
+    try
+    {
+
+         consumerPeer->requestAsync(
+            "newConsumer",
+            {
+             {"peerId"     , producerPeer->id},
+             {"producerId"         , producer->id()},
+             {"id"         , consumer->id()},
+             {"kind"         , consumer->kind()},
+             {"rtpParameters"         , consumer->rtpParameters()},
+             {"type"         , consumer->type()},
+             {"appData", producer->appData()},
+             {"producerPaused", consumer->producerPaused()}
+            });
+
+        // Now that we got the positive response from the remote endpoint, resume
+        // the Consumer so the remote endpoint will receive the a first RTP packet
+        // of this new stream once its PeerConnection is already ready to process
+        // and associate it.
+
+        if(consumerPeer->isHasNotify) {
+            // consumer->resume();
+            //return;
+        }
+       
+        consumerPeer->notifyAsync(
+            "consumerScore",
+            {
+                {"consumerId" , consumer->id()},
+                {"score"      , consumer->score()}
+            });
+
+         consumer->resume();
+    }
+    catch (const char *error)
+    {
+        MS_lOGW("_createConsumer() | failed:%s", error);
+    }
+    return;
+}
+
+
+/**
+ * Creates a mediasoup DataConsumer for the given mediasoup dataProducer->
+ *
+ * @async
+ */
+void Room::createDataConsumer(
+    //{
+                         std::shared_ptr<Peer> &dataConsumerPeer,
+                         std::shared_ptr<Peer> dataProducerPeer, // This is null for the bot dataProducer->
+                         std::shared_ptr<DataProducer> dataProducer
+    //}
+                         )
+{
+    // NOTE: Don"t create the DataConsumer if the remote Peer cannot consume it.
+    if (!dataConsumerPeer->data.sctpCapabilities.dump().empty())
+        return;
+
+    // Must take the Transport the remote Peer is using for consuming.
+//        auto transport = Array.from(dataConsumerPeer.data.transports)
+//            .find((t) => t.appData.consuming);
+    std::shared_ptr<Transport> transport;
+    for(auto &kv : dataConsumerPeer->data.transports)
+    {
+        auto t = kv.second;
+        if(t->appData()["consuming"].get<bool>() == true) {
+            transport = t;
+            break;
+        }
+    }
+    // This should not happen.
+    if (!transport)
+    {
+        MS_lOGW("_createDataConsumer() | Transport for consuming not found");
+
+        return;
+    }
+
+    // Create the Dataconsumer->
+    std::shared_ptr<DataConsumer> dataConsumer;
+
+    try
+    {
+          DataConsumerOptions options;
+          options.dataProducerId = dataProducer->id();
+        dataConsumer =  transport->consumeData(options);
+    }
+    catch (const char * error)
+    {
+        MS_lOGW("_createDataConsumer() | transport->consumeData():%s", error);
+
+        return;
+    }
+
+    // Store the DataConsumer into the protoo dataConsumerPeer data Object.
+    dataConsumerPeer->data.dataConsumers[dataConsumer->id()]= dataConsumer;
+
+    // Set DataConsumer events.
+    dataConsumer->on("transportclose",[&](  )
+    {
+        // Remove from its map.
+        dataConsumerPeer->data.dataConsumers.erase(dataConsumer->id());
+    });
+
+    dataConsumer->on("dataproducerclose",[&]( )
+    {
+        // Remove from its map.
+        dataConsumerPeer->data.dataConsumers.erase(dataConsumer->id());
+
+        dataConsumerPeer->notify(
+                                "dataConsumerClosed", { {"dataConsumerId", dataConsumer->id()} });
+    });
+
+    // Send a protoo request to the remote Peer with Consumer parameters.
+    try
+    {
+         dataConsumerPeer->request(
+            "newDataConsumer",
+            {
+                // This is null for bot dataProducer->
+                {"peerId"            , dataProducerPeer->id },
+                {"dataProducerId"       ,  dataProducer->id() },
+                {"id"                   ,  dataConsumer->id() },
+                {"sctpStreamParameters" ,  dataConsumer->sctpStreamParameters() },
+                {"label"                ,  dataConsumer->label() },
+                {"protocol"             ,  dataConsumer->protocol() },
+                {"appData"             ,  dataProducer->appData() }
+            });
+    }
+    catch (...)
+    {
+        MS_lOGW("_createDataConsumer() | failed:");
+    }
 }

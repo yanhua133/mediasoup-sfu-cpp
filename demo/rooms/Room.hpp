@@ -49,127 +49,138 @@
 
 class Room {
 private:
-  oatpp::String m_id;
-  std::shared_ptr<Router> m_mediasoupRouter ;//= mediasoupRouter;
-  std::unordered_map<std::string, std::shared_ptr<Peer>> m_peerById;
-  std::list<oatpp::Object<MessageDto>> m_history;
-  std::mutex m_peerByIdLock;
-  std::mutex m_historyLock;
+    oatpp::String m_id;
+    std::shared_ptr<Router> m_mediasoupRouter ;//= mediasoupRouter;
+    std::unordered_map<std::string, std::shared_ptr<Peer>> m_peerById;
+    std::list<oatpp::Object<MessageDto>> m_history;
+    std::mutex m_peerByIdLock;
+    std::mutex m_historyLock;
 private:
-  OATPP_COMPONENT(oatpp::Object<ConfigDto>, m_appConfig);
-  OATPP_COMPONENT(std::shared_ptr<Statistics>, m_statistics);
+    OATPP_COMPONENT(oatpp::Object<ConfigDto>, m_appConfig);
+    OATPP_COMPONENT(std::shared_ptr<Statistics>, m_statistics);
 public:
-
-  Room(const oatpp::String& id, std::shared_ptr<Router> mediasoupRouter)
+    
+    Room(const oatpp::String& id, std::shared_ptr<Router> mediasoupRouter)
     : m_id(id)
     , m_mediasoupRouter(mediasoupRouter)
-  {
-    ++ m_statistics->EVENT_ROOM_CREATED;
-  }
-
-  ~Room() {
-    ++ m_statistics->EVENT_ROOM_DELETED;
-  }
-
-  /**
-   * Get room name.
-   * @return
-   */
-  oatpp::String getId();
-
- 
-  //Add peer to the room.
-  void addPeer(const std::shared_ptr<Peer>& peer);
-
-  //Inform the audience about the new peer.
-  void welcomePeer(const std::shared_ptr<Peer>& peer);
-
-   //Send info about other peers and available chat history to peer.
-  void onboardPeer(const std::shared_ptr<Peer>& peer);
-
-  //Send peer left room message.
-  void goodbyePeer(const std::shared_ptr<Peer>& peer);
-
-  //Get peer by id.
-  std::shared_ptr<Peer> getPeerById(std::string peerId);
-
-
-  //Remove peer from the room.
-  void removePeerById(std::string peerId);
-
-
-  //Add message to history.
-  void addHistoryMessage(const oatpp::Object<MessageDto>& message);
-  
-  //when the request from client arrived
-  void handleRequest(std::shared_ptr<Peer> &peer, json &request, std::function<void(json data)> const & accept, std::function<void(int errorCode, std::string errorReason)> const & reject);
-
-  //handle notification
-  void handleNotification(json notification);
-
-  //Get list of history messages.
-  oatpp::List<oatpp::Object<MessageDto>> getHistory();
-
-  //Send message to all peers in the room.
-  void sendMessageAsync(const oatpp::Object<MessageDto>& message);
-
-  //Websocket-Ping all peers.
-  void pingAllPeers();
-
-  //Check if room is empty (no peers in the room).
-  bool isEmpty();
-
-  void connectBroadcasterTransport(
-			std::string broadcasterId,
-			std::string transportId,
-      DtlsParameters &dtlsParameters
-	){}
-
-  /**
-	 * Create a mediasoup Producer associated to a Broadcaster.
-	 *
-	 * @async
-	 *
-	 * @type {String} broadcasterId
-	 * @type {String} transportId
-	 * @type {String} kind - "audio" or "video" kind for the producer->
-	 * @type {RTCRtpParameters} rtpParameters - RTP parameters for the producer->
-	 */
-	json createBroadcasterProducer(
-		//{
-			std::string broadcasterId,
-			std::string transportId,
-			std::string kind,
-            RtpParameters &rtpParameters
-		//}
-	){}
-
-  json createBroadcasterConsumer(
-		//{
-			std::string broadcasterId,
-			std::string transportId,
-			std::string producerId
-		//}
-	){}
-
-  json createBroadcasterDataConsumer(
-		//{
-            std::string broadcasterId,
-			std::string transportId,
-			std::string dataProducerId
-		//}
-	){}
-
-  json createBroadcasterDataProducer(
-	//	{
-			std::string broadcasterId,
-			std::string transportId,
-			std::string label,
-			std::string protocol,
-      SctpStreamParameters &sctpStreamParameters,
-			json appData
-	//	}
-	){}
+    {
+        ++ m_statistics->EVENT_ROOM_CREATED;
+    }
+    
+    ~Room() {
+        ++ m_statistics->EVENT_ROOM_DELETED;
+    }
+    
+    /**
+     * Get room name.
+     * @return
+     */
+    oatpp::String getId();
+    
+    
+    //Add peer to the room.
+    void addPeer(const std::shared_ptr<Peer>& peer);
+    
+    //Inform the audience about the new peer.
+    void welcomePeer(const std::shared_ptr<Peer>& peer);
+    
+    //Send info about other peers and available chat history to peer.
+    void onboardPeer(const std::shared_ptr<Peer>& peer);
+    
+    //Send peer left room message.
+    void goodbyePeer(const std::shared_ptr<Peer>& peer);
+    
+    //Get peer by id.
+    std::shared_ptr<Peer> getPeerById(std::string peerId);
+    //get joined peer
+    std::vector<shared_ptr<Peer> > getJoinedPeers(std::shared_ptr<Peer> excludePeer = nullptr);
+    //get joined peer map
+    std::unordered_map<std::string,shared_ptr<Peer>> getJoinedPeersMap(std::shared_ptr<Peer> excludePeer = nullptr);
+    //create consumer
+    void createConsumer(std::shared_ptr<Peer> &consumerPeer, std::shared_ptr<Peer> &producerPeer, std::shared_ptr<Producer>  &producer);
+    void createDataConsumer(
+                             std::shared_ptr<Peer> &dataConsumerPeer,
+                             std::shared_ptr<Peer> dataProducerPeer, // This is null for the bot dataProducer->
+                             std::shared_ptr<DataProducer> dataProducer
+                            );
+    
+    
+    //Remove peer from the room.
+    void removePeerById(std::string peerId);
+    
+    
+    //Add message to history.
+    void addHistoryMessage(const oatpp::Object<MessageDto>& message);
+    
+    //when the request from client arrived
+    void handleRequest(std::shared_ptr<Peer> &peer, json &request, std::function<void(json data)> const & accept, std::function<void(int errorCode, std::string errorReason)> const & reject);
+    
+    //handle notification
+    void handleNotification(json notification);
+    
+    //Get list of history messages.
+    oatpp::List<oatpp::Object<MessageDto>> getHistory();
+    
+    //Send message to all peers in the room.
+    void sendMessageAsync(const oatpp::Object<MessageDto>& message);
+    
+    //Websocket-Ping all peers.
+    void pingAllPeers();
+    
+    //Check if room is empty (no peers in the room).
+    bool isEmpty();
+    
+    void connectBroadcasterTransport(
+                                     std::string broadcasterId,
+                                     std::string transportId,
+                                     DtlsParameters &dtlsParameters
+                                     ){}
+    
+    /**
+     * Create a mediasoup Producer associated to a Broadcaster.
+     *
+     * @async
+     *
+     * @type {String} broadcasterId
+     * @type {String} transportId
+     * @type {String} kind - "audio" or "video" kind for the producer->
+     * @type {RTCRtpParameters} rtpParameters - RTP parameters for the producer->
+     */
+    json createBroadcasterProducer(
+                                   //{
+                                   std::string broadcasterId,
+                                   std::string transportId,
+                                   std::string kind,
+                                   RtpParameters &rtpParameters
+    //}
+    ){}
+    
+    json createBroadcasterConsumer(
+                                   //{
+                                   std::string broadcasterId,
+                                   std::string transportId,
+                                   std::string producerId
+    //}
+    ){}
+    
+    json createBroadcasterDataConsumer(
+                                       //{
+                                       std::string broadcasterId,
+                                       std::string transportId,
+                                       std::string dataProducerId
+    //}
+    ){}
+    
+    json createBroadcasterDataProducer(
+                                       //	{
+                                       std::string broadcasterId,
+                                       std::string transportId,
+                                       std::string label,
+                                       std::string protocol,
+                                       SctpStreamParameters &sctpStreamParameters,
+                                       json appData
+    //	}
+    ){}
     
     RtpCapabilities getRouterRtpCapabilities()
     {
@@ -195,9 +206,9 @@ public:
     std::string getBridgeTransportId(std::string &bridgeId) {}
     std::shared_ptr<Transport> getBridgeTransport(std::string &bridgeId){}
     void connectBridgeTransport(
-                                   std::string &bridgeId,
-                                   std::string &transportId,
-                                   DtlsParameters &dtlsParameters
+                                std::string &bridgeId,
+                                std::string &transportId,
+                                DtlsParameters &dtlsParameters
                                 ){}
     
     json  getLocalSdp(){}
@@ -208,7 +219,7 @@ public:
                               RtpParameters &rtpParameters){}
     std::vector<PeerInfo> createBroadcaster(std::string id, std::string displayName, json  device, RtpCapabilities &rtpCapabilities){}
     std::vector<std::shared_ptr<Producer>> getProducersFromBridge(std::string &bridgeId){}
-
+    
 };
 
 #endif //ASYNC_SERVER_ROOMS_ROOM_HPP

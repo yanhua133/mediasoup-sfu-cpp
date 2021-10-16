@@ -142,7 +142,8 @@ void Peer::handleRequest(json request){
         auto response = Message::createErrorResponse(request, errorCode, errorReason);
         sendMessageAsync(response);
     });
-    m_room->handleRequest(this, request, accept, reject);
+    auto shared_peer = std::make_shared<Peer>((Peer*)this);
+    m_room->handleRequest(shared_peer, request, accept, reject);
 }
 void Peer::handleResponse(json response){
         // std::shared_ptr<PROTOO_MSG> pmsg(new PROTOO_MSG);
