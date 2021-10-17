@@ -74,6 +74,11 @@ SfuServer::~SfuServer()
   }
 
 }
+
+void SfuServer::setConfig(std::shared_ptr<Config> pConfig) {
+    this->m_pConfig = pConfig;
+}
+
 int SfuServer::init()
 {
     initMediasoup();
@@ -692,17 +697,15 @@ std::shared_ptr<Room> SfuServer::getOrCreateRoom(const oatpp::String& roomId)
 	if (!room)
 	{
 		auto mediasoupWorker = getMediasoupWorker();
-        //read mediasoup mediacodec config
-		Config config;
-        config.initConfig();
-        MS_lOGI("create() config.mediasoup.routerOptions=%s", config.mediasoup.routerOptions.dump().c_str());
-        json mediaCodecs = config.mediasoup.routerOptions["mediaCodecs"];
+        MS_lOGI("create() config.mediasoup.routerOptions=%s", this->m_pConfig->mediasoup.routerOptions.dump().c_str());
+        json mediaCodecs = this->m_pConfig->mediasoup.routerOptions["mediaCodecs"];
         // Create a mediasoup Router.   
         RouterOptions routerOptions;
         routerOptions.mediaCodecs = mediaCodecs.get<std::vector<RtpCodecCapability>>();       
         auto mediasoupRouter =  mediasoupWorker->createRouter(routerOptions);
         // Create room instance
 		room = std::make_shared<Room>(roomId, mediasoupRouter);
+        room->setConfig(this->m_pConfig);
 		//add to room map
 		m_rooms[roomId] = room;		
 	}
@@ -852,6 +855,9 @@ void SfuServer::onBeforeDestroy_NonBlocking(const std::shared_ptr<AsyncWebSocket
   //++ m_statistics->EVENT_PEER_DISCONNECTED;
 
   auto peer = std::static_pointer_cast<Peer>(socket->getListener());
+    if(!peer){
+        return;
+    }
   auto room = peer->getRoom();
 
   room->removePeerById(peer->getPeerId());

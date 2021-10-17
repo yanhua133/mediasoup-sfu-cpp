@@ -276,8 +276,8 @@ void run(int argc, const char* argv[]) {
   OATPP_LOGI("main.cpp", "statistics URL=%s", appConfig->getStatsUrl()->c_str());
   
     //SfuServer server;
-    Config config;
-    config.initConfig();
+    auto pConfig = std::make_shared<Config>();
+    pConfig->initConfig();
     DepLibUV::ClassInit();
     g_uvloop =  DepLibUV::GetLoop();
     mpipe(ConsumerChannelFd);
@@ -289,7 +289,7 @@ void run(int argc, const char* argv[]) {
     mpipe(PayloadProducerChannelFd);
     MS_lOGD("pipe Create Pair PayloadProducerChannelFd[0]=%d PayloadProducerChannelFd[1]=%d ",PayloadProducerChannelFd[0],PayloadProducerChannelFd[1]);
   
-    sfuServer->setConfig(config);
+    sfuServer->setConfig(pConfig);
 
     sfuServer->initMediasoup();
 

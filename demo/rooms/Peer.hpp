@@ -85,7 +85,7 @@ class PeerData
   std::unordered_map<std::string,std::shared_ptr<DataConsumer> > dataConsumers;
 };
 
-class Peer : public oatpp::websocket::AsyncWebSocket::Listener {
+class Peer : public oatpp::websocket::AsyncWebSocket::Listener, public std::enable_shared_from_this<Peer> {
   public:
   PeerData data;
 private:

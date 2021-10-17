@@ -66,9 +66,7 @@ public:
 public:
     int init();
     void run();
-    void setConfig(Config &config) {
-        this->config = config;
-    }
+    void setConfig(std::shared_ptr<Config> pConfig);
 
     void initMediasoup();
     void initWorker(int consumerFd,int producerFd,int payloadConsumerFd,int payloadProducerFd);
@@ -111,6 +109,6 @@ private:
 
     //std::shared_ptr<WebSocketServer> protooWebsockServer;
 
-    Config config;
+    std::shared_ptr<Config> m_pConfig;
     int nextMediasoupWorkerIdx =0;
 };

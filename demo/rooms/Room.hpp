@@ -51,15 +51,15 @@
 class Room {
 public:
     //Config
-    Config config;
+    std::shared_ptr<Config> m_pConfig;
     //record
     Transfmt transfmt;
 private:
     oatpp::String m_id;
     std::shared_ptr<Router> m_mediasoupRouter ;//= mediasoupRouter;
-    std::unordered_map<std::string, std::shared_ptr<Peer>> m_peerById;
+    std::unordered_map<std::string, std::shared_ptr<Peer>> m_peers;
     std::list<oatpp::Object<MessageDto>> m_history;
-    std::mutex m_peerByIdLock;
+    std::mutex m_peersLock;
     std::mutex m_historyLock;
 private:
     OATPP_COMPONENT(oatpp::Object<ConfigDto>, m_appConfig);
@@ -84,7 +84,7 @@ public:
     oatpp::String getId();
     
     //set mediasoup config
-    void setConfig(Config &config1);
+    void setConfig(std::shared_ptr<Config> pConfig);
     //Add peer to the room.
     void addPeer(const std::shared_ptr<Peer>& peer);
     
