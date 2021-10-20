@@ -138,7 +138,7 @@ void Peer::handleRequest(json request){
     });
     std::function<void(int errorCode, std::string errorReason)> reject([&, request](int errorCode, std::string errorReason)
                                                                        {
-        std::cout << "[Peer] handleRequest accept" << request.dump(4) << endl;
+        std::cout << "[Peer] handleRequest reject" << request.dump(4) << endl;
         auto response = Message::createErrorResponse(request, errorCode, errorReason);
         sendMessageAsync(response);
     });
