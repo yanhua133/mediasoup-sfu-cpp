@@ -70,36 +70,36 @@ json PayloadChannelAgent::request(const char * method, json& internal)
 }
 json PayloadChannelAgent::request(const char * method, json& internal,const json& data)
 {
-  	this->_nextId < 4294967295 ? ++this->_nextId : (this->_nextId = 1);
+	this->_nextId < 4294967295 ? ++this->_nextId : (this->_nextId = 1);
 
-		auto id = this->_nextId;
+	auto id = this->_nextId;
 
-		MS_lOGD("request() [method:%s, id:%ld]", method, id);
+	MS_lOGD("request() [method:%s, id:%ld]", method, id);
 
-		if (this->_closed)
-			MS_lOGE("Channel closed");
+	if (this->_closed)
+		MS_lOGE("Channel closed");
 
-		json request = { 
-      { "id" , id },
-      { "method" , std::string(method) },
-      { "internal" , internal },
-      { "data" , data } 
-    };
-    std::string strreq = request.dump();
-    size_t readLen = strreq.length();
-		char* jsonStart = nullptr;
-        size_t jsonLen = netstring_encode_new(&jsonStart,(char *)strreq.c_str(),(size_t)strreq.length());
-		//const ns = netstring.nsWrite(JSON.stringify(request));
+	json request = {
+	  { "id" , id },
+	  { "method" , std::string(method) },
+	  { "internal" , internal },
+	  { "data" , data }
+	};
+	std::string strreq = request.dump();
+	size_t readLen = strreq.length();
+	char* jsonStart = nullptr;
+	size_t jsonLen = netstring_encode_new(&jsonStart, (char*)strreq.c_str(), (size_t)strreq.length());
+	//const ns = netstring.nsWrite(JSON.stringify(request));
 
-		if (jsonLen > NS_MESSAGE_MAX_LEN)
-			MS_lOGE("Channel request too big");
+	if (jsonLen > NS_MESSAGE_MAX_LEN)
+		MS_lOGE("Channel request too big");
 
-		// This may throw if closed or remote side ended.
-		//this._producerSocket.write(ns);
-   
+	// This may throw if closed or remote side ended.
+	//this._producerSocket.write(ns);
+
     
     //发送数据处理异步处理
-	this->m_pPromise.reset(new std::promise<json>()); 
+	this->m_pPromise.reset(new std::promise<json>()); //modified by jacky 
 		//std::promise<json> promise;
 	//	this->m_pTransport->send(request);//just like await
 		//pplx::task_completion_event<json> tce;

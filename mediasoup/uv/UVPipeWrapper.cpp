@@ -10,6 +10,9 @@ inline static void StaticOnAllocCB(uv_handle_t* handle, size_t suggestedSize, uv
 }
 
 inline static void StaticOnReadCB(uv_stream_t* stream, ssize_t nRead, const uv_buf_t* buf) {
+	UVPipeWrapper* pWrapper = (UVPipeWrapper*)stream->data;
+	uv_mutex_lock(&pWrapper->m_mutex_writebuf); 
+
 	((UVPipeWrapper*)(stream->data))->OnReadCB(stream, nRead, buf);
 }
 
@@ -29,7 +32,8 @@ inline static void StaticcOnShutdown(uv_shutdown_t* req, int /*status*/) {
 
 inline static void StaticcOnWrite(uv_write_t* req, int status)
 {
-	auto* writeData = static_cast<UVPipeWrapper::UvWriteData*>(req->data);
+	UVPipeWrapper * pUvPipeWrapper = static_cast<UVPipeWrapper *>(req->data);
+	auto* writeData = pUvPipeWrapper->m_writeData;
 	auto* handle = req->handle;
 	auto* socket = static_cast<UVPipeWrapper*>(handle->data);
 
@@ -38,7 +42,10 @@ inline static void StaticcOnWrite(uv_write_t* req, int status)
 		socket->OnWriteError(status);
 
 	// Delete the UvWriteData struct.
+
 	delete writeData;
+	pUvPipeWrapper->m_writeData = NULL;
+	uv_mutex_unlock(&pUvPipeWrapper->m_mutex_writebuf);
 }
 
 UVPipeWrapper::UVPipeWrapper(UVPipeObserver* obs, int bufferSize, UVPipeWrapper::Role role)
@@ -47,6 +54,16 @@ UVPipeWrapper::UVPipeWrapper(UVPipeObserver* obs, int bufferSize, UVPipeWrapper:
 {
     MS_lOGF();
 	RegisterObserver(obs);
+
+	m_inputDataBuf = nullptr;
+	m_inputLen = 0;
+	m_writeData = nullptr;
+	int iret = uv_mutex_init(&m_mutex_writebuf);
+	if (iret) {
+		MS_lOGE("UVPipeWrapper () uv mutex init failed: %s", uv_strerror(iret));
+	}
+
+
 }
 
 UVPipeWrapper::~UVPipeWrapper() {
@@ -54,11 +71,23 @@ UVPipeWrapper::~UVPipeWrapper() {
 	if (!m_closed) {
 		Close();
 	}
+
+	uv_mutex_destroy(&m_mutex_writebuf);
 		
 	if (m_buffer) {
 		delete[] m_buffer;
 		m_buffer = nullptr;
-	}	
+	}
+
+	if (m_writeData) {
+		delete[] m_writeData;
+		m_writeData = nullptr;
+	}
+
+	if (m_inputDataBuf) {
+		delete[] m_inputDataBuf;
+		m_inputLen = 0;
+	}
 }
 
 bool UVPipeWrapper::Init(int fd) {
@@ -68,6 +97,14 @@ bool UVPipeWrapper::Init(int fd) {
   m_fd = fd ;
 	m_uvHandle = new uv_pipe_t;
 	m_uvHandle->data = static_cast<void*>(this);
+
+	if (m_inputDataBuf) {
+		delete[] m_inputDataBuf;
+		m_inputLen = 0;
+	}
+	m_inputLen = 1024 * 100;
+	m_inputDataBuf = new char[m_inputLen];
+
 
 	// ipc: whether this pipeline passes handles between different processes
 	int ret = uv_pipe_init(Mediasoup::GetInstance().GetLoop(), m_uvHandle, 0);
@@ -119,41 +156,40 @@ uv_pipe_t* UVPipeWrapper::GetPipe() const {
 
 void UVPipeWrapper::Write(const uint8_t* data, size_t len) {
 	MS_lOGF();
+
+	Mediasoup::GetInstance().Send((const char*)data, len, m_uvHandle);
+}
+/*
+void UVPipeWrapper::Write(const uint8_t* data, size_t len) {
+	MS_lOGF();
 	MS_ASSERT_R_LOGI(m_uvHandle, "no init");
 	MS_ASSERT_R_LOGE(!m_closed, "pipi closed already");
 	MS_ASSERT_R_LOGE(len != 0, "len == 0");	
 
+	uv_mutex_lock(&m_mutex_writebuf); //add by jacky 20211018
 	// First try uv_try_write(). In case it can not directly send all the given data
 	// then build a uv_req_t and use uv_write().
 
-	uv_buf_t buffer = uv_buf_init(reinterpret_cast<char*>(const_cast<uint8_t*>(data)), len);
-	int written = uv_try_write(reinterpret_cast<uv_stream_t*>(m_uvHandle), &buffer, 1);
-
-	// All the data was written. Done.
-	if (written == static_cast<int>(len)) {
-		return;
-	} else if (written == UV_EAGAIN || written == UV_ENOSYS) {
-		// Cannot write any data at first time. Use uv_write().
-		// Set written to 0 so pendingLen can be properly calculated.
-		written = 0;
-	} else if (written < 0) {
-		// Any other error.
-		MS_lOGE("uv_try_write() failed, trying uv_write(): %s", uv_strerror(written));
-
-		// Set written to 0 so pendingLen can be properly calculated.
-		written = 0;
+	if (m_writeData != nullptr) {
+		fprintf(stderr, "m_writeData != nullptr ,why?\n");//add by jacky 20211018
 	}
+	if (m_inputLen < len) {
+		if ((m_inputLen > 0) && (m_inputDataBuf != nullptr)) {
+			delete[] m_inputDataBuf;
+			m_inputDataBuf = nullptr;
+		}
+		m_inputLen = len ;
 
-	size_t pendingLen = len - written;
-	auto* writeData = new UvWriteData(pendingLen);
+		m_inputDataBuf = new char[m_inputLen];
+	}
+	memcpy(m_inputDataBuf, data, len);
+	uv_buf_t buffer = uv_buf_init(m_inputDataBuf, len); //add by jacky 20211019
+	m_writeData = new UvWriteData(len);
 
-	writeData->req.data = static_cast<void*>(writeData);
-	std::memcpy(writeData->store, data + written, pendingLen);
-
-	buffer = uv_buf_init(reinterpret_cast<char*>(writeData->store), pendingLen);
+	m_writeData->req.data = this;// static_cast<void*>(m_writeData);
 
 	int err = uv_write(
-		&writeData->req,
+		&m_writeData->req,
 		reinterpret_cast<uv_stream_t*>(m_uvHandle),
 		&buffer,
 		1,
@@ -162,11 +198,13 @@ void UVPipeWrapper::Write(const uint8_t* data, size_t len) {
 	if (err != 0) {
 		MS_lOGE("uv_write() failed: %s", uv_strerror(err));		
 
+		uv_mutex_unlock(&m_mutex_writebuf);
 		// Delete the UvSendData struct.
-		delete writeData;
+		delete m_writeData;
+		m_writeData = nullptr;
 	}
 }
-
+*/
 void UVPipeWrapper::Close() {
 	MS_lOGF();
 	MS_ASSERT_R_LOGI(m_uvHandle, "no init");
@@ -198,6 +236,12 @@ void UVPipeWrapper::Close() {
 	} else {
 		// Otherwise directly close the socket.
 		uv_close(reinterpret_cast<uv_handle_t*>(m_uvHandle), static_cast<uv_close_cb>(StaticOnClose));
+	}
+	if (m_writeData != nullptr) { 
+		uv_mutex_unlock(&m_mutex_writebuf);
+		// Delete the UvSendData struct.
+		delete m_writeData;
+		m_writeData = nullptr;
 	}
 }
 

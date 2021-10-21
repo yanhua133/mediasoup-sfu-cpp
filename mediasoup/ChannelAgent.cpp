@@ -73,121 +73,139 @@ json ChannelAgent::request(const char * method, json& internal,const json& data)
 {
   	this->_nextId < 4294967295 ? ++this->_nextId : (this->_nextId = 1);
 
-		auto id = this->_nextId;
+	auto id = this->_nextId;
 
-		MS_lOGD("Channel Agent, request [method:%s, id:%I64d]", method, id);
+	MS_lOGD("Channel Agent, request [method:%s, id:%I64d]", method, id);
 
-		if (this->_closed)
-			MS_lOGE("Channel Agent,Channel closed");
+	if (this->_closed)
+		MS_lOGE("Channel Agent,Channel closed");
 
-		json request = { 
-      { "id" , id },
-      { "method" , std::string(method) },
-      { "internal" , internal },
-      { "data" , data } 
-    };
-    std::string strreq = request.dump();
-    size_t readLen = strreq.length();
-		char* jsonStart = nullptr;
-        size_t jsonLen = netstring_encode_new(&jsonStart,(char *)strreq.c_str(),(size_t)strreq.length());
-		//const ns = netstring.nsWrite(JSON.stringify(request));
+	json request = { 
+    { "id" , id },
+    { "method" , std::string(method) },
+    { "internal" , internal },
+    { "data" , data } 
+};
+	std::string strreq = request.dump();
+	size_t readLen = strreq.length();
+	char* jsonStart = nullptr;
+	size_t jsonLen = netstring_encode_new(&jsonStart, (char*)strreq.c_str(), (size_t)strreq.length());
+	//const ns = netstring.nsWrite(JSON.stringify(request));
 
-		if (jsonLen > NS_MESSAGE_MAX_LEN)
-			MS_lOGE("Channel request too big");
+	if (jsonLen > NS_MESSAGE_MAX_LEN)
+		MS_lOGE("Channel request too big");
 
-		// This may throw if closed or remote side ended.
-		//this._producerSocket.write(ns);
+	// This may throw if closed or remote side ended.
+	//this._producerSocket.write(ns);
    
     
-    //发送数据处理异步处理
-
+	//发送数据处理异步处理
+	//this->m_pPromise.reset(new std::promise<json>); 
+	MS_lOGD("channel agent,new std::promise<json>() , start here.");
 	std::promise<json>* pPromiseJson = new std::promise<json>(); 
+	MS_lOGD("channel agent,new std::promise<json>() , start end.");
+	this->m_pPromise.reset();
 	this->m_pPromise.reset(pPromiseJson);
-		//std::promise<json> promise;
-	//	this->m_pTransport->send(request);//just like await
-		//pplx::task_completion_event<json> tce;
-		//m_request_task_queue.push(tce);
-		//Timer timer = Timer();
-		auto timeout = 1000 * (15 + (0.1 * this->m_sents.size()));
+	MS_lOGD("channel agent,new std::promise<json>() ,reset.");
+	//std::promise<json> promise;
+//	this->m_pTransport->send(request);//just like await
+	//pplx::task_completion_event<json> tce;
+	//m_request_task_queue.push(tce);
+	//Timer timer = Timer();
+	auto timeout = 1000 * (15 + (0.1 * this->m_sents.size()));
 
-		std::shared_ptr<Sent> sent(new Sent);
-		sent->id = request["id"].get<int>();
-		sent->method = request["method"].get<std::string>();
-		//capture all reference and capture value of request
-		sent->resolve = [&, request](json data2) {
+	std::shared_ptr<Sent> sent(new Sent);
+	sent->id = request["id"].get<int>();
+	sent->method = request["method"].get<std::string>();
+	//capture all reference and capture value of request
+	sent->resolve = [&, request](json data2) {
 #if PROTOO_LOG_ENABLE
-			std::cout << "[Peer] request resolved id=:" << request["id"].get<int>() << " data2=" << data2 << std::endl;
+		std::cout << "[Peer] request resolved id=:" << request["id"].get<int>() << " data2=" << data2 << std::endl;
 #endif
-			
-			auto sent_element = this->m_sents.find(request["id"].get<int>());
-			if (sent_element == m_sents.end()) {
-#if PROTOO_LOG_ENABLE
-				std::cout << "[Peer] request id not found in map!\n" << std::endl;
-#endif
-				
-				return;
-			}
-			this->m_sents.erase(sent_element);
-			this->mTimer.stop();
-			try {
-				this->m_pPromise->set_value(data2);
-			}
-			catch (std::exception&) {
-				this->m_pPromise->set_exception(std::current_exception()); 
-#if PROTOO_LOG_ENABLE
-				std::cout << "[Peer] request resolved m_pPromise set value error." << std::endl;
-#endif
-			}
-		};
 
-		sent->reject = [&, request](std::string errorInfo) {
+		if (this->m_sents.empty()) {
 #if PROTOO_LOG_ENABLE
-			std::cout << "[Peer] request reject id=:" << request["id"].get<int>() << " errorInfo=" << errorInfo << std::endl;
+			std::cout << "[Peer],sents is empty, request id not found in map!\n" << std::endl;
 #endif
-			
-			auto sent_element = this->m_sents.find(request["id"].get<int>());
-			if (sent_element == m_sents.end()) {
-				std::cout << "[Peer] reject request id not found in map!\n" << std::endl;
-				return;
-			}
-			this->m_sents.erase(sent_element);
-			this->mTimer.stop();
-			this->m_pPromise->set_exception(std::make_exception_ptr(PeerError(errorInfo.c_str())));
-		};
+			return;
+		}
+		auto sent_element = this->m_sents.find(request["id"].get<int>());
+		if (sent_element == m_sents.end()) {
+#if PROTOO_LOG_ENABLE
+			std::cout << "[Peer] request id not found in map!\n" << std::endl;
+#endif
 
-		sent->close = [&]() {
-			this->mTimer.stop();
-		};
-		//超时处理
-		mTimer.setTimeout([&, request]() {
+			return;
+		}
+		this->m_sents.erase(sent_element);
+		this->mTimer.stop();
+		try {
+			this->m_pPromise->set_value(data2);
+		}
+		catch (std::exception& e) {
+			//this->m_pPromise->set_exception(std::make_exception_ptr(PeerError("peer request error"))); //add by jacky
 #if PROTOO_LOG_ENABLE
-			std::cout << "[Peer] request request timeout request id=" << request["id"].get<int>() << std::endl;
+			std::cout << "[Peer] request resolved m_pPromise set value error." << e.what() << std::endl;
 #endif
-			std::lock_guard<std::mutex> lock(this->m_sents_mutex);
-			auto sent_element = this->m_sents.find(request["id"].get<int>());
-			if (sent_element == m_sents.end()) {
+		}
+		catch (...) {
+			MS_lOGD("promise set value, caught ...");
+
+			return ;
+		}
+	};
+
+	sent->reject = [&, request](std::string errorInfo) {
 #if PROTOO_LOG_ENABLE
-				std::cout << "[Peer] request id not found in map!\n" << std::endl;
+		std::cout << "[Peer] request reject id=:" << request["id"].get<int>() << " errorInfo=" << errorInfo << std::endl;
 #endif
-				
-				return;
-			}
-			this->m_sents.erase(sent_element);
-			this->m_pPromise->set_exception(std::make_exception_ptr(PeerError("peer request Time out error")));
-			}, timeout);
+
+		auto sent_element = this->m_sents.find(request["id"].get<int>());
+		if (sent_element == m_sents.end()) {
+			std::cout << "[Peer] reject request id not found in map!\n" << std::endl;
+			return;
+		}
+		this->m_sents.erase(sent_element);
+		this->mTimer.stop();
+		this->m_pPromise->set_exception(std::make_exception_ptr(PeerError(errorInfo.c_str())));
+	};
+
+	sent->close = [&]() {
+		this->mTimer.stop();
+	};
+	//超时处理
+	mTimer.setTimeout([&, request]() {
+#if PROTOO_LOG_ENABLE
+		std::cout << "[Peer] request request timeout request id=" << request["id"].get<int>() << std::endl;
+#endif
+		std::lock_guard<std::mutex> lock(this->m_sents_mutex);
+		auto sent_element = this->m_sents.find(request["id"].get<int>());
+		if (sent_element == m_sents.end()) {
+#if PROTOO_LOG_ENABLE
+			std::cout << "[Peer] request id not found in map!\n" << std::endl;
+#endif
+
+			return;
+		}
+		this->m_sents.erase(sent_element);
+		this->m_pPromise->set_exception(std::make_exception_ptr(PeerError("peer request Time out error")));
+		}, timeout);
 
 #if PROTOO_LOG_ENABLE
-		std::cout << "[Peer] insert into m_sents request id=" << request["id"].get<int>() << std::endl;
+	std::cout << "[Peer] insert into m_sents request id=" << request["id"].get<int>() << std::endl;
 #endif // PROTOO_LOG_ENABLE
-
-		this->m_sents[request["id"].get<int>()] = sent;
+	MS_lOGD("channel agent,m_sents <- send, start .");
+	this->m_sents[request["id"].get<int>()] = sent;
+	MS_lOGD("channel agent,m_sents <- send, end .");
 #if PROTOO_LOG_ENABLE
-		std::cout << "[Peer] after insert m_sents.size =" << m_sents.size() << std::endl;
+	std::cout << "[Peer] after insert m_sents.size =" << m_sents.size() << std::endl;
 #endif
-    //需要放到最后发送，不然会出现收到返回信息后还没有加入到队列的问题
-    MS_lOGD("request raw data = %s",strreq.c_str());
-    Write((const uint8_t*)jsonStart,jsonLen);
-
+	//需要放到最后发送，不然会出现收到返回信息后还没有加入到队列的问题
+	//MS_lOGD("channel agent,request raw data = %s", (char*)strreq.c_str());
+	MS_lOGD("channel agent,Write start = %s ", strreq.c_str());
+	Write((const uint8_t*)jsonStart, jsonLen);
+	MS_lOGD("channel agent,Write end ");
+	//return this->m_pPromise->get_future().get();//del by jacky 20211007
 
 	try {
 		MS_lOGD("channel agent,promise get future,start .");
@@ -200,12 +218,17 @@ json ChannelAgent::request(const char * method, json& internal,const json& data)
 			MS_lOGD("channel agent,promise get future,end  .promise is  nullptr !");
 			return nullptr;
 		}
-		
+
 
 	}
 	catch (std::exception& e) {
 
 		MS_lOGD("promise get future,exception caught =%s", e.what());
+
+		return nullptr;
+	}
+	catch (...) {
+		MS_lOGD("promise get future, caught ...");
 
 		return nullptr;
 	}

@@ -51,6 +51,11 @@ public:
 	void OnReadCB(uv_stream_t* stream, ssize_t nRead, const uv_buf_t* buf);
 	void OnWriteError(int error);
 
+public:
+	uv_mutex_t m_mutex_writebuf;
+	UvWriteData* m_writeData;
+	char* m_inputDataBuf; 
+	int  m_inputLen; 
 private:
 	uv_pipe_t* m_uvHandle = nullptr;
 

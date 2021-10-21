@@ -234,7 +234,7 @@ public:
 		this->_closed = true;
 
 		// Close the protoo Room.
-		//this->_protooRoom->close();
+		this->_protooRoom->close();
 
 		// Close the mediasoup Router.
 		this->_mediasoupRouter->close();
@@ -2131,7 +2131,8 @@ public:
 
                 accept({ {"id", dataProducer->id()} });
 
-				if (true)
+				//if (true)
+				if(data["label"]!=nullptr) 
 				{
 					if(dataProducer->label() == "chat")
 					{
