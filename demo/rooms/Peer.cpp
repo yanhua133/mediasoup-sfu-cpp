@@ -78,17 +78,17 @@ void Peer::requestAsync(std::string method, json message) {
       {}
 
       Action act() override {
-        return oatpp::async::synchronize(m_lock, m_websocket->sendOneFrameTextAsync(m_message)).next(yieldTo(&RequestCoroutine::checkResponse));
+        return oatpp::async::synchronize(m_lock, m_websocket->sendOneFrameTextAsync(m_message)).next(yieldTo(&RequestCoroutine::waitResponse));
       }
         
         Action waitResponse() {
-            return waitFor(std::chrono::milliseconds(100)).next(yieldTo(&RequestCoroutine::checkResponse));
+            return waitFor(std::chrono::milliseconds(100)).next(finish());
         }
         
         Action checkResponse() {
             //判断sent map里面是否有该值
             //结束coroutine
-            finish();
+            //finish();
         }
 
     };
