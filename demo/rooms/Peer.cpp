@@ -78,11 +78,11 @@ void Peer::requestAsync(std::string method, json message) {
       {}
 
       Action act() override {
-        return oatpp::async::synchronize(m_lock, m_websocket->sendOneFrameTextAsync(m_message)).next(yieldTo(&RequestCoroutine::waitResponse));
+          return oatpp::async::synchronize(m_lock, m_websocket->sendOneFrameTextAsync(m_message)).next(finish());//.next(yieldTo(&RequestCoroutine::waitResponse));
       }
         
         Action waitResponse() {
-            return waitFor(std::chrono::milliseconds(100)).next(finish());
+            //return waitFor(std::chrono::milliseconds(100)).next(finish());
         }
         
         Action checkResponse() {
@@ -132,14 +132,16 @@ void Peer::notifyAsync(std::string method, json message) {
 void Peer::handleRequest(json request){
     std::function<void(json data)> accept([&, request](json data)
                                           {
-        std::cout << "[Peer] handleRequest accept" << request.dump(4) << endl;
+        
         auto response = Message::createSuccessResponse(request, data);
+        std::cout << "[Room] [Peer] handleRequest with accept response=" << response.dump(4) << endl;
         sendMessageAsync(response);
     });
     std::function<void(int errorCode, std::string errorReason)> reject([&, request](int errorCode, std::string errorReason)
                                                                        {
-        std::cout << "[Peer] handleRequest reject" << request.dump(4) << endl;
+        
         auto response = Message::createErrorResponse(request, errorCode, errorReason);
+        std::cout << "[Room] [Peer] handleRequest with reject response=" << response.dump(4) << endl;
         sendMessageAsync(response);
     });
     //auto shared_peer = std::make_shared<Peer>((Peer*)this);
@@ -252,13 +254,23 @@ oatpp::async::CoroutineStarter Peer::onApiError(const oatpp::String& errorMessag
 
 }
 
-oatpp::async::CoroutineStarter Peer::handleMessage(const json& message) {
-    if (message["request"].is_boolean())
-        this->handleRequest(message);
-    else if (message["response"].is_boolean())
-        this->handleResponse(message);
-    else if (message["notification"].is_boolean())
-        this->handleNotification(message);
+oatpp::async::CoroutineStarter Peer::handleMessage(const json message) {
+    MS_lOGD("[Room] [Peer] handleMessage message=%s",message.dump(4).c_str());
+    if (message.contains("request")){
+        if(message["request"].is_boolean()){
+            this->handleRequest(message);
+        }
+    }
+    else if (message.contains("response")){
+        if(message["response"].is_boolean()){
+            this->handleResponse(message);
+        }
+    }
+    else if(message.contains("notification")){
+        if(message["notification"].is_boolean()){
+            this->handleNotification(message);
+        }
+    }
 //  if(!message->code) {
 //    return onApiError("No message code provided.");
 //  }
@@ -325,7 +337,7 @@ oatpp::async::CoroutineStarter Peer::readMessage(const std::shared_ptr<AsyncWebS
 
     auto wholeMessage = m_messageBuffer.toString();
     m_messageBuffer.clear();
-
+      MS_lOGD("[Room] [Peer] readMessage=%s",wholeMessage->c_str());
 //    oatpp::Object<MessageDto> message;
 //
 //    try {

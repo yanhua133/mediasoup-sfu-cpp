@@ -130,7 +130,7 @@ void Room::addHistoryMessage(const oatpp::Object<MessageDto>& message) {
 void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::function<void(json data)> const & accept, std::function<void(int errorCode, std::string errorReason)> const & reject){
     std::string method = request["method"];
     //switch (request.method)
-    MS_lOGD("_handleProtooRequest request data = %s",request["data"].dump().c_str());
+    //MS_lOGD("_handleProtooRequest request data = %s",request["data"].dump().c_str());
     if(!m_pConfig){
         MS_lOGD("_handleProtooRequest config not existing");
     }
@@ -144,7 +144,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         // Ensure the Peer is not already joined.
         if (peer->data.joined)
         {
-            MS_THROW_lOG("Peer already joined");
+            MS_THROW_lOG("[Room] Peer already joined");
             // accept(json({}));
             // return;
         }
@@ -153,7 +153,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         auto device = data["device"];
         auto rtpCapabilities = data["rtpCapabilities"];
         auto sctpCapabilities = data["sctpCapabilities"];
-        MS_lOGD("join rtpCapabilities=%s",rtpCapabilities.dump(4).c_str());
+        MS_lOGD("[Room] join rtpCapabilities=%s",rtpCapabilities.dump(4).c_str());
         
         // Store client data into the protoo Peer data object.
         peer->data.joined = true;
@@ -260,7 +260,12 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
                 {"displayName" , peer->data.displayName},
                 {"device"      , peer->data.device}
             });
-            
+            json jsonmsg={
+                {"id"          , peer->getPeerId()},
+                {"displayName" , peer->data.displayName},
+                {"device"      , peer->data.device}
+            };
+            MS_lOGD("[Room] on peer join otherPeer peerId=%s notifyAsync=%s",otherPeer->getPeerId().c_str(),jsonmsg.dump(4).c_str());
         }
         
         //break;

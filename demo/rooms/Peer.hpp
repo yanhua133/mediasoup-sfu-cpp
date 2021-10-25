@@ -123,7 +123,7 @@ private:
 
 private:
     
-  oatpp::async::CoroutineStarter handleMessage(const json& message);
+  oatpp::async::CoroutineStarter handleMessage(const json message);
 
 public:
 

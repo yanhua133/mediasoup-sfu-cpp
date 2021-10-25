@@ -62,6 +62,7 @@ public:
         auto forceH264 = request->getQueryParameter("forceH264","false"); //type is oatpp::string should convert to bool
         auto forceVP9 = request->getQueryParameter("forceVP9","false");
       /* Websocket handshake */
+      MS_lOGD("[Room] new connection roomId=%s peerId=%s",roomId->c_str(), peerId->c_str());
       auto response = oatpp::websocket::Handshaker::serversideHandshake(request->getHeaders(), controller->websocketConnectionHandler);
 
       auto parameters = std::make_shared<oatpp::network::ConnectionHandler::ParameterMap>();
