@@ -791,14 +791,14 @@ void SfuServer::onAfterCreate_NonBlocking(const std::shared_ptr<AsyncWebSocket>&
   //check whether peerId existed
    auto existingPeer = room->getPeerById(peerId->std_str());
   if(existingPeer){
-	  MS_lOGW("handleProtooConnection() | there is already a protoo Peer with same peerid(), closing it [peerId:%s]",
+	  MS_lOGW("[Room] handleProtooConnection() | there is already a protoo Peer with same peerid(), closing it [peerId:%s]",
               peerId->std_str().c_str());
             // TODO:should close
 			//existingPeer->close();
 	  return;
   }
  //TODO: uncomment below 3 lines
-  auto peer = std::make_shared<Peer>(socket, room, peerId, peerId);
+  auto peer = std::make_shared<Peer>(socket, room, peerId->std_str(), peerId->std_str());
   socket->setListener(peer);
   room->addPeer(peer);
 

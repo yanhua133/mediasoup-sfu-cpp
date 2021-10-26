@@ -125,21 +125,22 @@ void Peer::notifyAsync(std::string method, json message) {
 
   if(m_socket) {
       auto notify = Message::createNotification(method, message);
+      std::cout << "[Room] [Peer] notifyAsync notify=" << notify.dump(4) << endl;
     m_asyncExecutor->execute<NotifyCoroutine>(&m_writeLock, m_socket, notify.dump().c_str());
   }    
 }
 
 void Peer::handleRequest(json request){
+    MS_lOGD("[Room] [Peer] handleRequest peerId=%s,request=%s",this->m_peerId.c_str(), request.dump(4).c_str());
     std::function<void(json data)> accept([&, request](json data)
                                           {
-        
         auto response = Message::createSuccessResponse(request, data);
         std::cout << "[Room] [Peer] handleRequest with accept response=" << response.dump(4) << endl;
         sendMessageAsync(response);
     });
+    //需要注意的是，capture by reference是不会修改被capture变量的生命周期的，你要保证被capture的变量在closure运行时是有效的。
     std::function<void(int errorCode, std::string errorReason)> reject([&, request](int errorCode, std::string errorReason)
                                                                        {
-        
         auto response = Message::createErrorResponse(request, errorCode, errorReason);
         std::cout << "[Room] [Peer] handleRequest with reject response=" << response.dump(4) << endl;
         sendMessageAsync(response);
@@ -299,8 +300,12 @@ std::shared_ptr<Room> Peer::getRoom() {
   return m_room;
 }
 
-oatpp::String Peer::getNickname() {
+std::string Peer::getNickname() {
   return m_nickname;
+}
+
+void Peer::setNickname(std::string nickName){
+    m_nickname = nickName;
 }
 
 std::string Peer::getPeerId() {

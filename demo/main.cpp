@@ -250,6 +250,9 @@ void run(int argc, const char* argv[]) {
   oatpp::network::Server server(connectionProvider, connectionHandler);
 
   std::thread serverThread([&server]{
+      std::ostringstream ss;
+      ss << std::this_thread::get_id();
+      MS_lOGD("[Room] serverThread thread:%s",ss.str().c_str());
     server.run();
   });
     //std::shared_ptr<SfuServer> sfuServer = std::make_shared<SfuServer>();
@@ -259,10 +262,10 @@ void run(int argc, const char* argv[]) {
     //sfuServer->runPingLoop(std::chrono::seconds(30));
   });
 
-  std::thread statThread([]{
-    OATPP_COMPONENT(std::shared_ptr<Statistics>, statistics);
-    statistics->runStatLoop();
-  });
+//  std::thread statThread([]{
+//    OATPP_COMPONENT(std::shared_ptr<Statistics>, statistics);
+//    statistics->runStatLoop();
+//  });
 
   OATPP_COMPONENT(oatpp::Object<ConfigDto>, appConfig);
 
@@ -300,13 +303,16 @@ void run(int argc, const char* argv[]) {
 
   serverThread.join();
   pingThread.join();
-  statThread.join();
+  //statThread.join();
 
 }
 
 int main(int argc, const char* argv[])
 {
     oatpp::base::Environment::init();
+    std::ostringstream ss;
+    ss << std::this_thread::get_id();
+    MS_lOGD("[Room] mainThread:%s",ss.str().c_str());
     run(argc, argv);
     oatpp::base::Environment::destroy();
 
