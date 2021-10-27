@@ -97,7 +97,6 @@ private:
     int listenport;
     int thread_count=1;
     //copy from canchat Lobby.hpp
-    std::atomic<v_int64> m_peerIdCounter;
     std::unordered_map<oatpp::String, std::shared_ptr<Room>> m_rooms;
     std::mutex m_roomsMutex;
     //copy end
