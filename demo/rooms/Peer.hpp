@@ -103,7 +103,7 @@ private:
 private:
   std::shared_ptr<AsyncWebSocket> m_socket;
   std::shared_ptr<Room> m_room;
-  oatpp::String m_nickname;
+  std::string m_nickname;
   std::string m_peerId;
 private:
   std::atomic<v_int32> m_pingPoingCounter;
@@ -129,12 +129,13 @@ public:
 
   Peer(const std::shared_ptr<AsyncWebSocket>& socket,
        const std::shared_ptr<Room>& room,
-       const oatpp::String& nickname,
-       const oatpp::String& peerId)
+       const std::string peerId,
+       const std::string nickname
+       )
     : m_socket(socket)
     , m_room(room)
+    , m_peerId(peerId)
     , m_nickname(nickname)
-    , m_peerId(peerId->std_str())
     , m_pingPoingCounter(0)
   {}
 
@@ -164,7 +165,10 @@ public:
    * Get peer nickname.
    * @return
    */
-  oatpp::String getNickname();
+  std::string getNickname();
+   
+    //set peer nickname
+  void setNickname(std::string nickname);
 
   /**
    * Get peer peerId.

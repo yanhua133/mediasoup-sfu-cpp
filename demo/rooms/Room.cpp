@@ -39,14 +39,14 @@ void Room::welcomePeer(const std::shared_ptr<Peer>& peer) {
 
   /* Inform all that peer have joined the room */
 
-  auto joinedMessage = MessageDto::createShared();
-  joinedMessage->code = MessageCodes::CODE_PEER_JOINED;
-  joinedMessage->peerId = oatpp::String(peer->getPeerId().c_str());
-  joinedMessage->peerName = peer->getNickname();
-  joinedMessage->message = peer->getNickname() + " - joined room";
-
-  addHistoryMessage(joinedMessage);
-  sendMessageAsync(joinedMessage);
+//  auto joinedMessage = MessageDto::createShared();
+//  joinedMessage->code = MessageCodes::CODE_PEER_JOINED;
+//  joinedMessage->peerId = oatpp::String(peer->getPeerId().c_str());
+//  joinedMessage->peerName = peer->getNickname();
+//  joinedMessage->message = peer->getNickname() + " - joined room";
+//
+//  addHistoryMessage(joinedMessage);
+  // sendMessageAsync(joinedMessage);
 
 }
 
@@ -80,13 +80,13 @@ void Room::onboardPeer(const std::shared_ptr<Peer>& peer) {
 
 void Room::goodbyePeer(const std::shared_ptr<Peer>& peer) {
 
-  auto message = MessageDto::createShared();
-  message->code = MessageCodes::CODE_PEER_LEFT;
-  //message->peerId = peer->getPeerId();
-  message->message = peer->getNickname() + " - left room";
-
-  addHistoryMessage(message);
-  sendMessageAsync(message);
+//  auto message = MessageDto::createShared();
+//  message->code = MessageCodes::CODE_PEER_LEFT;
+//  //message->peerId = peer->getPeerId();
+//  message->message = peer->getNickname() + " - left room";
+//
+//  addHistoryMessage(message);
+//  sendMessageAsync(message);
 
 }
 
@@ -129,18 +129,21 @@ void Room::addHistoryMessage(const oatpp::Object<MessageDto>& message) {
 
 void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::function<void(json data)> const & accept, std::function<void(int errorCode, std::string errorReason)> const & reject){
     std::string method = request["method"];
+    //print current thread
+    std::ostringstream ss;
+    ss << std::this_thread::get_id();
+    MS_lOGD("[Room] handleRequest current thread:%s",ss.str().c_str());
     //switch (request.method)
     //MS_lOGD("_handleProtooRequest request data = %s",request["data"].dump().c_str());
     if(!m_pConfig){
-        MS_lOGD("_handleProtooRequest config not existing");
+        MS_lOGD("[Room] handleRequest config not existing");
     }
     if(method == "getRouterRtpCapabilities")
     {
         json rtpCapabilities = this->m_mediasoupRouter->rtpCapabilities();
-        MS_lOGE("_handleProtooRequest getRouterRtpCapabilities = %s",rtpCapabilities.dump(4).c_str());
+        MS_lOGE("[Room] handleRequest getRouterRtpCapabilities peerId=%s, peerName=%s, rtpCapabilities = 暂不显示",peer->getPeerId().c_str(),peer->getNickname().c_str()); //rtpCapabilities.dump(4).c_str());
         accept(rtpCapabilities);
-        //break;
-    }else if(method ==  "join"){
+    }else if(method == "join"){
         // Ensure the Peer is not already joined.
         if (peer->data.joined)
         {
@@ -153,7 +156,8 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         auto device = data["device"];
         auto rtpCapabilities = data["rtpCapabilities"];
         auto sctpCapabilities = data["sctpCapabilities"];
-        MS_lOGD("[Room] join rtpCapabilities=%s",rtpCapabilities.dump(4).c_str());
+        peer->setNickname(displayName);
+        MS_lOGD("[Room] peer join peerId=%s,displayName=%s,rtpCapabilities=%s",peer->getPeerId().c_str(), peer->getNickname().c_str(), rtpCapabilities.dump(4).c_str());
         
         // Store client data into the protoo Peer data object.
         peer->data.joined = true;
