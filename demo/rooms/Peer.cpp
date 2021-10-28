@@ -126,7 +126,7 @@ void Peer::notifyAsync(std::string method, json message) {
   if(m_socket) {
       auto notify = Message::createNotification(method, message);
       std::cout << "[Room] [Peer] notifyAsync notify=" << notify.dump(4) << endl;
-    m_asyncExecutor->execute<NotifyCoroutine>(&m_writeLock, m_socket, notify.dump().c_str());
+    m_asyncExecutor->execute<NotifyCoroutine>(&m_writeLock, m_socket, oatpp::String(notify.dump().c_str()));
   }    
 }
 

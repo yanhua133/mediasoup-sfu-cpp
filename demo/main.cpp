@@ -293,16 +293,21 @@ void run(int argc, const char* argv[]) {
     MS_lOGD("pipe Create Pair PayloadProducerChannelFd[0]=%d PayloadProducerChannelFd[1]=%d ",PayloadProducerChannelFd[0],PayloadProducerChannelFd[1]);
   
     sfuServer->setConfig(pConfig);
-
-    sfuServer->initMediasoup();
-
-    MS_lOGD("initWorker ProducerChannelFd[0]=%d,ConsumerChannelFd[1]=%d,PayloadProducerChannelFd[0]=%d,PayloadConsumerChannelFd[1]=%d",ProducerChannelFd[0],ConsumerChannelFd[1],PayloadProducerChannelFd[0],PayloadConsumerChannelFd[1]);
-    sfuServer->initWorker(ProducerChannelFd[0],ConsumerChannelFd[1],PayloadProducerChannelFd[0],PayloadConsumerChannelFd[1]);
     
-    worker_init(argc,argv);
-
-  serverThread.join();
-  pingThread.join();
+    
+    std::thread workerThread([&argc, &argv, &sfuServer]{
+        std::ostringstream ss;
+        ss << std::this_thread::get_id();
+        sfuServer->initMediasoup();
+        MS_lOGD("initWorker ProducerChannelFd[0]=%d,ConsumerChannelFd[1]=%d,PayloadProducerChannelFd[0]=%d,PayloadConsumerChannelFd[1]=%d",ProducerChannelFd[0],ConsumerChannelFd[1],PayloadProducerChannelFd[0],PayloadConsumerChannelFd[1]);
+        sfuServer->initWorker(ProducerChannelFd[0],ConsumerChannelFd[1],PayloadProducerChannelFd[0],PayloadConsumerChannelFd[1]);
+        worker_init(argc,argv);
+        MS_lOGD("workerThread ended");
+    });
+    
+    serverThread.join();
+    pingThread.join();
+    workerThread.join();
   //statThread.join();
 
 }
