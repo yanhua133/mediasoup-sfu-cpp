@@ -49,11 +49,11 @@ vc2019 需要拷贝到对应的Debug目录下，和执行文件同一个目录
 8、测试客户端输入地址
 目前客户端代码还没整理好暂未开源后续会陆续开源
 测试客户端下载地址
-win下载地址：
-http://quickrtc.cn:8012/latest/sft-demo-client-1.0.1.win.zip
+win下载地址： 
+http://121.36.0.230:8012/latest/sft-demo-client-1.0.1.win.zip
 
-mac下载地址：
-http://quickrtc.cn:8012/latest/sft-demo-client-1.0.1.mac.zip
+mac下载地址： 
+http://121.36.0.230:8012/latest/sft-demo-client-1.0.1.mac.zip
 
 会议号输入任意数字比如 
 会议号：123456
