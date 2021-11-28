@@ -93,6 +93,7 @@ void Peer::requestAsync(std::string method, json message) {
         
         Action act() override {
             auto sentMsg = oatpp::String(m_message.dump().c_str());
+            m_peer->m_sents[m_message["id"].get<int>()] = m_message;
             return oatpp::async::synchronize(m_lock, m_websocket->sendOneFrameTextAsync(sentMsg)).next(yieldTo(&RequestCoroutine::waitResponse));
         }
         
@@ -166,27 +167,26 @@ void Peer::handleRequest(json request){
     auto shared_this = shared_from_this();
     m_room->handleRequest(shared_this, request, accept, reject);
 }
+
 void Peer::handleResponse(json response){
-        // std::shared_ptr<PROTOO_MSG> pmsg(new PROTOO_MSG);
-        // pmsg->message = response;
-
-        // auto sent_element = this->m_sents.find(response["id"].get<int>());
-        // if (sent_element == m_sents.end()) {
-        //     return;
-        // }
-        // auto sent = sent_element->second;
-
-        // if (response.contains("ok"))
-        // {
-        //     if (response["ok"].get<bool>())
-        //         sent->resolve(response["data"]);
-        // }
-        // else
-        // {
-        //     auto error = "error response!";
-        //     sent->reject(error);
-        // }
+    auto sent_element = this->m_sents.find(response["id"].get<int>());
+    if (sent_element == m_sents.end()) {
+        std::cout << "[Peer] response id not found in map!\n" << std::endl;
+        return;
+    }
+    
+    if (response.contains("ok"))
+    {
+        if (response["ok"].get<bool>())
+            this->m_sents.erase(sent_element);
+    }
+    else
+    {
+        auto error = "error response!";
+        this->m_sents.erase(sent_element);
+    }
 }
+
 void Peer::handleNotification(json notification){
   m_room->handleNotification(notification);
 }
