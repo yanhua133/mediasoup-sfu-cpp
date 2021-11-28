@@ -147,6 +147,7 @@ public:
     void sendMessageAsync(json message);
   void requestAsync(std::string method, json message);
   void notifyAsync(std::string method, json message);
+    oatpp::async::Action checkResponseAsync(int messageId, oatpp::async::Action&& nextAction);
 
   /**
    * Send Websocket-Ping.
@@ -192,6 +193,8 @@ private:
   void handleRequest(json request);
   void handleResponse(json response);
   void handleNotification(json notification);
+private:
+    std::map<int, nlohmann::json> m_sents;
 };
 
 

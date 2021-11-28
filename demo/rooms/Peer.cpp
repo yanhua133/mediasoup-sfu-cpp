@@ -61,41 +61,58 @@ void Peer::sendMessageAsync(json message) {
 
 }
 
+oatpp::async::Action Peer::checkResponseAsync(int messageId, oatpp::async::Action&& nextAction) {
+
+    auto sent_element = this->m_sents.find(messageId);
+    if (sent_element != m_sents.end()) {
+           //需要重复查找,直到找不到为止,好像还得有个超时机制
+        return oatpp::async::Action::createActionByType(oatpp::async::Action::TYPE_REPEAT);
+    }else{
+        return std::forward<oatpp::async::Action>(nextAction);
+    }
+}
+
 void Peer::requestAsync(std::string method, json message) {
     class RequestCoroutine : public oatpp::async::Coroutine<RequestCoroutine> {
     private:
-      oatpp::async::Lock* m_lock;
-      std::shared_ptr<AsyncWebSocket> m_websocket;
-      oatpp::String m_message;
+        std::shared_ptr<Peer> m_peer;
+        oatpp::async::Lock* m_lock;
+        std::shared_ptr<AsyncWebSocket> m_websocket;
+        json m_message;
     public:
-
-        RequestCoroutine(oatpp::async::Lock* lock,
-                           const std::shared_ptr<AsyncWebSocket>& websocket,
-                           const oatpp::String& message)
-        : m_lock(lock)
+        
+        RequestCoroutine(const std::shared_ptr<Peer>& peer,
+                         oatpp::async::Lock* lock,
+                         const std::shared_ptr<AsyncWebSocket>& websocket,
+                         const json& message)
+        : m_peer(peer)
+        , m_lock(lock)
         , m_websocket(websocket)
         , m_message(message)
-      {}
-
-      Action act() override {
-          return oatpp::async::synchronize(m_lock, m_websocket->sendOneFrameTextAsync(m_message)).next(finish());//.next(yieldTo(&RequestCoroutine::waitResponse));
-      }
+        {}
+        
+        Action act() override {
+            auto sentMsg = oatpp::String(m_message.dump().c_str());
+            return oatpp::async::synchronize(m_lock, m_websocket->sendOneFrameTextAsync(sentMsg)).next(yieldTo(&RequestCoroutine::waitResponse));
+        }
         
         Action waitResponse() {
+            auto messageId = m_message["id"].get<int>();
+            return m_peer->checkResponseAsync(messageId,yieldTo(&RequestCoroutine::onMessageResponse));
             //return waitFor(std::chrono::milliseconds(100)).next(finish());
         }
         
-        Action checkResponse() {
+        Action onMessageResponse() {
             //判断sent map里面是否有该值
             //结束coroutine
-            //finish();
+            finish();
         }
-
+        
     };
-
+    
     if(m_socket) {
-      auto request = Message::createRequest(method, message);
-      m_asyncExecutor->execute<RequestCoroutine>(&m_writeLock, m_socket, oatpp::String(request.dump().c_str()));
+        auto request = Message::createRequest(method, message);
+        m_asyncExecutor->execute<RequestCoroutine>(shared_from_this(), &m_writeLock, m_socket, request);
     }
     
     
@@ -291,8 +308,7 @@ oatpp::async::CoroutineStarter Peer::handleMessage(const json message) {
 //      return onApiError("Invalid client message code.");
 
   //}
-
-  return nullptr;
+    return nullptr;// do nothing
 
 }
 

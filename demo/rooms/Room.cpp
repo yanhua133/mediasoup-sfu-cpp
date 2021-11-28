@@ -1254,12 +1254,12 @@ void Room::createConsumer(std::shared_ptr<Peer> &consumerPeer, std::shared_ptr<P
             //return;
         //}
        
-        consumerPeer->notifyAsync(
-            "consumerScore",
-            {
-                {"consumerId" , consumer->id()},
-                {"score"      , consumer->score()}
-            });
+//        consumerPeer->notifyAsync(
+//            "consumerScore",
+//            {
+//                {"consumerId" , consumer->id()},
+//                {"score"      , consumer->score()}
+//            });
 
          consumer->resume();
     }
