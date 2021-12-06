@@ -498,11 +498,16 @@ public:
 
         });
             //transport.on('@producerclose', (producer: Producer) => this->_producers.delete(producer.id));
-        transport->on("@producerclose",[&](  std::shared_ptr<Producer> &producer)
-        {
-            this->_producers.erase(producer->id());
+		transport->on(
+			"@producerclose", [=](std::string id)
+			{
+				try {
+					this->_producers.erase(id);
+				}
+				catch (const char* error) {
 
-        });
+				}
+			});
             //transport.on('@newdataproducer', (dataProducer: DataProducer) => (
             //	this->_dataProducers.set(dataProducer.id, dataProducer)
             //));

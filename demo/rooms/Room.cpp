@@ -1244,6 +1244,9 @@ void Room::createConsumer(std::shared_ptr<Peer> &consumerPeer, std::shared_ptr<P
              {"producerPaused", consumer->producerPaused()}
             });
 
+
+              
+
         // Now that we got the positive response from the remote endpoint, resume
         // the Consumer so the remote endpoint will receive the a first RTP packet
         // of this new stream once its PeerConnection is already ready to process
@@ -1261,7 +1264,7 @@ void Room::createConsumer(std::shared_ptr<Peer> &consumerPeer, std::shared_ptr<P
 //                {"score"      , consumer->score()}
 //            });
 
-         consumer->resume();
+         //consumer->resume();
     }
     catch (const char *error)
     {

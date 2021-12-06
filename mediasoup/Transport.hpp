@@ -604,11 +604,10 @@ public:
         MS_lOGD("getConsumableRtpParameters jconsumableRtpParameters=%s",jconsumableRtpParameters.dump(4).c_str());
 		//const internal = { ...this->_internal, producerId: id || uuidv4() };
         json internal = this->_internal;
-        if(!id.empty()) {
-            internal["producerId"] = id;
-        } else {
-            internal["producerId"] = uuidv4();
+        if(id.empty()) {
+			id = uuidv4();
         }
+		internal["producerId"] = id;
         
 		const json reqData = {
             {"kind",kind},
@@ -641,10 +640,17 @@ public:
         );
 
 		this->_producers[producer->id()] =  producer;
-		producer->on("@close",[&]()
+
+		producer->on("@close",[=]()
 		{
-			this->_producers.erase(producer->id());
-			this->emit("@producerclose", producer);
+				try {
+					this->_producers.erase(id);
+					//this->_producers.erase(producer->id());
+					this->emit("@producerclose", id);
+				}
+				catch (const char* error) {
+
+				}
 		});
 
 		this->emit("@newproducer", producer);

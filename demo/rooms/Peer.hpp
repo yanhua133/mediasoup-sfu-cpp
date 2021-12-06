@@ -147,7 +147,7 @@ public:
     void sendMessageAsync(json message);
   void requestAsync(std::string method, json message);
   void notifyAsync(std::string method, json message);
-    oatpp::async::Action checkResponseAsync(int messageId, oatpp::async::Action&& nextAction);
+    oatpp::async::Action checkResponseAsync(int messageId, std::string method, std::string param, oatpp::async::Action&& nextAction);
 
   /**
    * Send Websocket-Ping.

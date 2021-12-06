@@ -61,13 +61,17 @@ void Peer::sendMessageAsync(json message) {
 
 }
 
-oatpp::async::Action Peer::checkResponseAsync(int messageId, oatpp::async::Action&& nextAction) {
+oatpp::async::Action Peer::checkResponseAsync(int messageId, string method, string param, oatpp::async::Action&& nextAction) {
 
     auto sent_element = this->m_sents.find(messageId);
     if (sent_element != m_sents.end()) {
            //需要重复查找,直到找不到为止,好像还得有个超时机制
         return oatpp::async::Action::createActionByType(oatpp::async::Action::TYPE_REPEAT);
-    }else{
+    }else {
+        if (method == "newConsumer" && param != "") {
+            auto& consumer = this->data.consumers[param];
+            consumer->resume();
+        }
         return std::forward<oatpp::async::Action>(nextAction);
     }
 }
@@ -99,15 +103,23 @@ void Peer::requestAsync(std::string method, json message) {
         
         Action waitResponse() {
             auto messageId = m_message["id"].get<int>();
-            return m_peer->checkResponseAsync(messageId,yieldTo(&RequestCoroutine::onMessageResponse));
+            auto method = m_message["method"].get<std::string>();
+            if (method == "newConsumer") {
+                auto data = m_message["data"];
+                auto consumerId = data["id"].get<std::string>();
+                return m_peer->checkResponseAsync(messageId, method, consumerId, finish());
+            }
+            else {
+                return m_peer->checkResponseAsync(messageId, "", "", finish());
+            }
             //return waitFor(std::chrono::milliseconds(100)).next(finish());
         }
         
-        Action onMessageResponse() {
-            //判断sent map里面是否有该值
-            //结束coroutine
-            finish();
-        }
+        //Action onMessageResponse() {
+        //    //判断sent map里面是否有该值
+        //    //结束coroutine
+        //    finish();
+        //}
         
     };
     
