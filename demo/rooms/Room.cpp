@@ -403,7 +403,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         auto data = request["data"];
         auto transportId = data["transportId"];
         auto dtlsParameters = data["dtlsParameters"];
-        auto &transport = peer->data.transports[transportId];
+        auto transport = peer->data.transports[transportId];
         
         if (!transport)
             MS_THROW_lOG("transport with id transportId=%s not found",transportId.dump().c_str());
@@ -416,8 +416,8 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         accept(json({}));
     }else if(method ==  "restartIce"){
         auto data = request["data"];
-        auto & transportId = data["transportId"];
-        auto &transport = peer->data.transports[transportId];
+        auto transportId = data["transportId"];
+        auto transport = peer->data.transports[transportId];
         
         if (!transport)
         {
@@ -594,8 +594,8 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         if (!peer->data.joined)
             MS_THROW_lOG("Peer not yet joined");
         auto data = request["data"];
-        auto & producerId = data["producerId"];
-        auto & producer = peer->data.producers[producerId];
+        auto producerId = data["producerId"];
+        auto producer = peer->data.producers[producerId];
         
         if (!producer)
         {
@@ -629,8 +629,8 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         if (!peer->data.joined)
             MS_THROW_lOG("Peer not yet joined");
         auto data = request["data"];
-        auto & producerId = data["producerId"];
-        auto &producer = peer->data.producers[producerId];
+        auto producerId = data["producerId"];
+        auto producer = peer->data.producers[producerId];
         
         if (!producer)
             MS_THROW_lOG("producer with id producerId=%s not found",producerId.dump().c_str());
