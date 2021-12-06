@@ -15,6 +15,7 @@
 #include "Promise.hpp"
 #include "uuid.hpp"
 #include "ortc.hpp"
+#include <memory>
 
 using json = nlohmann::json;
 using namespace uuid;
@@ -149,7 +150,7 @@ void from_json(const json& j, DtlsParameters& st);
 
 //const logger = new Logger('Transport");
 
-class Transport  : public EnhancedEventEmitter
+class Transport  : public EnhancedEventEmitter, public std::enable_shared_from_this<Transport>
 {
 	// Internal data.
 public:
@@ -641,12 +642,12 @@ public:
 
 		this->_producers[producer->id()] =  producer;
 
-		producer->on("@close",[=]()
+		producer->on("@close",[self = shared_from_this(), id]()
 		{
 				try {
-					this->_producers.erase(id);
+					self->_producers.erase(id);
 					//this->_producers.erase(producer->id());
-					this->emit("@producerclose", id);
+					self->emit("@producerclose", id);
 				}
 				catch (const char* error) {
 
