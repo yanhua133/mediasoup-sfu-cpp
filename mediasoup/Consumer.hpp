@@ -165,7 +165,7 @@ struct ConsumerStat
 
 //const logger = new Logger('Consumer');
 
-class Consumer  : public EnhancedEventEmitter
+class Consumer  : public EnhancedEventEmitter, public std::enable_shared_from_this<Consumer>
 {
 	// Internal data.
 public:
@@ -258,8 +258,8 @@ public:
 		this->_producerPaused = producerPaused;
 		this->_score = score;
 		this->_preferredLayers = preferredLayers;
-
-		this->_handleWorkerNotifications();
+		
+		//this->_handleWorkerNotifications(); 
 	}
 
 	/**
@@ -691,20 +691,18 @@ public:
 					}
 				//}
   }
-  void	_handleWorkerNotifications()
+  void	handleWorkerNotifications()
 	{
      //this->_internal["consumerId"], (event, data?: any) =>
-		this->_channel->on(this->_internal["consumerId"],[&]( std::string event,json data )
-		{
-         
-			processChannelNotifications(event,data);
+		this->_channel->on(this->_internal["consumerId"],[self = shared_from_this()]( std::string event,json data )
+		{         
+			self->processChannelNotifications(event,data);
 		});
         //this->_internal["consumerId"],
     //    (event, data: any | undefined, payload: Buffer) =>
-		this->_payloadChannel->on(this->_internal["consumerId"],[&]( std::string event,json data )
-        {
-           
-            processPayloadChannelNotifications(event,data);
+		this->_payloadChannel->on(this->_internal["consumerId"],[self = shared_from_this()]( std::string event,json data )
+        {           
+            self->processPayloadChannelNotifications(event,data);
         });
 	}
 };

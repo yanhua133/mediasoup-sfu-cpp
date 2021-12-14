@@ -327,7 +327,8 @@ public:
                 preferredLayers
 			//}
         );
-
+		consumer->handleWorkerNotifications();
+		
 		this->_consumers[consumer->id()] = consumer;
 	//consumer.on('@close', () => this->_consumers.delete(consumer.id));
         consumer->on("@close",[&]( )

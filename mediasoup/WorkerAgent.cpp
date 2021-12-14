@@ -344,9 +344,9 @@ void WorkerAgent::OnExit(int64_t exitStatus, int termSignal) {
       );
 
 		m_routers.push_back(router);
-        router->on("@close", [&](){
+        router->on("@close", [self = shared_from_this(), router](){
             //auto * router = (Router*)e.value();
-            this->m_routers.erase(std::remove( this->m_routers.begin(), this->m_routers.end(), router ),this->m_routers.end() );
+            self->m_routers.erase(std::remove(self->m_routers.begin(), self->m_routers.end(), router ), self->m_routers.end() );
         });
         
 		// Emit observer event.

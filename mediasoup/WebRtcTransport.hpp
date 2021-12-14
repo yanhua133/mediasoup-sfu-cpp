@@ -438,8 +438,7 @@ public:
 	void _handleWorkerNotifications()
 	{
 		this->_channel->on(this->_internal["transportId"],[&]( std::string event,json data )//this->_internal.transportId, (event, data?: any) =>
-		{
-		  
+		{		  
 			processChannelNotifications(event,data);
 		});
 	}

@@ -155,7 +155,7 @@ struct ProducerStat
 
 //const logger = new Logger('Producer');
 
-class Producer   : public EnhancedEventEmitter
+class Producer   : public EnhancedEventEmitter, public std::enable_shared_from_this<Producer>
 {
 	// Internal data.
 public:
@@ -224,7 +224,7 @@ public:
 		this->_appData = appData;
 		this->_paused = paused;
 
-		this->_handleWorkerNotifications();
+		//this->_handleWorkerNotifications();
 	}
 
 	/**
@@ -350,7 +350,7 @@ public:
 		this->emit("@close");
 
 		// Emit observer event.
-		this->_observer->safeEmit("close");
+		this->_observer->safeEmit("close", this->_internal["producerId"]);
 	}
 
 	/**
@@ -513,12 +513,11 @@ public:
   void processPayloadChannelNotifications(std::string event,const json & data) 
   {
   }
-	void _handleWorkerNotifications()
+	void handleWorkerNotifications()
 	{
-		this->_channel->on(this->_internal["producerId"],[&]( std::string event,json data ) //this->_internal["producerId"], (event, data?: any) =>
-		{
-		  
-			processChannelNotifications(event,data);
+		this->_channel->on(this->_internal["producerId"],[self = shared_from_this()]( std::string event,json data ) //this->_internal["producerId"], (event, data?: any) =>
+		{		  
+			self->processChannelNotifications(event,data);
 		});
 	}
 };

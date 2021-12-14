@@ -313,12 +313,12 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
             webRtcTransportOptions.enableTcp = true;
         }
         auto transport =  this->m_mediasoupRouter->createWebRtcTransport(webRtcTransportOptions);
-        transport->on("sctpstatechange", [&]( std::string sctpState ) //(sctpState) =>
+        transport->on("sctpstatechange", []( std::string sctpState ) //(sctpState) =>
                       {
             MS_lOGD("WebRtcTransport sctpstatechange event [sctpState:%s]", sctpState.c_str());
         });
         
-        transport->on("dtlsstatechange", [&]( std::string dtlsState ) //(dtlsState) =>
+        transport->on("dtlsstatechange", []( std::string dtlsState ) //(dtlsState) =>
                       {
             
             if (dtlsState == "failed" || dtlsState == "closed")
@@ -332,12 +332,12 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         types.push_back("bwe");
         transport->enableTraceEvent(types);
         
-        transport->on("trace", [&]( TransportTraceEventData & trace ) //(trace) =>
+        transport->on("trace", [peer, transport]( TransportTraceEventData & trace ) //(trace) =>
                       {
             
             MS_lOGD(
                     "transport trace event [transportId:%s, trace.type:%s, trace]",
-                    transport->id().c_str(), trace.type.c_str());
+                transport->id().c_str(), trace.type.c_str());
             
             if (trace.type == "bwe" && trace.direction == "out")
             {
@@ -472,7 +472,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         peer->data.producers[producer->id()]= producer;
         
         // Set Producer events.
-        producer->on("score", [&]( int score) //(score) =>
+        producer->on("score", [peer, producer]( int score) //(score) =>
                      {
             
             // MS_lOGD(
@@ -483,12 +483,12 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
             
         });
         
-        producer->on("videoorientationchange",[&]( int videoOrientation ) // (videoOrientation) =>
+        producer->on("videoorientationchange",[producer]( int videoOrientation ) // (videoOrientation) =>
                      {
             
             MS_lOGD(
                     "producer videoorientationchange event [producerId:%s, videoOrientation:%o]",
-                    producer->id().c_str(), videoOrientation);
+                producer->id().c_str(), videoOrientation);
         });
         
         // NOTE: For testing.
@@ -496,12 +496,12 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         //  producer->enableTraceEvent([ "pli", "fir" ]);
         //  producer->enableTraceEvent([ "keyframe" ]);
         
-        producer->on("trace", [&](TransportTraceEventData & trace) //(trace) =>
+        producer->on("trace", [producer](TransportTraceEventData & trace) //(trace) =>
                      {
             
             MS_lOGD(
                     "producer trace event [producerId:%s, trace.type:%s, trace]",
-                    producer->id().c_str(), trace.type.c_str());
+                producer->id().c_str(), trace.type.c_str());
         });
         
         accept({ {"id", producer->id() } });
@@ -1159,13 +1159,13 @@ void Room::createConsumer(std::shared_ptr<Peer> &consumerPeer, std::shared_ptr<P
     consumerPeer->data.consumers[consumer->id()] =  consumer;
 
     // Set Consumer events.
-    consumer->on("transportclose",[&]( )
+    consumer->on("transportclose",[consumerPeer, consumer]( )
     {
         // Remove from its map.
         consumerPeer->data.consumers.erase(consumer->id());
     });
 
-    consumer->on("producerclose",[&](  )
+    consumer->on("producerclose",[consumerPeer, consumer](  )
     {
         // Remove from its map.
         consumerPeer->data.consumers.erase(consumer->id());
@@ -1173,17 +1173,17 @@ void Room::createConsumer(std::shared_ptr<Peer> &consumerPeer, std::shared_ptr<P
         consumerPeer->notifyAsync("consumerClosed", { {"consumerId", consumer->id()} });
     });
 
-    consumer->on("producerpause",[&]()
+    consumer->on("producerpause",[consumerPeer, consumer]()
     {
         consumerPeer->notifyAsync("consumerPaused", { {"consumerId", consumer->id()} });
     });
 
-    consumer->on("producerresume",[&](  )
+    consumer->on("producerresume",[consumerPeer, consumer](  )
     {
         consumerPeer->notifyAsync("consumerResumed", { {"consumerId", consumer->id()} });
     });
 
-    consumer->on("score", [&]( int score ) //(score) =>
+    consumer->on("score", [consumerPeer, consumer](int score ) //(score) =>
     {
        
         // MS_lOGD(
@@ -1198,7 +1198,7 @@ void Room::createConsumer(std::shared_ptr<Peer> &consumerPeer, std::shared_ptr<P
 
     });
 
-    consumer->on("layerschange",[&]( json layers ) // (layers) =>
+    consumer->on("layerschange",[consumerPeer, consumer]( json layers ) // (layers) =>
     {
   
         consumerPeer->notifyAsync(
@@ -1215,7 +1215,7 @@ void Room::createConsumer(std::shared_ptr<Peer> &consumerPeer, std::shared_ptr<P
     //  consumer->enableTraceEvent([ "pli", "fir" ]);
     //  consumer->enableTraceEvent([ "keyframe" ]);
 
-    consumer->on("trace",[&]( ConsumerTraceEventData & trace ) // (trace) =>
+    consumer->on("trace",[consumer]( ConsumerTraceEventData & trace ) // (trace) =>
     {
         
         MS_lOGD(
@@ -1331,13 +1331,13 @@ void Room::createDataConsumer(
     dataConsumerPeer->data.dataConsumers[dataConsumer->id()]= dataConsumer;
 
     // Set DataConsumer events.
-    dataConsumer->on("transportclose",[&](  )
+    dataConsumer->on("transportclose",[dataConsumerPeer, dataConsumer](  )
     {
         // Remove from its map.
         dataConsumerPeer->data.dataConsumers.erase(dataConsumer->id());
     });
 
-    dataConsumer->on("dataproducerclose",[&]( )
+    dataConsumer->on("dataproducerclose",[dataConsumerPeer, dataConsumer]( )
     {
         // Remove from its map.
         dataConsumerPeer->data.dataConsumers.erase(dataConsumer->id());
