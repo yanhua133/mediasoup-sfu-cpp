@@ -693,14 +693,17 @@ public:
   }
   void	handleWorkerNotifications()
 	{
+      MS_lOGD("==handleWorkerNotifications==~~~~~~~%s", this->_internal["consumerId"].dump().c_str());
      //this->_internal["consumerId"], (event, data?: any) =>
-		this->_channel->on(this->_internal["consumerId"],[self = shared_from_this()]( std::string event,json data )
+		this->_channel->on(this->_internal["consumerId"].get<std::string>(),[self = shared_from_this()]( std::string event,json data )
 		{         
+            auto ss = self->_internal["consumerId"];
+            MS_lOGD("==handleWorkerNotifications==id=%s  \n%s      \n  %s\n",ss.dump().c_str(),event.c_str(), data.dump().c_str());
 			self->processChannelNotifications(event,data);
 		});
         //this->_internal["consumerId"],
     //    (event, data: any | undefined, payload: Buffer) =>
-		this->_payloadChannel->on(this->_internal["consumerId"],[self = shared_from_this()]( std::string event,json data )
+		this->_payloadChannel->on(this->_internal["consumerId"].get<std::string>(),[self = shared_from_this()]( std::string event,json data )
         {           
             self->processPayloadChannelNotifications(event,data);
         });
