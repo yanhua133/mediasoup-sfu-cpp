@@ -469,6 +469,7 @@ public:
         std::shared_ptr<WebRtcTransport> transport = std::make_shared<WebRtcTransport>(
              params
         );
+		transport->handleWorkerNotifications();
         //{
 //            internal,
 //            data1,
@@ -597,6 +598,8 @@ public:
         params.getDataProducerById = this->getDataProducerByIdFunc;
    
         std::shared_ptr<PlainTransport> transport = std::make_shared<PlainTransport>(params);
+		transport->handleWorkerNotifications();
+
 //        internal,
 //        data,
 //        this->_channel,
@@ -713,6 +716,7 @@ public:
         params.getProducerById = this->getProducerByIdFunc;
         params.getDataProducerById = this->getDataProducerByIdFunc;
         std::shared_ptr<PipeTransport> transport = std::make_shared<PipeTransport>(params);
+		transport->handleWorkerNotifications();
 //        internal,
 //        data,
 //        this->_channel,
@@ -791,6 +795,7 @@ public:
         params.getProducerById = this->getProducerByIdFunc;
         params.getDataProducerById = this->getDataProducerByIdFunc;
         std::shared_ptr<DirectTransport> transport = std::make_shared<DirectTransport>(params);
+		transport->handleWorkerNotifications();
 //        internal,
 //        data,
 //        this->_channel,

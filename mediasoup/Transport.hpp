@@ -145,10 +145,6 @@ void from_json(const json& j, DtlsFingerprint& st);
 void to_json(json& j, const DtlsParameters& st);
 void from_json(const json& j, DtlsParameters& st);
 
-/* Trick to allow multiple inheritance of objects
- * inheriting shared_from_this.
- * cf. https://stackoverflow.com/a/12793989/587407
- */
 
  /* First a common base class
   * of course, one should always virtually inherit from it.
@@ -181,7 +177,7 @@ public:
 
 //const logger = new Logger('Transport");
 
-class Transport  : public EnhancedEventEmitter, public std::enable_shared_from_this<Transport>
+class Transport  : public EnhancedEventEmitter, public inheritable_enable_shared_from_this<Transport>
 {
 	// Internal data.
 public:

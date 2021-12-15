@@ -163,7 +163,7 @@ public:
             {"sctpState"          , data["sctpState"]}
         };
 
-		this->_handleWorkerNotifications();
+		//this->_handleWorkerNotifications();
 	}
 
 	/**
@@ -435,11 +435,11 @@ public:
 				}
 			//}
     }
-	void _handleWorkerNotifications()
+	void handleWorkerNotifications()
 	{
-		this->_channel->on(this->_internal["transportId"],[&]( std::string event,json data )//this->_internal.transportId, (event, data?: any) =>
+		this->_channel->on(this->_internal["transportId"],[self = Transport::downcasted_shared_from_this<WebRtcTransport>()]( std::string event,json data )//this->_internal.transportId, (event, data?: any) =>
 		{		  
-			processChannelNotifications(event,data);
+			self->processChannelNotifications(event,data);
 		});
 	}
 };
