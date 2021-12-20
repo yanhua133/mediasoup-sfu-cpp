@@ -28,9 +28,10 @@
 
 Generate a project file to open the project compilation
 
-Then copy lib \ win \ x64 \ libssl-1_ 1-x64. dll
+Then copy   
 
-lib\win\x64\libcrypto-1_ 1-x64. dll
+lib\win\x64\libssl-1_1-x64.dll  
+lib\win\x64\libcrypto-1_1-x64.dll
 
 Go to the debug directory where the execution file is located
 
@@ -62,7 +63,7 @@ Release / bin directory
 ```
 
 
-##  4、 Set profile
+##  4、 Set config
 
 ###  Directory where the compiled executable file of the configuration file copy is located
 
@@ -87,11 +88,11 @@ Test client download address
 
 Win download address:
 
-http://121.36.0.230:8012/latest/sft-demo-client-1.0.1.win.zip
+<http://121.36.0.230:8012/latest/sft-demo-client-1.0.1.win.zip>
 
 Mac download address:
 
-http://121.36.0.230:8012/latest/sft-demo-client-1.0.1.mac.zip
+<http://121.36.0.230:8012/latest/sft-demo-client-1.0.1.mac.zip>
 
 Enter any number for the conference number, such as
 
