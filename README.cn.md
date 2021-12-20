@@ -78,6 +78,6 @@ ws://192.168.3.19:8001/
 ![image](https://raw.githubusercontent.com/yanhua133/mediasoup-sfu-cpp/main/demo.jpg)
 
 
-10、交流及技术支持
+## 六、交流及技术支持
 加微信：jamesyhua，备注：进群，我拉你入微信群
 ![image](https://github.com/yanhua133/mediasoup-sfu-cpp/blob/main/zuozhe.jpeg?raw=true)

@@ -112,7 +112,7 @@ design sketch
 ![image]( https://raw.githubusercontent.com/yanhua133/mediasoup-sfu-cpp/main/demo.jpg )
 
 
-10. Communication and technical support
+##  6、Communication and technical support
 
 Add wechat: James yhua, note: join the group, I'll pull you into the wechat group
 
