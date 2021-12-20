@@ -84,7 +84,7 @@ public:
 
 	void handleWorkerNotifications()
 	{
-		this->_channel->on(this->_internal["rtpObserverId"], [self = shared_from_this()]( std::string event,json data ) //(event: string, data?: any) =>
+		this->_channel->on(this->_internal["rtpObserverId"].get<std::string>(), [self = shared_from_this()]( std::string event,json data ) //(event: string, data?: any) =>
 		{
 			if (true)
 			{

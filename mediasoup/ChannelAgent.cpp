@@ -295,7 +295,8 @@ namespace mediasoup
 	}
 
 	void ChannelAgent::processMessage(const nlohmann::json& msg) {
-		MS_lOGD("ChannelAgent::processMessage: msg=%s", msg.dump().c_str());
+        if(msg.contains("event") && msg["event"].get<std::string>() != "score")
+            MS_lOGD("ChannelAgent::processMessage: msg=%s", msg.dump().c_str());
 		if (msg.contains("id"))
 		{
 			auto sent_element = this->m_sents.find(msg["id"].get<int>());
@@ -352,9 +353,12 @@ namespace mediasoup
 		else if (msg.contains("targetId") && msg.contains("event"))
 		{
 			if (msg.contains("data"))
-				this->emit(msg["targetId"].dump().c_str(), msg["event"].dump().c_str(), msg["data"]);
-			else
-				this->emit(msg["targetId"].dump().c_str(), msg["event"].dump().c_str(), json({}));
+				//this->emit(msg["targetId"].dump().c_str(), msg["event"].dump().c_str(), msg["data"]);
+                this->emit(msg["targetId"].get<std::string>(), msg["event"].get<std::string>(), msg["data"]);
+            else{
+				//this->emit(msg["targetId"].dump().c_str(), msg["event"].dump().c_str(), json({}));
+                this->emit(msg["targetId"].get<std::string>(), msg["event"].get<std::string>(), json({}));
+            }
 		}
 		// Otherwise unexpected message.
 		else

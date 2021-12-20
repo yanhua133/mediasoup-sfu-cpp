@@ -427,13 +427,13 @@ public:
   }
 	void handleWorkerNotifications()
 	{
-		this->_channel->on(this->_internal["dataConsumerId"],[self = shared_from_this()]( std::string event,json data ) //this->_internal["dataConsumerId"], (event, data: any) =>
+		this->_channel->on(this->_internal["dataConsumerId"].get<std::string>(),[self = shared_from_this()]( std::string event,json data ) //this->_internal["dataConsumerId"], (event, data: any) =>
 		{     
 			self->processChannelNotifications(event,data);
 			
 		});
 
-		this->_payloadChannel->on(this->_internal["dataConsumerId"],[self = shared_from_this()]( std::string event,json data ) //
+		this->_payloadChannel->on(this->_internal["dataConsumerId"].get<std::string>(),[self = shared_from_this()]( std::string event,json data ) //
 			//this->_internal["dataConsumerId"],
 			//(event, data: any | undefined, payload: Buffer) =>
 			{

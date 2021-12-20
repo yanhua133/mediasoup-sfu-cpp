@@ -515,7 +515,7 @@ public:
   }
 	void handleWorkerNotifications()
 	{
-		this->_channel->on(this->_internal["producerId"],[self = shared_from_this()]( std::string event,json data ) //this->_internal["producerId"], (event, data?: any) =>
+		this->_channel->on(this->_internal["producerId"].get<std::string>(),[self = shared_from_this()]( std::string event,json data ) //this->_internal["producerId"], (event, data?: any) =>
 		{		  
 			self->processChannelNotifications(event,data);
 		});

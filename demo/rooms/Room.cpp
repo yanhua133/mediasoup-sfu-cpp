@@ -591,6 +591,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         //break;
     }else if(method ==  "closeProducer"){
         // Ensure the Peer is joined.
+        MS_lOGD("closeProducer");
         if (!peer->data.joined)
             MS_THROW_lOG("Peer not yet joined");
         auto data = request["data"];
@@ -1167,6 +1168,9 @@ void Room::createConsumer(std::shared_ptr<Peer> &consumerPeer, std::shared_ptr<P
 
     consumer->on("producerclose",[consumerPeer, consumer](  )
     {
+        
+        MS_lOGD("producerclose  producerclose  producerclose()");
+        
         // Remove from its map.
         consumerPeer->data.consumers.erase(consumer->id());
 
@@ -1230,7 +1234,7 @@ void Room::createConsumer(std::shared_ptr<Peer> &consumerPeer, std::shared_ptr<P
     //}
     try
     {
-
+        MS_lOGD("===========newConsumer==============");
          consumerPeer->requestAsync(
             "newConsumer",
             {
