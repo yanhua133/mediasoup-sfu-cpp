@@ -21,7 +21,7 @@
 
 
 ```
-.\genvs2019. bat
+.\genvs2019.bat
 ```
 ###  Note: right click all projects, select properties, and select the compiler llvm clang CL compiler installed with vc2019 to compile
 
@@ -47,19 +47,19 @@ Go to the debug directory where the execution file is located
 ```
 Generated executable
 
-Release / bin directory
+Release /bin directory
 
 ###  2). Compile and debug with Xcode development environment
 
 ```
-./genxcode. sh
+./genxcode.sh
 ```
 
 ##  3、 Compiling under Linux
 
 ```
-./builddeps. sh
-./build. sh
+./builddeps.sh
+./build.sh
 ```
 
 
