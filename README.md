@@ -39,19 +39,16 @@ Go to the debug directory where the execution file is located
 ##  2、 Xcode compilation under mac
 
 
-###  1. Establish dependency Library
-
+###  1). Establish dependency Library
 
 ```
 ./builddeps.sh
 ```
-
 Generated executable
 
 Release / bin directory
 
-
-###  2. Compile and debug with Xcode development environment
+###  2). Compile and debug with Xcode development environment
 
 ```
 ./genxcode. sh
