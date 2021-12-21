@@ -75,7 +75,7 @@ Release /bin directory
 
 ###  The IP address in the configuration file needs to be configured with the intranet address and extranet address of the corresponding server
 
-"IP": "192.168.1.192"
+"IP": "192.168.1.192"  
 "Announcedip": "192.168.1.192" / / public network address
 
 
