@@ -1,10 +1,5 @@
 #include <stdio.h>
 #include <iostream>
-#include <boost/beast/core.hpp>
-#include <boost/beast/http.hpp>
-#include <boost/beast/version.hpp>
-#include <boost/asio/connect.hpp>
-#include <boost/asio/ip/tcp.hpp>
 #include "Config.hpp"
 
 #include "common.hpp"
@@ -35,6 +30,12 @@
 #include "IWorker.hpp"
 #include "Log.hpp"
 #include "Consumer.hpp"
+
+#include "controller/StatisticsController.hpp"
+#include "controller/RoomsController.hpp"
+#include "./AppComponent.hpp"
+#include "oatpp/network/Server.hpp"
+
 #define MS_CLASS "mediasoup-worker"
 // #define MS_LOG_DEV_LEVEL 3
 #include "Server.hpp"
@@ -57,7 +58,7 @@ Channel::UnixStreamSocket* channel{ nullptr };
 // PayloadChannel socket (it will be handled and deleted by the Worker).
 PayloadChannel::UnixStreamSocket* payloadChannel{ nullptr };
 
-int worker_init(int argc, char* argv[])
+int worker_init(int argc, const char* argv[])
 {
 
     std::string version = "m1";//std::getenv("MEDIASOUP_VERSION");
@@ -223,11 +224,63 @@ static int mpipe(int *fds) {
   return 0;
 }
 #endif
-int main(int argc, char* argv[])
-{
-    Server server;
-    Config config;
-    config.initConfig();
+
+void run(int argc, const char* argv[]) {
+    
+  /* Register Components in scope of run() method */
+  AppComponent components(oatpp::base::CommandLineArguments(argc, argv));
+
+  /* Get router component */
+  OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router);
+
+  /* Create RoomsController and add all of its endpoints to router */
+  auto roomsController = std::make_shared<RoomsController>();
+  roomsController->addEndpointsToRouter(router);
+
+  auto statisticsController = std::make_shared<StatisticsController>();
+  statisticsController->addEndpointsToRouter(router);
+
+  /* Get connection handler component */
+  OATPP_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>, connectionHandler, "http");
+
+  /* Get connection provider component */
+  OATPP_COMPONENT(std::shared_ptr<oatpp::network::ServerConnectionProvider>, connectionProvider);
+
+  /* Create server which takes provided TCP connections and passes them to HTTP connection handler */
+  oatpp::network::Server server(connectionProvider, connectionHandler);
+
+  std::thread serverThread([&server]{
+      std::ostringstream ss;
+      ss << std::this_thread::get_id();
+      MS_lOGD("[Room] serverThread thread:%s",ss.str().c_str());
+    server.run();
+  });
+    //std::shared_ptr<SfuServer> sfuServer = std::make_shared<SfuServer>();
+  OATPP_COMPONENT(std::shared_ptr<SfuServer>, sfuServer);
+  std::thread pingThread([]{
+    OATPP_COMPONENT(std::shared_ptr<SfuServer>, sfuServer);
+    //sfuServer->runPingLoop(std::chrono::seconds(30));
+  });
+
+//  std::thread statThread([]{
+//    OATPP_COMPONENT(std::shared_ptr<Statistics>, statistics);
+//    statistics->runStatLoop();
+//  });
+
+  OATPP_COMPONENT(oatpp::Object<ConfigDto>, appConfig);
+
+  if(appConfig->useTLS) {
+    OATPP_LOGI("main.cpp", "clients are expected to connect at https://%s:%d/", appConfig->host->c_str(), *appConfig->port);
+  } else {
+    OATPP_LOGI("main.cpp", "clients are expected to connect at http://%s:%d/", appConfig->host->c_str(), *appConfig->port);
+  }
+
+  OATPP_LOGI("main.cpp", "canonical base URL=%s", appConfig->getCanonicalBaseUrl()->c_str());
+  OATPP_LOGI("main.cpp", "statistics URL=%s", appConfig->getStatsUrl()->c_str());
+  
+    //SfuServer server;
+    auto pConfig = std::make_shared<Config>();
+    pConfig->initConfig();
     DepLibUV::ClassInit();
     g_uvloop =  DepLibUV::GetLoop();
     mpipe(ConsumerChannelFd);
@@ -238,40 +291,42 @@ int main(int argc, char* argv[])
     MS_lOGD("pipe Create Pair PayloadConsumerChannelFd[0]=%d PayloadConsumerChannelFd[1]=%d ",PayloadConsumerChannelFd[0],PayloadConsumerChannelFd[1]);
     mpipe(PayloadProducerChannelFd);
     MS_lOGD("pipe Create Pair PayloadProducerChannelFd[0]=%d PayloadProducerChannelFd[1]=%d ",PayloadProducerChannelFd[0],PayloadProducerChannelFd[1]);
-    /*
-    char str[34]={0};
-    strcpy(str,"test");
-    write(ProducerChannelFd[1], str, sizeof(str));
-    char buf[34]={0};
-    read(ProducerChannelFd[0], buf, 34);
-*/
-    
-//    json response = {
-//                   {"response", true},
-//                   {"ok", true},
-//        {"data", json({})}
-//    };
-//    MS_lOGD("response = %s",response.dump().c_str());
-    // Initialize libuv stuff (we need it for the Channel).
   
-    server.setConfig(config);
-
-    server.initMediasoup();
-
-    MS_lOGD("initWorker ProducerChannelFd[0]=%d,ConsumerChannelFd[1]=%d,PayloadProducerChannelFd[0]=%d,PayloadConsumerChannelFd[1]=%d",ProducerChannelFd[0],ConsumerChannelFd[1],PayloadProducerChannelFd[0],PayloadConsumerChannelFd[1]);
-    server.initWorker(ProducerChannelFd[0],ConsumerChannelFd[1],PayloadProducerChannelFd[0],PayloadConsumerChannelFd[1]);
-
-    std::thread t1([&]() {
-        server.run();
+    sfuServer->setConfig(pConfig);
+    
+    
+    std::thread workerThread([&argc, &argv, &sfuServer]{
+        std::ostringstream ss;
+        ss << std::this_thread::get_id();
+        sfuServer->initMediasoup();
+        MS_lOGD("initWorker ProducerChannelFd[0]=%d,ConsumerChannelFd[1]=%d,PayloadProducerChannelFd[0]=%d,PayloadConsumerChannelFd[1]=%d",ProducerChannelFd[0],ConsumerChannelFd[1],PayloadProducerChannelFd[0],PayloadConsumerChannelFd[1]);
+        sfuServer->initWorker(ProducerChannelFd[0],ConsumerChannelFd[1],PayloadProducerChannelFd[0],PayloadConsumerChannelFd[1]);
+        worker_init(argc,argv);
+        MS_lOGD("workerThread ended");
     });
-    t1.detach();
+    
+    serverThread.join();
+    pingThread.join();
+    workerThread.join();
+  //statThread.join();
+
+}
+
+int main(int argc, const char* argv[])
+{
+    oatpp::base::Environment::init();
+    std::ostringstream ss;
+    ss << std::this_thread::get_id();
+    MS_lOGD("[Room] mainThread:%s",ss.str().c_str());
+    run(argc, argv);
+    oatpp::base::Environment::destroy();
 
 
-    worker_init(argc,argv);
+    //worker_init(argc,argv);
    
    
     
-    getchar();
+    //getchar();
 
 }
 

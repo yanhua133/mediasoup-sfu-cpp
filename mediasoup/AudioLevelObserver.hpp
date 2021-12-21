@@ -51,7 +51,7 @@ struct AudioLevelObserverVolume
 
 //onst logger = new Logger('AudioLevelObserver');
 
-class AudioLevelObserver : public RtpObserver
+class AudioLevelObserver : public RtpObserver, public std::enable_shared_from_this<AudioLevelObserver>
 {
 public:
 	/**
@@ -63,7 +63,7 @@ public:
 	{
 		//super(params);
 
-		this->_handleWorkerNotifications();
+		//this->_handleWorkerNotifications();
 	}
 
 	/**
@@ -82,9 +82,9 @@ public:
 		return this->_observer;
 	}
 
-	void _handleWorkerNotifications()
+	void handleWorkerNotifications()
 	{
-		this->_channel->on(this->_internal["rtpObserverId"], [&]( std::string event,json data ) //(event: string, data?: any) =>
+		this->_channel->on(this->_internal["rtpObserverId"].get<std::string>(), [self = shared_from_this()]( std::string event,json data ) //(event: string, data?: any) =>
 		{
 			if (true)
 			{
@@ -106,27 +106,27 @@ public:
                     {
                         AudioLevelObserverVolume vol;
                         std::string producerId = it["producerId"];
-                        vol.producer = this->_getProducerById(producerId);
+                        vol.producer = self->_getProducerById(producerId);
                         vol.volume = it["volume"].get<int>();
                         volumes.push_back(vol);
                         
                     }
 					if (volumes.size() > 0)
 					{
-						this->safeEmit("volumes", &volumes);
+						self->safeEmit("volumes", &volumes);
 
 						// Emit observer event.
-						this->_observer->safeEmit("volumes", &volumes);
+						self->_observer->safeEmit("volumes", &volumes);
 					}
 
 					//break;
 				}else
                 if(event == "silence")
 				{
-					this->safeEmit("silence");
+					self->safeEmit("silence");
 
 					// Emit observer event.
-					this->_observer->safeEmit("silence");
+					self->_observer->safeEmit("silence");
 
 					//break;
 				}else

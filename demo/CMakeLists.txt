@@ -35,12 +35,25 @@ set(sources
   Server.cpp
   Config.hpp
   Config.cpp
-  Peer.cpp
-  Peer.hpp
-  Room.cpp
-  Room.hpp
   Transfmt.cpp
   Transfmt.hpp
+  AppComponent.hpp
+  controller/RoomsController.hpp
+  controller/StatisticsController.hpp
+  dto/ConfigDto.hpp
+  dto/DTOs.hpp
+  rooms/Lobby.cpp
+  rooms/Lobby.hpp
+  rooms/Message.cpp
+  rooms/Message.h
+  rooms/Peer.cpp
+  rooms/Peer.hpp
+  rooms/Room.cpp
+  rooms/Room.hpp
+  utils/Statistics.cpp
+  utils/Statistics.hpp 
+  utils/util.cpp
+  utils/util.h
 )
 
 add_executable(${PROJECT_NAME} ${sources} )
@@ -162,21 +175,15 @@ IF (WIN32)
   target_link_libraries(${PROJECT_NAME}
       worker
       libwebrtc
-      oatpp
+      ${PROJECT_LIB_DIR}/oatpp.lib
+      ${PROJECT_LIB_DIR}/oatpp-websocket.lib
+      ${PROJECT_LIB_DIR}/oatpp-openssl.lib
       ${PROJECT_LIB_DIR}/netstring.lib
       ${PROJECT_LIB_DIR}/uv_a.lib
       ${PROJECT_LIB_DIR}/libssl.lib
       ${PROJECT_LIB_DIR}/libcrypto.lib
       ${PROJECT_LIB_DIR}/srtp2.lib
       ${PROJECT_LIB_DIR}/usrsctp.lib
-      ${PROJECT_LIB_DIR}/boost_atomic-vc140-mt.lib
-      ${PROJECT_LIB_DIR}/boost_chrono-vc140-mt.lib
-      ${PROJECT_LIB_DIR}/boost_date_time-vc140-mt.lib
-      ${PROJECT_LIB_DIR}/boost_filesystem-vc140-mt.lib
-      ${PROJECT_LIB_DIR}/boost_random-vc140-mt.lib
-      ${PROJECT_LIB_DIR}/boost_regex-vc140-mt.lib
-      ${PROJECT_LIB_DIR}/boost_system-vc140-mt.lib
-      ${PROJECT_LIB_DIR}/boost_thread-vc140-mt.lib
       ${PROJECT_LIB_DIR}/absl_internal_throw_delegate.lib
       ${PROJECT_LIB_DIR}/absl_strings.lib
       ${PROJECT_LIB_DIR}/absl_optional.lib
@@ -187,10 +194,13 @@ IF (WIN32)
       ${PROJECT_LIB_DIR}/sdptransform.lib
       ${PROJECT_LIB_DIR}/getopt.lib
       mediasoup
-      protoo
       ws2_32
       userenv
       
+       # LibreSSL libraries
+      # LibreSSL::TLS
+      # LibreSSL::SSL
+      # LibreSSL::Crypto
   )
   
 ELSE ()
@@ -198,20 +208,15 @@ ELSE ()
 target_link_libraries(${PROJECT_NAME}
     worker
     libwebrtc
+    ${PROJECT_LIB_DIR}/liboatpp.a
+    ${PROJECT_LIB_DIR}/liboatpp-websocket.a
+    ${PROJECT_LIB_DIR}/liboatpp-openssl.a
     ${PROJECT_LIB_DIR}/libnetstring.a
     ${PROJECT_LIB_DIR}/libuv_a.a
     ${PROJECT_LIB_DIR}/libssl.a
     ${PROJECT_LIB_DIR}/libcrypto.a
     ${PROJECT_LIB_DIR}/libsrtp2.a
     ${PROJECT_LIB_DIR}/libusrsctp.a
-    ${PROJECT_LIB_DIR}/libboost_atomic.a
-    ${PROJECT_LIB_DIR}/libboost_chrono.a
-    ${PROJECT_LIB_DIR}/libboost_date_time.a
-    ${PROJECT_LIB_DIR}/libboost_filesystem.a
-    ${PROJECT_LIB_DIR}/libboost_random.a
-    ${PROJECT_LIB_DIR}/libboost_regex.a
-    ${PROJECT_LIB_DIR}/libboost_system.a
-    ${PROJECT_LIB_DIR}/libboost_thread.a
     ${PROJECT_LIB_DIR}/libabsl_internal_throw_delegate.a
     ${PROJECT_LIB_DIR}/libabsl_strings.a
     ${PROJECT_LIB_DIR}/libabsl_optional.a
@@ -221,8 +226,12 @@ target_link_libraries(${PROJECT_NAME}
     dl
     ${PROJECT_LIB_DIR}/libsdptransform.a
     mediasoup
-    protoo
     ${PROJECT_LIB_DIR}/libuv_a.a
+
+     # LibreSSL libraries
+    #  LibreSSL::TLS
+    #  LibreSSL::SSL
+    #  LibreSSL::Crypto
     
 )
 ENDIF()

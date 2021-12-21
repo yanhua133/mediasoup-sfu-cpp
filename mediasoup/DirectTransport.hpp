@@ -76,7 +76,7 @@ public:
 			// Nothing for now.
 		};
 
-		this->_handleWorkerNotifications();
+		//this->_handleWorkerNotifications();
 	}
 
 	/**
@@ -205,20 +205,18 @@ public:
 					}
 			//	}
   }
-	void _handleWorkerNotifications()
+	void handleWorkerNotifications()
 	{
-		this->_channel->on(this->_internal["transportId"],[&]( std::string event,json data ) //this->_internal.transportId, (event, data?: any) =>
-		{
-		
-			processChannelNotifications(event,data);
+		this->_channel->on(this->_internal["transportId"].get<std::string>(),[self = Transport::downcasted_shared_from_this<DirectTransport>()]( std::string event,json data ) //this->_internal.transportId, (event, data?: any) =>
+		{		
+			self->processChannelNotifications(event,data);
 		});
 
-		this->_payloadChannel->on(this->_internal["transportId"],[&]( std::string event,json data ) //
+		this->_payloadChannel->on(this->_internal["transportId"].get<std::string>(),[self = Transport::downcasted_shared_from_this<DirectTransport>()]( std::string event,json data ) //
 		//	this->_internal.transportId,
 		//	(event, data: any | undefined, payload: Buffer) =>
-			{
-			     
-            processPayloadChannelNotifications(event,data);
+			{			     
+            self->processPayloadChannelNotifications(event,data);
 			});
 	}
 };

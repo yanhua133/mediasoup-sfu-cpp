@@ -1,4 +1,0 @@
-Name: nlohmann_json
-Description: JSON for Modern C++
-Version: 3.9.1
-Cflags: -I/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/release/include

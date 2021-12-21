@@ -11,7 +11,8 @@ namespace mediasoup
 class WorkerAgent : public IWorker
 	, public CommonObserver<IWorker::Observer>
 	, public UVPipeObserver 
-	, public ChannelObserver {
+	, public ChannelObserver
+	, public std::enable_shared_from_this<WorkerAgent>{
 public:
     WorkerAgent(IWorker::Observer* obs, const WorkerSettings& workerSettings);
     virtual ~WorkerAgent();

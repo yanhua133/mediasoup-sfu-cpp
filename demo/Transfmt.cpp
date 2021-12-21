@@ -5,7 +5,7 @@
 #include "Log.hpp"
 #include "Router.hpp"
 #include "Producer.hpp"
-#include "Peer.hpp"
+#include "./rooms/Peer.hpp"
 #include "json.hpp"
 
 std::string& replace_str(std::string& str, const std::string& to_replaced, const std::string& newchars)
@@ -247,10 +247,11 @@ void Transfmt::startRecord(std::shared_ptr<Router> router,std::shared_ptr<Peer> 
 		MS_lOGD("publishRtpStream kind=%s  info=%s",producer->kind().c_str(),recordInfo[producer->kind()].dump().c_str());
 	}
 
-  MS_lOGD("startRecord userId=%s  roomId=%s",peer->id.c_str(),roomId.c_str());
-  writeSdpFile(peer->id, recordInfo);
+  MS_lOGD("startRecord userId=%s  roomId=%s",peer->getPeerId().c_str(),roomId.c_str());
+    auto peerId = peer->getPeerId();
+  writeSdpFile(peerId, recordInfo);
     TransfmtCreateRtc2Rtmp data;
-    getTransfmtCreateRtc2RtmpInfo(peer->id,roomId,data);
+    getTransfmtCreateRtc2RtmpInfo(peerId,roomId,data);
  // MS_lOGD(buf);
   //auto ret = tcp_client.write(buf);
   //MS_lOGD("write ret="+ret);

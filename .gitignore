@@ -40,3 +40,9 @@ deps/boost/boost_1_74_0.tar.gz
 xcode/
 vc2019/
 .vscode/settings.json
+deps/libwebrtc/build/
+deps/netstring/build/
+deps/openssl/include/openssl/opensslconf.h
+deps/openssl/test/rsa_complex
+deps/openssl/test/rsa_complex
+.DS_Store

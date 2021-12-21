@@ -65,6 +65,7 @@ protected:
 
 private:
 	int m_pid = -1;
+	std::mutex m_mutex;
 	std::unique_ptr<UVPipeWrapper> m_producerPipe = nullptr;
 	std::unique_ptr<UVPipeWrapper> m_consumerPipe = nullptr;
 

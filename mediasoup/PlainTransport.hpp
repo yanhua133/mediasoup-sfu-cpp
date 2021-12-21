@@ -159,7 +159,7 @@ public:
 			{"srtpParameters" , data["srtpParameters"]}
 		};
 
-		this->_handleWorkerNotifications();
+		//this->_handleWorkerNotifications();
 	}
 
 	/**
@@ -363,12 +363,11 @@ public:
   void processPayloadChannelNotifications(std::string event,const json & data) 
   {
   }
-	void _handleWorkerNotifications()
+	void handleWorkerNotifications()
 	{
-		this->_channel->on(this->_internal["transportId"],[&]( std::string event,json data ) //this->_internal.transportId, (event, data?: any) =>
-		{
-		 
-			processChannelNotifications(event,data);
+		this->_channel->on(this->_internal["transportId"].get<std::string>(),[self = Transport::downcasted_shared_from_this<PlainTransport>()]( std::string event,json data ) //this->_internal.transportId, (event, data?: any) =>
+		{		 
+			self->processChannelNotifications(event,data);
 		});
 	}
 };

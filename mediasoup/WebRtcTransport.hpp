@@ -163,7 +163,7 @@ public:
             {"sctpState"          , data["sctpState"]}
         };
 
-		this->_handleWorkerNotifications();
+		//this->_handleWorkerNotifications();
 	}
 
 	/**
@@ -392,14 +392,14 @@ public:
 				if(event == "dtlsstatechange")
 				{
 					auto dtlsState = data["dtlsState"];// as DtlsState;
-					auto dtlsRemoteCert = data["dtlsRemoteCert"];// as string;
+					//auto dtlsRemoteCert = data["dtlsRemoteCert"];// as string;
 
 					this->_data["dtlsState"] = dtlsState;
 
 					if (dtlsState == "connected")
-						this->_data["dtlsRemoteCert"] = dtlsRemoteCert;
+                        this->_data["dtlsRemoteCert"] = data["dtlsRemoteCert"];
          
-					  this->safeEmit("dtlsstatechange", dtlsState);
+					  this->safeEmit("dtlsstatechange", dtlsState.get<std::string>());
 
 					// Emit observer event.
 					  this->_observer->safeEmit("dtlsstatechange", dtlsState);
@@ -435,12 +435,11 @@ public:
 				}
 			//}
     }
-	void _handleWorkerNotifications()
+	void handleWorkerNotifications()
 	{
-		this->_channel->on(this->_internal["transportId"],[&]( std::string event,json data )//this->_internal.transportId, (event, data?: any) =>
+		this->_channel->on(this->_internal["transportId"].get<std::string>(),[self = Transport::downcasted_shared_from_this<WebRtcTransport>()]( std::string event,json data )//this->_internal.transportId, (event, data?: any) =>
 		{
-		  
-			processChannelNotifications(event,data);
+			self->processChannelNotifications(event,data);
 		});
 	}
 };

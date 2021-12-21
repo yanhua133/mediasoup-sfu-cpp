@@ -132,7 +132,7 @@ public:
 			{"srtpParameters" , data["srtpParameters"]}
 		};
 
-		this->_handleWorkerNotifications();
+		//this->_handleWorkerNotifications();
 	}
 
 	/**
@@ -327,18 +327,19 @@ public:
                 preferredLayers
 			//}
         );
-
+		consumer->handleWorkerNotifications();
+		
 		this->_consumers[consumer->id()] = consumer;
 	//consumer.on('@close', () => this->_consumers.delete(consumer.id));
-        consumer->on("@close",[&]( )
+        consumer->on("@close",[self = Transport::downcasted_shared_from_this<PipeTransport>(), consumer]( )
         {
-            this->_consumers.erase(consumer->id());
+            self->_consumers.erase(consumer->id());
 
         });
 		//consumer.on('@producerclose', () => this->_consumers.delete(consumer.id));
-        consumer->on("@producerclose",[&](  )
+        consumer->on("@producerclose",[self = Transport::downcasted_shared_from_this<PipeTransport>(), consumer](  )
         {
-            this->_consumers.erase(consumer->id());
+            self->_consumers.erase(consumer->id());
         });
 		// Emit observer event.
 		this->_observer->safeEmit("newconsumer", consumer);
@@ -381,12 +382,11 @@ public:
   void processPayloadChannelNotifications(std::string event,const json & data) 
   {
   }
-	void _handleWorkerNotifications()
+	void handleWorkerNotifications()
 	{
-		this->_channel->on(this->_internal["transportId"],[&]( std::string event,json data ) //this->_internal.transportId, (event, data?: any) =>
-		{
-		
-			processChannelNotifications(event,data);
+		this->_channel->on(this->_internal["transportId"].get<std::string>(),[self = Transport::downcasted_shared_from_this<PipeTransport>()]( std::string event,json data ) //this->_internal.transportId, (event, data?: any) =>
+		{		
+			self->processChannelNotifications(event,data);
 		});
 	}
 };

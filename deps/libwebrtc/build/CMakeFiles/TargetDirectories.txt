@@ -1,7 +1,0 @@
-/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/libwebrtc/build/CMakeFiles/install/local.dir
-/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/libwebrtc/build/CMakeFiles/install/strip.dir
-/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/libwebrtc/build/CMakeFiles/install.dir
-/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/libwebrtc/build/CMakeFiles/list_install_components.dir
-/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/libwebrtc/build/CMakeFiles/rebuild_cache.dir
-/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/libwebrtc/build/CMakeFiles/edit_cache.dir
-/Users/yanhua/Documents/work/github/mediasoup-sfu-cpp/deps/libwebrtc/build/CMakeFiles/libwebrtc.dir

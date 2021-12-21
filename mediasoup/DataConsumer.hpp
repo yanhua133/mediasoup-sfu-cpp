@@ -69,7 +69,7 @@ struct DataConsumerStat
 
 //const logger = new Logger('DataConsumer');
 
-class DataConsumer   : public EnhancedEventEmitter
+class DataConsumer   : public EnhancedEventEmitter, public std::enable_shared_from_this<DataConsumer>
 {
 
 public:
@@ -129,14 +129,14 @@ public:
 		//super();
 
 		MS_lOGD("DataConsumer()");
-
+		
 		this->_internal = internal;
 		this->_data = data;
 		this->_channel = channel;
 		this->_payloadChannel = payloadChannel;
 		this->_appData = appData;
 
-		this->_handleWorkerNotifications();
+		//this->_handleWorkerNotifications();
 	}
 
 	/**
@@ -425,21 +425,20 @@ public:
 					}
 			//	}
   }
-	void _handleWorkerNotifications()
+	void handleWorkerNotifications()
 	{
-		this->_channel->on(this->_internal["dataConsumerId"],[&]( std::string event,json data ) //this->_internal["dataConsumerId"], (event, data: any) =>
-		{
-     
-			processChannelNotifications(event,data);
+		this->_channel->on(this->_internal["dataConsumerId"].get<std::string>(),[self = shared_from_this()]( std::string event,json data ) //this->_internal["dataConsumerId"], (event, data: any) =>
+		{     
+			self->processChannelNotifications(event,data);
 			
 		});
 
-		this->_payloadChannel->on(this->_internal["dataConsumerId"],[&]( std::string event,json data ) //
+		this->_payloadChannel->on(this->_internal["dataConsumerId"].get<std::string>(),[self = shared_from_this()]( std::string event,json data ) //
 			//this->_internal["dataConsumerId"],
 			//(event, data: any | undefined, payload: Buffer) =>
 			{
 			   
-            processPayloadChannelNotifications(event,data);
+            self->processPayloadChannelNotifications(event,data);
 			});
 	}
 };

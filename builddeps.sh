@@ -2,10 +2,14 @@ cur_dir=$(cd "$(dirname "$0")"; pwd)
 parent_dir=$(dirname $(pwd))
 cd script
 #./buildzlib.sh
-./buildopenssl.sh
+#./buildopenssl.sh
 #./buildboringssl.sh
-./buildboost.sh
+#./buildboost.sh
+#./buildlibressl.sh
+./buildopenssl.sh
 ./buildoatpp.sh
+./buildoatppwebsocket.sh
+./buildoatppopenssl.sh
 #./buildspdlog.sh
 ./builduv.sh
 ./buildjson.sh
@@ -13,7 +17,7 @@ cd script
 ./buildcatch.sh
 ./buildsrtp.sh
 ./buildusrsctp.sh
-./buildboost.sh
+#./buildboost.sh
 ./buildabsl.sh
 ./buildsdp.sh
 ./buildwebrtc.sh

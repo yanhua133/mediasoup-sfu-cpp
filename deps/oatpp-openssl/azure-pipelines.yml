@@ -1,0 +1,126 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+jobs:
+  - job: ubuntu_16_04
+    displayName: 'Build - Ubuntu 16.04'
+    continueOnError: false
+    pool:
+      vmImage: 'Ubuntu 16.04'
+    workspace:
+      clean: all
+    steps:
+      - script: |
+          sudo apt-get install libssl-dev -y
+        displayName: 'Install - openssl'
+      - script: |
+          mkdir build
+      - script: |
+          git clone https://github.com/oatpp/oatpp
+          mkdir -p oatpp/build
+        displayName: 'Checkout - oatpp'
+        workingDirectory: build
+      - script: |
+          cmake -DOATPP_BUILD_TESTS=OFF ..
+          sudo make install -j 2
+        displayName: 'Build - oatpp'
+        workingDirectory: build/oatpp/build
+      - script: |
+          cmake ..
+          make
+        displayName: 'Build - module'
+        workingDirectory: build
+      - script: |
+          make test ARGS="-V"
+        displayName: 'Test'
+        workingDirectory: build
+
+  - job: macOS
+    displayName: 'Build - macOS'
+    continueOnError: false
+    pool:
+      vmImage: 'macOS-10.14'
+    workspace:
+      clean: all
+    steps:
+      - script: |
+          mkdir build
+
+      - script: |
+          git clone https://github.com/microsoft/vcpkg.git --depth 1
+        displayName: 'Get vcpkg'
+        workingDirectory: build
+      - script: |
+          ./bootstrap-vcpkg.sh
+        displayName: Bootstrap vcpkg
+        workingDirectory: build/vcpkg
+      - script: |
+          ./vcpkg install openssl
+        displayName: Install OpenSSL
+        workingDirectory: build/vcpkg
+
+      - script: |
+          git clone https://github.com/oatpp/oatpp
+          mkdir -p oatpp/build
+        displayName: 'Checkout - oatpp'
+        workingDirectory: build
+      - script: |
+          cmake -DOATPP_BUILD_TESTS=OFF ..
+          sudo make install -j 2
+        displayName: 'Build - oatpp'
+        workingDirectory: build/oatpp/build
+      - script: |
+          cmake -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake ..
+          make
+        displayName: 'Build - module'
+        workingDirectory: build
+      - script: |
+          make test ARGS="-V"
+        displayName: 'Test'
+        workingDirectory: build
+#
+#  - job: windows
+#    displayName: 'Build - Windows'
+#    continueOnError: false
+#    pool:
+#      vmImage: 'windows-latest'
+#    workspace:
+#      clean: all
+#    steps:
+#      - script: |
+#          MD build
+#      - script: |
+#          git clone https://github.com/microsoft/vcpkg.git --depth 1
+#        displayName: 'Get vcpkg'
+#        workingDirectory: build
+#      - script: |
+#          .\bootstrap-vcpkg.bat
+#        displayName: Bootstrap vcpkg
+#        workingDirectory: build\vcpkg
+#      - script: |
+#          .\vcpkg.exe install openssl --vcpkg-root ./
+#          .\vcpkg.exe list
+#        displayName: Install OpenSSL
+#        workingDirectory: build\vcpkg
+#      - script: |
+#          git clone https://github.com/oatpp/oatpp
+#          MD oatpp\build
+#        displayName: 'Checkout - oatpp'
+#        workingDirectory: build
+#      - script: |
+#          cmake -DOATPP_BUILD_TESTS=OFF ..
+#          cmake --build . --target INSTALL
+#        displayName: 'Build - oatpp'
+#        workingDirectory: build\oatpp\build
+#      - script: |
+#          set OPENSSL_ROOT_DIR="$BUILD_SOURCESDIRECTORY/build/vcpkg/installed/x86-windows"
+#          cmake -DCMAKE_TOOLCHAIN_FILE=.\vcpkg\scripts\buildsystems\vcpkg.cmake ..
+#          cmake --build .
+#        displayName: 'Build Module'
+#        workingDirectory: build
+#      - script: |
+#          module-tests.exe
+#        displayName: 'Test'
+#        workingDirectory: build\test\Debug\
