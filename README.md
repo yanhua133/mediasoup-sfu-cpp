@@ -114,3 +114,6 @@ Add wechat: James yhua, note: join the group, I'll pull you into the wechat grou
 
 ![image](https://github.com/yanhua133/mediasoup-sfu-cpp/blob/main/zuozhe.jpeg?raw=true)
 
+## 7、Discord discussion group
+
+<https://discord.gg/f55DnczkEx>
