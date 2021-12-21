@@ -522,6 +522,7 @@ public:
 	{
 		// Should not happen.
 		MS_THROW_lOG("method not implemented in the subclass");
+        return json({});
 	}
 
 	/**
@@ -1063,6 +1064,7 @@ public:
 		}
 
 		MS_THROW_lOG("no sctpStreamId available");
+        return 0;
 	}
  };
 
