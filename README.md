@@ -1,5 +1,6 @@
 
 ## [中文说明请点击](https://github.com/yanhua133/mediasoup-sfu-cpp/blob/main/README.cn.md)
+## [gitee地址](https://gitee.com/yanhua133/mediasoup-sfu-cpp)
 ##  Project Description:
 
 ###  This project is a C + + version based on the JS version of SFU in mediasoup V3, webrtc M84
