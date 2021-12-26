@@ -31,6 +31,18 @@
 #include "oatpp/network/tcp/Connection.hpp"
 #include "oatpp/encoding/Base64.hpp"
 
+void Peer::close() {
+    for (const auto& kv : this->data.transports)
+    {
+        auto transportId = kv.first;
+        auto transport = kv.second;
+
+        transport->close();
+    }
+    this->data.transports.clear();
+
+    //todo: other release 
+}
 
 void Peer::sendMessageAsync(json message) {
 
@@ -357,7 +369,9 @@ oatpp::async::CoroutineStarter Peer::onPong(const std::shared_ptr<AsyncWebSocket
 }
 
 oatpp::async::CoroutineStarter Peer::onClose(const std::shared_ptr<AsyncWebSocket>& socket, v_uint16 code, const oatpp::String& message) {
-  return nullptr; // do nothing
+   
+    this->close();
+    return nullptr; // do nothing
 }
 
 oatpp::async::CoroutineStarter Peer::readMessage(const std::shared_ptr<AsyncWebSocket>& socket, v_uint8 opcode, p_char8 data, oatpp::v_io_size size) {

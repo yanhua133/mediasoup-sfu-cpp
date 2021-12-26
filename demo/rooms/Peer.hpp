@@ -139,6 +139,8 @@ public:
     , m_pingPoingCounter(0)
   {}
 
+  void close();
+
   /**
    * Send message to peer (to user).
    * @param message
