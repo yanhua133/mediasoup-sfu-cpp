@@ -87,6 +87,53 @@
 				},
 				{
 					"kind"       : "video",
+					"mimeType"   : "video/h264",
+					"clockRate"  : 90000,
+					"parameters" :
+					{
+						"packetization-mode"      : 1,
+						"profile-level-id"        : "640c1f",
+						"level-asymmetry-allowed" : 1,
+						"x-google-start-bitrate"  : 1000
+					}
+				},
+				{
+					"kind"       : "video",
+					"mimeType"   : "video/h264",
+					"clockRate"  : 90000,
+					"parameters" :
+					{
+						"packetization-mode"      : 1,
+						"profile-level-id"        : "64001f",
+						"level-asymmetry-allowed" : 1,
+						"x-google-start-bitrate"  : 1000
+					}
+				},
+				{
+					"kind"       : "video",
+					"mimeType"   : "video/h264",
+					"clockRate"  : 90000,
+					"parameters" :
+					{
+						"packetization-mode"      : 1,
+						"profile-level-id"        : "640032",
+						"level-asymmetry-allowed" : 1,
+						"x-google-start-bitrate"  : 1000
+					}
+				},
+				{
+					"kind"       : "video",
+					"mimeType"   : "video/h265",
+					"clockRate"  : 90000,
+					"parameters" :
+					{
+						"packetization-mode"      : 1,
+						"level-asymmetry-allowed" : 1,
+						"x-google-start-bitrate"  : 1000
+					}
+				},
+				{
+					"kind"       : "video",
 					"mimeType"   : "video/VP8",
 					"clockRate"  : 90000,
 					"parameters" :
@@ -112,7 +159,7 @@
 			[
 				{
 					"ip"          : "0.0.0.0",
-					"announcedIp" : "192.168.1.192"
+					"announcedIp" : "192.168.31.165"
 				}
 			],
 			"initialAvailableOutgoingBitrate" : 1000000,
