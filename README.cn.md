@@ -36,7 +36,7 @@ release/bin 目录下
 ./genxcode.sh
 ```
 
-## 三、Linux下编译
+## 三、Linux下编译 gcc >= 8.4.0
 ```
 ./builddeps.sh 
 ./build.sh

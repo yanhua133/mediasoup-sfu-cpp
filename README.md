@@ -56,7 +56,7 @@ Release /bin directory
 ./genxcode.sh
 ```
 
-##  3、 Compiling under Linux
+##  3、 Compiling under Linux gcc >= 8.4.0
 
 ```
 ./builddeps.sh
