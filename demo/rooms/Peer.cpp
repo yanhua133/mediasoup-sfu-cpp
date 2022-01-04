@@ -36,12 +36,13 @@ void Peer::close() {
     {
         auto transportId = kv.first;
         auto transport = kv.second;
-
-        transport->close();
+        if(transport){
+            transport->close();
+        }
     }
     this->data.transports.clear();
-
-    //todo: other release 
+    
+    //todo: other release
 }
 
 void Peer::sendMessageAsync(json message) {
