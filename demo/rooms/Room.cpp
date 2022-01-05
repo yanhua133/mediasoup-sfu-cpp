@@ -405,8 +405,10 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         auto dtlsParameters = data["dtlsParameters"];
         auto transport = peer->data.transports[transportId];
         
-        if (!transport)
+        if (!transport){
             MS_THROW_lOG("transport with id transportId=%s not found",transportId.dump().c_str());
+            return;
+        }
         
         json newdata= json::object();
         newdata["dtlsParameters"] = dtlsParameters;
