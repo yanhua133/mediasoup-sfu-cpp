@@ -3,7 +3,7 @@
 ## [gitee地址](https://gitee.com/yanhua133/mediasoup-sfu-cpp)
 ##  Project Description:
 
-###  This project is a C + + version based on the JS version of SFU in mediasoup V3, webrtc M84
+###  This project is a C + + version based on the JS version of SFU in mediasoup V3, webrtc M77
 
 ###  It supports the same complete demo function as the JS version, but this project directly integrates the worker process code into the demo, which can be called directly at the code level;
 
