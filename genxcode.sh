@@ -1,7 +1,7 @@
 if [ -e xcode ]
 then
 echo "exist xcode"
-/bin/rm -rf xocde
+/bin/rm -rf xcode
 mkdir xcode
 else
 mkdir xcode
