@@ -61,6 +61,7 @@ private:
     std::list<oatpp::Object<MessageDto>> m_history;
     std::mutex m_peersLock;
     std::mutex m_historyLock;
+    std::shared_ptr<Peer> m_pushPeer;
 private:
     OATPP_COMPONENT(oatpp::Object<ConfigDto>, m_appConfig);
     OATPP_COMPONENT(std::shared_ptr<Statistics>, m_statistics);
@@ -226,7 +227,8 @@ public:
                               RtpParameters &rtpParameters){}
     std::vector<PeerInfo> createBroadcaster(std::string id, std::string displayName, json  device, RtpCapabilities &rtpCapabilities){}
     std::vector<std::shared_ptr<Producer>> getProducersFromBridge(std::string &bridgeId){}
-    
+  
+    void createPushPeer(std::shared_ptr<Room>& room);
 };
 
 #endif //ASYNC_SERVER_ROOMS_ROOM_HPP

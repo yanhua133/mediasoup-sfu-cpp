@@ -9,6 +9,7 @@
 #include "WebRtcTransport.hpp"
 #include "PlainTransport.hpp"
 #include "PipeTransport.hpp"
+#include "PushTransport.hpp"
 
 using json = nlohmann::json;
 namespace mediasoup
@@ -753,6 +754,15 @@ void from_json(const json& j, PipeTransportOptions& st){
 
 
     }
-}
 
+    void to_json(json& j, const PushTransportOptions& st) {
+        j = json{
+            {"appData", st.appData}
+        };
+    }
+    void from_json(const json& j, PushTransportOptions& st) {
+        if (j.contains("appData"))
+            j.at("appData").get_to(st.appData);
+    }
+}
 

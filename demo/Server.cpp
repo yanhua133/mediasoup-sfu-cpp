@@ -706,6 +706,7 @@ std::shared_ptr<Room> SfuServer::getOrCreateRoom(const oatpp::String& roomId)
         // Create room instance
 		room = std::make_shared<Room>(roomId, mediasoupRouter);
         room->setConfig(this->m_pConfig);
+		room->createPushPeer(room);
 		//add to room map
 		m_rooms[roomId] = room;		
 	}

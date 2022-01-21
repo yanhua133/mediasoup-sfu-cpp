@@ -38,6 +38,7 @@ set(mediasoup_headers
   PipeTransport.hpp
   PlainTransport.hpp
   Producer.hpp
+  PushTransport.hpp
   Router.hpp
   SctpParameters.hpp
   SrtpParameters.hpp

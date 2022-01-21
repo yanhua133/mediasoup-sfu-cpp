@@ -430,7 +430,48 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         
         accept(iceParameters);
         
-        
+
+    }
+    else if (method == "createPushTransport") {
+        auto data = request["data"];
+        MS_lOGD("createWebRtcTransport request.data=%s", data.dump().c_str());
+        string peerId = data["peerId"];
+        auto srcPeer = this->getPeerById(peerId);
+        if (srcPeer == nullptr) {
+            reject(403, "invalid peer id");
+            return;
+        }
+
+        if (srcPeer->getPushTransportId() != "") {
+            json resp;
+            accept(resp);
+            return;
+        }
+
+        json jpushTransportOptions;
+        jpushTransportOptions["appData"] = {{"peerId",peerId}};
+   
+        PushTransportOptions pushTransportOptions = jpushTransportOptions;
+
+        auto transport = this->m_mediasoupRouter->createPushTransport(pushTransportOptions);
+        srcPeer->setPushTransportId(transport->id());
+
+        // NOTE: For testing.
+        //  transport->enableTraceEvent([ "probation", "bwe" ]);
+        std::vector<std::string> types;
+        //types.push_back("probation");
+        transport->enableTraceEvent(types);
+
+        transport->on("trace", [peer, transport](TransportTraceEventData& trace) //(trace) =>
+            {
+                MS_lOGD(
+                    "transport trace event [transportId:%s, trace.type:%s, trace]",
+                    transport->id().c_str(), trace.type.c_str());
+            });
+
+        m_pushPeer->data.transports[transport->id()] = transport;
+        json resp;
+        accept(resp);
     }else if(method ==  "produce"){
         // Ensure the Peer is joined.
         if (!peer->data.joined)
@@ -1373,4 +1414,9 @@ void Room::createDataConsumer(
     {
         MS_lOGW("_createDataConsumer() | failed:");
     }
+}
+
+void Room::createPushPeer(std::shared_ptr<Room>& room) {
+    if (m_pushPeer != nullptr) return;
+    m_pushPeer = std::make_shared<Peer>(nullptr, room, uuidv4(), "ffmpeg pusher");
 }

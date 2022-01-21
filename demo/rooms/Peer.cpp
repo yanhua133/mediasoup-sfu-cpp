@@ -336,6 +336,14 @@ void Peer::setNickname(std::string nickName){
     m_nickname = nickName;
 }
 
+std::string Peer::getPushTransportId() {
+    return m_pushTransport;
+}
+
+void Peer::setPushTransportId(std::string id) {
+    m_pushTransport = id;
+}
+
 std::string Peer::getPeerId() {
   return m_peerId;
 }

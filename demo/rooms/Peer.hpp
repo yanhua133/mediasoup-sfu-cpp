@@ -105,6 +105,7 @@ private:
   std::shared_ptr<Room> m_room;
   std::string m_nickname;
   std::string m_peerId;
+  std::string m_pushTransport;
 private:
   std::atomic<v_int32> m_pingPoingCounter;
 private:
@@ -137,6 +138,7 @@ public:
     , m_peerId(peerId)
     , m_nickname(nickname)
     , m_pingPoingCounter(0)
+    , m_pushTransport("")
   {}
 
   /**
@@ -170,6 +172,9 @@ public:
    
     //set peer nickname
   void setNickname(std::string nickname);
+
+  std::string getPushTransportId();
+  void setPushTransportId(std::string id);
 
   /**
    * Get peer peerId.
