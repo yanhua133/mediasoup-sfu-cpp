@@ -229,6 +229,8 @@ public:
     std::vector<std::shared_ptr<Producer>> getProducersFromBridge(std::string &bridgeId){}
   
     void createPushPeer(std::shared_ptr<Room>& room);
+    void createPushConsumer(std::shared_ptr<Peer>& consumerPeer, std::shared_ptr<Transport>& transport, std::shared_ptr<Peer>& producerPeer, std::shared_ptr<Producer>& producer);
+
 };
 
 #endif //ASYNC_SERVER_ROOMS_ROOM_HPP

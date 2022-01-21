@@ -434,7 +434,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
     }
     else if (method == "createPushTransport") {
         auto data = request["data"];
-        MS_lOGD("createWebRtcTransport request.data=%s", data.dump().c_str());
+        MS_lOGD("createPushTransport request.data=%s", data.dump().c_str());
         string peerId = data["peerId"];
         auto srcPeer = this->getPeerById(peerId);
         if (srcPeer == nullptr) {
@@ -443,8 +443,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         }
 
         if (srcPeer->getPushTransportId() != "") {
-            json resp;
-            accept(resp);
+            accept(json({}));
             return;
         }
 
@@ -470,8 +469,39 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
             });
 
         m_pushPeer->data.transports[transport->id()] = transport;
-        json resp;
-        accept(resp);
+        accept(json({}));
+    }
+    else if (method == "connectPushTransport") {
+        auto data = request["data"];
+        MS_lOGD("connectPushTransport request.data=%s", data.dump().c_str());
+        string peerId = data["peerId"];
+        auto srcPeer = this->getPeerById(peerId);
+
+        if (srcPeer == nullptr) {
+            reject(403, "invalid peer id");
+            return;
+        }
+
+        auto transportId = srcPeer->getPushTransportId();
+        if (transportId  == "") {
+            reject(403, "PushTransport is not created.");
+            return;
+        }
+
+        auto transport = m_pushPeer->data.transports[transportId];
+        if (!transport)
+            MS_THROW_lOG("transport with id transportId=%s not found", transportId.c_str());
+
+        json newdata = json::object();
+        transport->connect(newdata);
+
+        for (auto& kv : srcPeer->data.producers)
+        {
+            auto producer = kv.second;
+            createPushConsumer(m_pushPeer, transport, srcPeer, producer);
+        }
+
+        accept(json({}));
     }else if(method ==  "produce"){
         // Ensure the Peer is joined.
         if (!peer->data.joined)
@@ -561,13 +591,12 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         //joinedPeers.insert(this->_broadcasters.begin(), this->_broadcasters.end());
         
         // Optimization: Create a server-side Consumer for each Peer.
-        if(kind == "audio") {
-            auto tt=0;
-            tt=1;
-            
-        }else{
-            
+        
+        auto pushTransport = m_pushPeer->data.transports[peer->getPushTransportId()];
+        if (pushTransport != nullptr) {
+            createPushConsumer(m_pushPeer, pushTransport, peer, producer);
         }
+
         for (auto  &kv : joinedPeers)
         {
             auto otherPeer = kv.second;
@@ -1419,4 +1448,97 @@ void Room::createDataConsumer(
 void Room::createPushPeer(std::shared_ptr<Room>& room) {
     if (m_pushPeer != nullptr) return;
     m_pushPeer = std::make_shared<Peer>(nullptr, room, uuidv4(), "ffmpeg pusher");
+    m_pushPeer->data.rtpCapabilities = m_mediasoupRouter->getRouterRtpCapabilities();
+}
+
+void Room::createPushConsumer(std::shared_ptr<Peer>& consumerPeer, std::shared_ptr<Transport>& transport, std::shared_ptr<Peer>& producerPeer, std::shared_ptr<Producer>& producer)
+{
+    RtpCapabilities rtpCapabilities = consumerPeer->data.rtpCapabilities;
+    if (
+        rtpCapabilities.codecs.size() == 0 ||
+        !this->m_mediasoupRouter->canConsume(
+            producer->id(),
+            rtpCapabilities
+        )
+        )
+    {
+        MS_lOGW("_createConsumer() | Transport canConsume = false return");
+        return;
+    }
+
+
+    // Create the Consumer in paused mode.
+    std::shared_ptr<Consumer> consumer;
+
+    try
+    {
+        ConsumerOptions options;
+        options.producerId = producer->id();
+        options.rtpCapabilities = consumerPeer->data.rtpCapabilities;
+        options.paused = true;
+        consumer = transport->consume(options);
+        MS_lOGD("consumerPeer->data.rtpCapabilities=%s", consumerPeer->data.rtpCapabilities.dump(4).c_str());
+        json jrtpParameters = consumer->rtpParameters();
+        MS_lOGD("consumer->rtpParameters()=%s", jrtpParameters.dump(4).c_str());
+    }
+    catch (const char* error)
+    {
+        MS_lOGW("_createConsumer() | transport->consume():%s", error);
+
+        return;
+    }
+
+    // Store the Consumer into the protoo consumerPeer data Object.
+    consumerPeer->data.consumers[consumer->id()] = consumer;
+
+    // Set Consumer events.
+    consumer->on("transportclose", [consumerPeer, consumer]()
+        {
+            // Remove from its map.
+            consumerPeer->data.consumers.erase(consumer->id());
+        });
+
+    consumer->on("producerclose", [consumerPeer, consumer]()
+        {
+
+            MS_lOGD("producerclose  producerclose  producerclose()");
+
+            // Remove from its map.
+            consumerPeer->data.consumers.erase(consumer->id());
+        });
+
+
+    // NOTE: For testing.
+    //  consumer->enableTraceEvent([ "rtp", "keyframe", "nack", "pli", "fir" ]);
+    //  consumer->enableTraceEvent([ "pli", "fir" ]);
+    //  consumer->enableTraceEvent([ "keyframe" ]);
+
+    consumer->on("trace", [consumer](ConsumerTraceEventData& trace) // (trace) =>
+        {
+
+            MS_lOGD(
+                "consumer trace event [producerId:%s, trace.type:%s, trace]",
+                consumer->id().c_str(), trace.type.c_str());
+        });
+
+    try
+    {
+        consumerPeer->requestAsync(
+            "newConsumer",
+            {
+             {"peerId"     , producerPeer->getPeerId()},
+             {"producerId"         , producer->id()},
+             {"id"         , consumer->id()},
+             {"kind"         , consumer->kind()},
+             {"rtpParameters"         , consumer->rtpParameters()},
+             {"type"         , consumer->type()},
+             {"appData", producer->appData()},
+             {"producerPaused", consumer->producerPaused()}
+            });
+    }
+    catch (const char* error)
+    {
+        MS_lOGW("_createConsumer() | failed:%s", error);
+    }
+    return;
 }
