@@ -606,7 +606,7 @@ public:
 			}
 			// Otherwise if we don't have yet a CNAME for Producers and the RTP parameters
 			// do not include CNAME, create a random one.
-			else if (!this->_cnameForProducers.empty())
+			else if (this->_cnameForProducers.empty())
 			{
                 this->_cnameForProducers = uuidv4_prefix8();//.substr(0, 8);
 			}
