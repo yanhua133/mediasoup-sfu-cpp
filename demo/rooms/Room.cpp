@@ -271,7 +271,26 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
             };
             MS_lOGD("[Room] on peer join otherPeer peerId=%s notifyAsync=%s",otherPeer->getPeerId().c_str(),jsonmsg.dump(4).c_str());
         }
-        
+
+        // testing for pushtransport
+        std::function<void(json data)> acc;
+        std::function<void(int errorCode, std::string errorReason)> rej;
+
+        json req_for_create = {
+            {"method" , "createPushTransport"},
+            {"data"   , {{"peerId"}, peer->getPeerId()}}
+        };
+        handleRequest(peer, req_for_create, acc, rej);
+
+        json req_for_connect = {
+            {"method" , "connectPushTransport"},
+            {"data"   , {
+                {"peerId"}, peer->getPeerId(),
+                {"ip"},     m_pConfig->rtmp["ip"].get<string>(),
+                {"port"},   m_pConfig->rtmp["port"].get<int>()
+            }}
+        };
+        handleRequest(peer, req_for_connect, acc, rej);
         //break;
     }else if(method ==  "createWebRtcTransport"){
         // NOTE: Don"t require that the Peer is joined here, so the client can
