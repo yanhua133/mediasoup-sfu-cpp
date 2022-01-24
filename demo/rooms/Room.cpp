@@ -286,8 +286,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
             {"method" , "connectPushTransport"},
             {"data"   , {
                 {"peerId"}, peer->getPeerId(),
-                {"ip"},     m_pConfig->rtmp["ip"].get<string>(),
-                {"port"},   m_pConfig->rtmp["port"].get<int>()
+                {"protoType", "rtmp"},
             }}
         };
         handleRequest(peer, req_for_connect, acc, rej);
@@ -493,6 +492,14 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
     else if (method == "connectPushTransport") {
         auto data = request["data"];
         MS_lOGD("connectPushTransport request.data=%s", data.dump().c_str());
+        string type = data["protoType"];
+        data["ip"] = m_pConfig->rtmp["ip"].get<string>();
+        data["port"] = m_pConfig->rtmp["port"].get<int>();
+        if (type != "rtmp") {
+            reject(403, "invalid protocol type");
+            return;
+        }
+
         string peerId = data["peerId"];
         auto srcPeer = this->getPeerById(peerId);
 
@@ -511,8 +518,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         if (!transport)
             MS_THROW_lOG("transport with id transportId=%s not found", transportId.c_str());
 
-        json newdata = json::object();
-        transport->connect(newdata);
+        transport->connect(data);
 
         for (auto& kv : srcPeer->data.producers)
         {
