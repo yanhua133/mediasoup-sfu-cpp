@@ -324,6 +324,7 @@ ELSEIF(CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_include_directories(${PROJECT_NAME}
     PRIVATE
     ../deps/getopt/src
+    ../deps/ffmpeg/install
 )
 ELSE()
 

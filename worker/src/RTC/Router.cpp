@@ -270,6 +270,29 @@ namespace RTC
 				break;
 			}
 
+			case Channel::Request::MethodId::ROUTER_CREATE_PUSH_TRANSPORT:
+			{
+				std::string transportId;
+
+				// This may throw
+				SetNewTransportIdFromInternal(request->internal, transportId);
+
+				//auto* pushTransport = new RTC::PushTransport(transportId, this, request->data);
+
+				// Insert into the map.
+				//this->mapTransports[transportId] = pushTransport;
+
+				MS_DEBUG_DEV("PushTransport created [transportId:%s]", transportId.c_str());
+
+				json data = json::object();
+
+				//pushTransport->FillJson(data);
+
+				request->Accept(data);
+
+				break;
+			}
+
 			case Channel::Request::MethodId::ROUTER_CREATE_AUDIO_LEVEL_OBSERVER:
 			{
 				std::string rtpObserverId;
