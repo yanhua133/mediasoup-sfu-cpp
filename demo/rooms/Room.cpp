@@ -273,19 +273,19 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         }
 
         // testing for pushtransport
-        std::function<void(json data)> acc;
-        std::function<void(int errorCode, std::string errorReason)> rej;
+        std::function<void(json data)> acc = [](json data) {};
+        std::function<void(int errorCode, std::string errorReason)> rej = [](int errorCode, std::string errorReason) {};
 
         json req_for_create = {
-            {"method" , "createPushTransport"},
-            {"data"   , {{"peerId"}, peer->getPeerId()}}
+             {"method" , "createPushTransport"},
+             {"data"   , {{"peerId", peer->getPeerId()}}}
         };
         handleRequest(peer, req_for_create, acc, rej);
 
         json req_for_connect = {
             {"method" , "connectPushTransport"},
             {"data"   , {
-                {"peerId"}, peer->getPeerId(),
+                {"peerId", peer->getPeerId()},
                 {"protoType", "rtmp"},
             }}
         };
@@ -430,7 +430,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         newdata["dtlsParameters"] = dtlsParameters;
         MS_lOGD("connectWebRtcTransport dtlsParameters=%s",newdata.dump(4).c_str());
         transport->connect(newdata);
-        
+
         accept(json({}));
     }else if(method ==  "restartIce"){
         auto data = request["data"];
@@ -472,12 +472,6 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
 
         auto transport = this->m_mediasoupRouter->createPushTransport(pushTransportOptions);
         srcPeer->setPushTransportId(transport->id());
-
-        // NOTE: For testing.
-        //  transport->enableTraceEvent([ "probation", "bwe" ]);
-        std::vector<std::string> types;
-        //types.push_back("probation");
-        transport->enableTraceEvent(types);
 
         transport->on("trace", [peer, transport](TransportTraceEventData& trace) //(trace) =>
             {

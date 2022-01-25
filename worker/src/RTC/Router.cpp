@@ -10,6 +10,7 @@
 #include "RTC/PipeTransport.hpp"
 #include "RTC/PlainTransport.hpp"
 #include "RTC/WebRtcTransport.hpp"
+#include "RTC/PushTransport.hpp"
 
 namespace RTC
 {
@@ -277,10 +278,10 @@ namespace RTC
 				// This may throw
 				SetNewTransportIdFromInternal(request->internal, transportId);
 
-				//auto* pushTransport = new RTC::PushTransport(transportId, this, request->data);
+				auto* pushTransport = new RTC::PushTransport(transportId, this, request->data);
 
 				// Insert into the map.
-				//this->mapTransports[transportId] = pushTransport;
+				this->mapTransports[transportId] = pushTransport;
 
 				MS_DEBUG_DEV("PushTransport created [transportId:%s]", transportId.c_str());
 

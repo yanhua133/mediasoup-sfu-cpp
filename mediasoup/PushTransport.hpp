@@ -102,7 +102,7 @@ public:
 	{
 		MS_lOGD("connect()");
 
-        const json reqData;
+        const json reqData = params;
 
 		json data =
 			this->_channel->request("transport.connect", this->_internal, reqData);
