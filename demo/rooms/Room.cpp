@@ -1326,7 +1326,6 @@ void Room::createConsumer(std::shared_ptr<Peer> &consumerPeer, std::shared_ptr<P
     //}
     try
     {
-        MS_lOGD("===========newConsumer==============");
          consumerPeer->requestAsync(
             "newConsumer",
             {
@@ -1540,24 +1539,7 @@ void Room::createPushConsumer(std::shared_ptr<Peer>& consumerPeer, std::shared_p
                 consumer->id().c_str(), trace.type.c_str());
         });
 
-    try
-    {
-        consumerPeer->requestAsync(
-            "newConsumer",
-            {
-             {"peerId"     , producerPeer->getPeerId()},
-             {"producerId"         , producer->id()},
-             {"id"         , consumer->id()},
-             {"kind"         , consumer->kind()},
-             {"rtpParameters"         , consumer->rtpParameters()},
-             {"type"         , consumer->type()},
-             {"appData", producer->appData()},
-             {"producerPaused", consumer->producerPaused()}
-            });
-    }
-    catch (const char* error)
-    {
-        MS_lOGW("_createConsumer() | failed:%s", error);
-    }
+    consumer->resume();
+
     return;
 }
