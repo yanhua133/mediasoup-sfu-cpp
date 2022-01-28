@@ -35,8 +35,7 @@ namespace RTC
 	{
 		MS_TRACE();
 
-		delete this->tuple;
-		this->tuple = nullptr;
+		this->connected = false;
 	}
 
 	void PushTransport::FillJson(json& jsonObject) const
@@ -48,17 +47,6 @@ namespace RTC
 
 		// Add comedia.
 		jsonObject["comedia"] = this->comedia;
-
-		// Add tuple.
-		if (this->tuple)
-		{
-			this->tuple->FillJson(jsonObject["tuple"]);
-		}
-		else
-		{
-			jsonObject["tuple"] = json::object();
-			auto jsonTupleIt    = jsonObject.find("tuple");			
-		}
 	}
 
 	void PushTransport::FillJsonStats(json& jsonArray)
@@ -75,18 +63,6 @@ namespace RTC
 
 		// Add comedia.
 		jsonObject["comedia"] = this->comedia;
-
-		if (this->tuple)
-		{
-			// Add tuple.
-			this->tuple->FillJson(jsonObject["tuple"]);
-		}
-		else
-		{
-			// Add tuple.
-			jsonObject["tuple"] = json::object();
-			auto jsonTupleIt    = jsonObject.find("tuple");
-		}
 	}
 
 	void PushTransport::HandleRequest(Channel::Request* request)
@@ -138,19 +114,17 @@ namespace RTC
 				}
 				catch (const MediaSoupError& error)
 				{
-					delete this->tuple;
-					this->tuple = nullptr;
-
 					throw;
 				}
 
 				this->connectCalled = true;
+				this->connected = true;
 
 				// Tell the caller about the selected local DTLS role.
 				json data = json::object();
 
-				if (this->tuple)
-					this->tuple->FillJson(data["tuple"]);
+		/*		if (this->tuple)
+					this->tuple->FillJson(data["tuple"]);*/
 
 				request->Accept(data);
 
@@ -179,9 +153,9 @@ namespace RTC
 
 	inline bool PushTransport::IsConnected() const
 	{
-		return this->tuple;
+		return this->connected;
 	}
-
+	static uint32_t at = 0, vt=0;
 	void PushTransport::SendRtpPacket(
 	  RTC::Consumer* /*consumer*/, RTC::RtpPacket* packet, RTC::Transport::onSendCallback* cb)
 	{
@@ -202,6 +176,26 @@ namespace RTC
 		const uint8_t* data = packet->GetData();
 		size_t len          = packet->GetSize();
 
+		auto t = packet->GetPayloadType();
+		auto s = packet->GetSequenceNumber();
+		auto ts = packet->GetTimestamp();
+		t = t;
+		ts = ts;
+		s = s;
+		uint32_t dur = 0;
+		if (t == 100) {
+			if (at != 0) {
+				dur = ts - at;
+			}
+			at = ts;
+		}
+		if (t == 101) {
+			if (vt != 0) {
+				dur = ts - vt;
+			}
+			vt = ts;
+		}
+		auto lenlen = packet->GetPayloadLength();
 		// Increase send transmission.
 		RTC::Transport::DataSent(len);
 	}

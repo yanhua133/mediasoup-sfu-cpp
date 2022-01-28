@@ -43,11 +43,13 @@ namespace RTC
 
 	private:
 		// Allocated by this.
-		RTC::TransportTuple* tuple{ nullptr };
+		std::string ip;
+		uint16_t port{ 1935u };
 		// Others.
 		bool comedia{ false };
 		struct sockaddr_storage remoteAddrStorage;
 		bool connectCalled{ false }; // Whether connect() was succesfully called.
+		bool connected{ false };
 	};
 } // namespace RTC
 
