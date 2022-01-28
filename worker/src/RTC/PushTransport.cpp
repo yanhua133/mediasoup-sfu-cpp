@@ -6,6 +6,7 @@
 #include "MediaSoupErrors.hpp"
 #include "Utils.hpp"
 #include "Channel/Notifier.hpp"
+#include "libavformat/avformat.h"
 
 namespace RTC
 {
@@ -76,6 +77,12 @@ namespace RTC
 
 				try
 				{
+					AVFormatContext* m_context = avformat_alloc_context();
+					avformat_alloc_output_context2(&m_context, NULL, "mp4", "D:/test.mp4");
+
+					std::string ip;
+					uint16_t port{ 0u };
+
 					if (!this->comedia)
 					{
 						auto jsonIpIt = request->data.find("ip");
