@@ -6,7 +6,9 @@
 #include "MediaSoupErrors.hpp"
 #include "Utils.hpp"
 #include "Channel/Notifier.hpp"
-#include "libavformat/avformat.h"
+extern "C" {
+#include <libavformat/avformat.h>
+}
 
 namespace RTC
 {

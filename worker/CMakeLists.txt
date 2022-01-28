@@ -326,7 +326,6 @@ ELSEIF(CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_include_directories(${PROJECT_NAME}
     PRIVATE
     ../deps/getopt/src
-    ../deps/ffmpeg/include
 )
 ELSE()
 
@@ -374,20 +373,14 @@ LINK_DIRECTORIES(
 	${PROJECT_LIB_DIR}
 )
 IF(WIN32)
+    target_include_directories(${PROJECT_NAME}
+        PUBLIC
+        ../deps/ffmpeg/include
+    )
     target_link_libraries(${PROJECT_NAME}
         #usrsctp-static
     )
 
-    target_link_libraries(${PROJECT_NAME}
-        ${PROJECT_LIB_DIR}/avcodec.lib
-        ${PROJECT_LIB_DIR}/avdevice.lib
-        ${PROJECT_LIB_DIR}/avfilter.lib
-        ${PROJECT_LIB_DIR}/avformat.lib
-        ${PROJECT_LIB_DIR}/avutil.lib
-        ${PROJECT_LIB_DIR}/postproc.lib
-        ${PROJECT_LIB_DIR}/swresample.lib
-        ${PROJECT_LIB_DIR}/swscale.lib
-    )
 ELSE()
     target_link_libraries(${PROJECT_NAME}
         #usrsctp

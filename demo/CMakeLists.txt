@@ -170,11 +170,18 @@ LINK_DIRECTORIES(
 	${PROJECT_LIB_DIR}
 )
 
-
 IF (WIN32)
   target_link_libraries(${PROJECT_NAME}
       worker
       libwebrtc
+      ${PROJECT_LIB_DIR}/avcodec.lib
+      ${PROJECT_LIB_DIR}/avdevice.lib
+      ${PROJECT_LIB_DIR}/avfilter.lib
+      ${PROJECT_LIB_DIR}/avformat.lib
+      ${PROJECT_LIB_DIR}/avutil.lib
+      ${PROJECT_LIB_DIR}/postproc.lib
+      ${PROJECT_LIB_DIR}/swresample.lib
+      ${PROJECT_LIB_DIR}/swscale.lib
       ${PROJECT_LIB_DIR}/oatpp-websocket.lib
       ${PROJECT_LIB_DIR}/oatpp.lib
       ${PROJECT_LIB_DIR}/oatpp-openssl.lib
