@@ -4,6 +4,9 @@
 #include "RTC/Transport.hpp"
 #include "RTC/TransportTuple.hpp"
 #include <map>
+extern "C" {
+#include <libavformat/avformat.h>
+}
 
 namespace RTC
 {
@@ -45,6 +48,9 @@ namespace RTC
 		// Allocated by this.
 		std::string ip;
 		uint16_t port{ 1935u };
+		std::string protoType;
+		std::string suffix{"/live"};
+		AVFormatContext* m_context{NULL};
 		// Others.
 		bool comedia{ false };
 		struct sockaddr_storage remoteAddrStorage;

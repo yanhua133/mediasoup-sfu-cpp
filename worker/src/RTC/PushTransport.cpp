@@ -6,9 +6,6 @@
 #include "MediaSoupErrors.hpp"
 #include "Utils.hpp"
 #include "Channel/Notifier.hpp"
-extern "C" {
-#include <libavformat/avformat.h>
-}
 
 namespace RTC
 {
@@ -79,12 +76,6 @@ namespace RTC
 
 				try
 				{
-					AVFormatContext* m_context = avformat_alloc_context();
-					avformat_alloc_output_context2(&m_context, NULL, "mp4", "D:/test.mp4");
-
-					std::string ip;
-					uint16_t port{ 0u };
-
 					if (!this->comedia)
 					{
 						auto jsonIpIt = request->data.find("ip");
@@ -99,17 +90,39 @@ namespace RTC
 
 						auto jsonPortIt = request->data.find("port");
 
-						// clang-format off
 						if (
 							jsonPortIt == request->data.end() ||
 							!Utils::Json::IsPositiveInteger(*jsonPortIt)
 						)
-						// clang-format on
 						{
 							MS_THROW_TYPE_ERROR("missing port");
 						}
 
 						port = jsonPortIt->get<uint16_t>();
+
+						auto jsonProtoTypeIt = request->data.find("protoType");
+
+						if (jsonProtoTypeIt == request->data.end() || !jsonProtoTypeIt->is_string())
+						{
+							MS_THROW_TYPE_ERROR("missing protocol type");
+						}
+
+						protoType = jsonProtoTypeIt->get<std::string>();
+						if (protoType != "rtmp") {
+							MS_THROW_TYPE_ERROR("unknown protocol");
+						}
+
+						auto jsonSuffixIt = request->data.find("suffix");
+
+						if (jsonSuffixIt != request->data.end() && jsonSuffixIt->is_string())
+						{
+							suffix = jsonSuffixIt->get<std::string>();
+						}
+
+						std::string url = "rtmp://" + ip + ":" + std::to_string(port) + suffix + "/" + id;
+
+						m_context = avformat_alloc_context();
+						avformat_alloc_output_context2(&m_context, NULL, protoType.c_str(), url.c_str());
 					}
 				}
 				catch (const MediaSoupError& error)
@@ -175,27 +188,7 @@ namespace RTC
 
 		const uint8_t* data = packet->GetData();
 		size_t len          = packet->GetSize();
-
-		auto t = packet->GetPayloadType();
-		auto s = packet->GetSequenceNumber();
-		auto ts = packet->GetTimestamp();
-		t = t;
-		ts = ts;
-		s = s;
-		uint32_t dur = 0;
-		if (t == 100) {
-			if (at != 0) {
-				dur = ts - at;
-			}
-			at = ts;
-		}
-		if (t == 101) {
-			if (vt != 0) {
-				dur = ts - vt;
-			}
-			vt = ts;
-		}
-		auto lenlen = packet->GetPayloadLength();
+		
 		// Increase send transmission.
 		RTC::Transport::DataSent(len);
 	}

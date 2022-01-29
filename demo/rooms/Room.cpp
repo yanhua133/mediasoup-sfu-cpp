@@ -489,6 +489,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         string type = data["protoType"];
         data["ip"] = m_pConfig->rtmp["ip"].get<string>();
         data["port"] = m_pConfig->rtmp["port"].get<int>();
+        data["suffix"] = m_pConfig->rtmp["suffix"].get<string>();
         if (type != "rtmp") {
             reject(403, "invalid protocol type");
             return;
