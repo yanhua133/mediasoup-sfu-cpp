@@ -119,10 +119,21 @@ namespace RTC
 							suffix = jsonSuffixIt->get<std::string>();
 						}
 
-						std::string url = "rtmp://" + ip + ":" + std::to_string(port) + suffix + "/" + id;
+						std::string url = "rtmp://" + ip + ":" + std::to_string(port) + suffix + "/1";// +id;
 
 						m_context = avformat_alloc_context();
-						avformat_alloc_output_context2(&m_context, NULL, protoType.c_str(), url.c_str());
+						avformat_alloc_output_context2(&m_context, NULL, "flv", url.c_str());
+						if (!m_context) {
+							MS_THROW_TYPE_ERROR("allocate output context failed");
+						}
+
+						if (!(m_context->oformat->flags & AVFMT_NOFILE)) {
+							if (avio_open(&m_context->pb, m_context->url, AVIO_FLAG_WRITE) < 0) {
+								avformat_free_context(m_context);
+								m_context = NULL;
+								MS_THROW_TYPE_ERROR("open avio failed");
+							}
+						}
 					}
 				}
 				catch (const MediaSoupError& error)
@@ -168,7 +179,7 @@ namespace RTC
 	{
 		return this->connected;
 	}
-	static uint32_t at = 0, vt=0;
+
 	void PushTransport::SendRtpPacket(
 	  RTC::Consumer* /*consumer*/, RTC::RtpPacket* packet, RTC::Transport::onSendCallback* cb)
 	{
@@ -185,12 +196,52 @@ namespace RTC
 
 			return;
 		}
+		if (m_videoStream == NULL) {
+			addVideoStream(AV_CODEC_ID_H264, 1920, 1080);
 
-		const uint8_t* data = packet->GetData();
-		size_t len          = packet->GetSize();
+			if (avformat_write_header(m_context, NULL) < 0) {
+				if (cb)
+				{
+					(*cb)(false);
+
+					delete cb;
+				}
+
+				return;
+			}
+		}
+		int64_t ts = packet->GetTimestamp();
+		if (m_videoStartTs == 0) {
+			m_videoStartTs = ts;
+			m_videoPrevTs = m_videoStartTs;
+			m_videoOffsetTs = 0;
+		}
+
+		if (m_videoPrevTs < ts) {
+			m_videoOffsetTs = ts - m_videoStartTs;
+			m_videoPrevTs = ts;
+		}
 		
-		// Increase send transmission.
-		RTC::Transport::DataSent(len);
+		AVPacket pkt;
+		av_init_packet(&pkt);
+		pkt.data = packet->GetPayload();
+		pkt.size = packet->GetPayloadLength();
+		pkt.dts = m_videoOffsetTs;
+		pkt.pts = pkt.dts;
+		//pkt.duration = 3600;
+		pkt.stream_index = m_videoStream->index;
+
+		int ret = av_interleaved_write_frame(m_context, &pkt);
+		if (ret < 0)
+			return;
+
+		return ;
+
+		//const uint8_t* data = packet->GetData();
+		//size_t len          = packet->GetSize();
+		//
+		//// Increase send transmission.
+		//RTC::Transport::DataSent(len);
 	}
 
 	void PushTransport::SendRtcpPacket(RTC::RTCP::Packet* packet)
@@ -268,5 +319,45 @@ namespace RTC
 	  RTC::TransportTuple* tuple, const uint8_t* data, size_t len)
 	{
 		MS_TRACE();
+	}
+
+	bool PushTransport::addVideoStream(AVCodecID codec_id, uint32_t width, uint32_t height)
+	{
+		m_videoStream = avformat_new_stream(m_context, NULL);
+		if (!m_videoStream) {
+			return false;
+		}
+
+		m_videoStream->time_base.num = 1;
+		m_videoStream->time_base.den = 90000;
+
+		AVCodecParameters* par = m_videoStream->codecpar;
+		par->codec_type = AVMEDIA_TYPE_VIDEO;
+		par->codec_id = codec_id;
+		par->width = width;
+		par->height = height;
+		//if (codec_id == AV_CODEC_ID_H264 || codec_id == AV_CODEC_ID_H265) { //extradata
+		//	AVCodecParserContext* parser = av_parser_init(codec_id);
+		//	if (!parser) {
+		//		return false;
+		//	}
+
+		//	int size = parser->parser->split(NULL, m_videoKeyFrame->m_frame.payload, m_videoKeyFrame->m_frame.length);
+		//	if (size > 0) {
+		//		par->extradata_size = size;
+		//		par->extradata = (uint8_t*)av_malloc(par->extradata_size + AV_INPUT_BUFFER_PADDING_SIZE);
+		//		memcpy(par->extradata, m_videoKeyFrame->m_frame.payload, par->extradata_size);
+		//	}
+		//	else {
+		//	}
+
+		//	av_parser_close(parser);
+		//}
+
+		//if (codec_id == AV_CODEC_ID_H265) {
+		//	par->codec_tag = 0x31637668; //hvc1
+		//}
+
+		return true;
 	}
 } // namespace RTC

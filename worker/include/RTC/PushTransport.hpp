@@ -44,6 +44,8 @@ namespace RTC
 		void OnRtcpDataReceived(RTC::TransportTuple* tuple, const uint8_t* data, size_t len);
 		void OnSctpDataReceived(RTC::TransportTuple* tuple, const uint8_t* data, size_t len);
 
+		bool addVideoStream(AVCodecID codec_id, uint32_t width, uint32_t height);
+
 	private:
 		// Allocated by this.
 		std::string ip;
@@ -51,6 +53,8 @@ namespace RTC
 		std::string protoType;
 		std::string suffix{"/live"};
 		AVFormatContext* m_context{NULL};
+		AVStream* m_videoStream{ NULL }, * m_audioStream{ NULL };
+		int64_t m_videoStartTs{ 0u }, m_videoPrevTs{0u}, m_videoOffsetTs{ 0u };
 		// Others.
 		bool comedia{ false };
 		struct sockaddr_storage remoteAddrStorage;
