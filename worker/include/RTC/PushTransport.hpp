@@ -4,6 +4,9 @@
 #include "RTC/Transport.hpp"
 #include "RTC/TransportTuple.hpp"
 #include <map>
+extern "C" {
+#include <libavformat/avformat.h>
+}
 
 extern "C" {
 #include "libavformat/avformat.h"

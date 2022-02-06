@@ -176,7 +176,7 @@ namespace RTC
 	{
 		return this->connected;
 	}
-	static uint32_t at = 0, vt=0;
+
 	void PushTransport::SendRtpPacket(
 	  RTC::Consumer* /*consumer*/, RTC::RtpPacket* packet, RTC::Transport::onSendCallback* cb)
 	{
@@ -193,6 +193,16 @@ namespace RTC
 
 			return;
 		}
+		if (m_videoStream == NULL) {
+			addVideoStream(AV_CODEC_ID_H264, 1920, 1080);
+
+			if (avformat_write_header(m_context, NULL) < 0) {
+				if (cb)
+				{
+					(*cb)(false);
+
+					delete cb;
+				}
 
 		const uint8_t* data = packet->GetData();
 		size_t len          = packet->GetSize();
