@@ -287,7 +287,7 @@ namespace RTC
 					std::string srtpKeyBase64;
 
 					auto jsonSrtpParametersIt = request->data.find("srtpParameters");
-
+					jsonSrtpParametersIt = request->data.end();
 					if (!HasSrtp() && jsonSrtpParametersIt != request->data.end())
 					{
 						MS_THROW_TYPE_ERROR("invalid srtpParameters (SRTP not enabled)");

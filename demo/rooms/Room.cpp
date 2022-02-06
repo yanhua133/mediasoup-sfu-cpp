@@ -126,7 +126,8 @@ void Room::addHistoryMessage(const oatpp::Object<MessageDto>& message) {
   }
 
 }
-
+static string tid1 = "";
+static string tid2 = "";
 void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::function<void(json data)> const & accept, std::function<void(int errorCode, std::string errorReason)> const & reject){
     std::string method = request["method"];
     //print current thread
@@ -290,6 +291,38 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
             }}
         };
         handleRequest(peer, req_for_connect, acc, rej);
+
+        json req_for_create1 = {
+             {"method" , "createPlainTransport"},
+             {"data"   , {{"peerId", peer->getPeerId()}}}
+        };
+        handleRequest(peer, req_for_create1, acc, rej);
+
+        json req_for_connect1 = {
+            {"method" , "connectPlainTransport"},
+            {"data"   , {
+                {"peerId", peer->getPeerId()},
+                {"protoType", "rtmp"},
+                {"port", 10086},
+            }}
+        };
+        handleRequest(peer, req_for_connect1, acc, rej);
+
+        json req_for_create2 = {
+             {"method" , "createPlainTransport"},
+             {"data"   , {{"peerId", peer->getPeerId()}}}
+        };
+        handleRequest(peer, req_for_create2, acc, rej);
+
+        json req_for_connect2 = {
+            {"method" , "connectPlainTransport"},
+            {"data"   , {
+                {"peerId", peer->getPeerId()},
+                {"protoType", "rtmp"},
+                {"port", 10088},
+            }}
+        };
+        handleRequest(peer, req_for_connect2, acc, rej);
         //break;
     }else if(method ==  "createWebRtcTransport"){
         // NOTE: Don"t require that the Peer is joined here, so the client can
@@ -489,10 +522,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         string type = data["protoType"];
         data["ip"] = m_pConfig->rtmp["ip"].get<string>();
         data["port"] = m_pConfig->rtmp["port"].get<int>();
-        if (type != "rtmp") {
-            reject(403, "invalid protocol type");
-            return;
-        }
+        data["suffix"] = m_pConfig->rtmp["suffix"].get<string>();
 
         string peerId = data["peerId"];
         auto srcPeer = this->getPeerById(peerId);
@@ -521,7 +551,77 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         }
 
         accept(json({}));
-    }else if(method ==  "produce"){
+    }
+    else if (method == "createPlainTransport") {
+        auto data = request["data"];
+        MS_lOGD("createPlainTransport request.data=%s", data.dump().c_str());
+        string peerId = data["peerId"];
+        auto srcPeer = this->getPeerById(peerId);
+        if (srcPeer == nullptr) {
+            reject(403, "invalid peer id");
+            return;
+        }
+
+        if (srcPeer->getPushTransportId() != "") {
+           /* accept(json({}));
+            return;*/
+        }
+       
+        json jplainTransportOptions = m_pConfig->mediasoup.plainTransportOptions;
+
+        PlainTransportOptions plainTransportOptions = jplainTransportOptions;
+
+        auto transport = this->m_mediasoupRouter->createPlainTransport(plainTransportOptions);
+        srcPeer->setPushTransportId(transport->id());
+        if (tid1 == "") tid1 = transport->id();
+        else tid2 = transport->id();
+
+        transport->on("trace", [peer, transport](TransportTraceEventData& trace) //(trace) =>
+            {
+                MS_lOGD(
+                    "transport trace event [transportId:%s, trace.type:%s, trace]",
+                    transport->id().c_str(), trace.type.c_str());
+            });
+
+        m_pushPeer->data.transports[transport->id()] = transport;
+        accept(json({}));
+    }
+    else if (method == "connectPlainTransport") {
+        auto data = request["data"];
+        MS_lOGD("connectPlainTransport request.data=%s", data.dump().c_str());
+        data["ip"] = "192.168.31.208";
+        //data["port"] = 10086;
+
+        string peerId = data["peerId"];
+        auto srcPeer = this->getPeerById(peerId);
+
+        if (srcPeer == nullptr) {
+            reject(403, "invalid peer id");
+            return;
+        }
+
+        //auto transportId = srcPeer->getPushTransportId();
+        auto transportId = tid2 == "" ? tid1 : tid2;
+        if (transportId == "") {
+            reject(403, "PushTransport is not created.");
+            return;
+        }
+
+        auto transport = m_pushPeer->data.transports[transportId];
+        if (!transport)
+            MS_THROW_lOG("transport with id transportId=%s not found", transportId.c_str());
+
+        transport->connect(data);
+
+        for (auto& kv : srcPeer->data.producers)
+        {
+            auto producer = kv.second;
+            createPushConsumer(m_pushPeer, transport, srcPeer, producer);
+        }
+
+        accept(json({}));
+    }
+    else if(method ==  "produce"){
         // Ensure the Peer is joined.
         if (!peer->data.joined)
         {
@@ -610,12 +710,23 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         //joinedPeers.insert(this->_broadcasters.begin(), this->_broadcasters.end());
         
         // Optimization: Create a server-side Consumer for each Peer.
-        
+        /*
         auto pushTransport = m_pushPeer->data.transports[peer->getPushTransportId()];
         if (pushTransport != nullptr) {
             createPushConsumer(m_pushPeer, pushTransport, peer, producer);
-        }
+        }*/
 
+        auto pushTransport = m_pushPeer->data.transports[peer->getPushTransportId()];
+        if (pushTransport != nullptr) {
+            if (producer->kind() == "video") {
+                auto pushTransport1 = m_pushPeer->data.transports[tid1];
+                createPushConsumer(m_pushPeer, pushTransport1, peer, producer);
+            }
+            else {
+                auto pushTransport2 = m_pushPeer->data.transports[tid2];
+                createPushConsumer(m_pushPeer, pushTransport2, peer, producer);
+            }
+        }
         for (auto  &kv : joinedPeers)
         {
             auto otherPeer = kv.second;

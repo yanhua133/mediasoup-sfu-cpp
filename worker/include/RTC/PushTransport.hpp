@@ -5,6 +5,23 @@
 #include "RTC/TransportTuple.hpp"
 #include <map>
 
+extern "C" {
+#include "libavformat/avformat.h"
+#include "libavfilter/avfilter.h"
+}
+
+#define RTMP_PROTO_NAME "rtmp"
+#define RTMP_PROTO_FORMAT_NAME "flv"
+#define RTMP_DEFAULT_PORT 1935
+#define RTMP_DEFAULT_SUFFIX "/live"
+#define RTMP_GENERATE_URL \ 
+	m_url = RTMP_PROTO_NAME; \
+	m_url += "://" + ip + ":" + std::to_string(port) + suffix + "/" + id;
+#define RTMP_AUDIO_CODEC "aac"
+#define RTMP_AUDIO_FRAME_FORMAT AV_SAMPLE_FMT_FLTP
+#define RTMP_AUDIO_FRAME_FORMAT_NAME "fltp"
+#define RTMP_AUDIO_CHANNEL_LAYOUT 4
+
 namespace RTC
 {
 	class PushTransport : public RTC::Transport
@@ -41,15 +58,22 @@ namespace RTC
 		void OnRtcpDataReceived(RTC::TransportTuple* tuple, const uint8_t* data, size_t len);
 		void OnSctpDataReceived(RTC::TransportTuple* tuple, const uint8_t* data, size_t len);
 
+		void connect();
+		void disconnect();
+		void init_audio_filter();
+
 	private:
 		// Allocated by this.
-		std::string ip;
-		uint16_t port{ 1935u };
+		std::string m_url, m_formatName;
 		// Others.
 		bool comedia{ false };
 		struct sockaddr_storage remoteAddrStorage;
 		bool connectCalled{ false }; // Whether connect() was succesfully called.
 		bool connected{ false };
+		AVFormatContext* m_context{ nullptr };
+		AVFilterGraph* m_audioGraph{ nullptr };
+		AVFilterContext* m_audioFilterIn{ nullptr }, * m_audioFilterOut{ nullptr };
+		int m_audioSampleRate{ 48000 };
 	};
 } // namespace RTC
 
