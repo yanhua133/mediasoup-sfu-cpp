@@ -1,8 +1,9 @@
 
 ## [中文说明请点击](https://github.com/yanhua133/mediasoup-sfu-cpp/blob/main/README.cn.md)
+## [gitee地址](https://gitee.com/yanhua133/mediasoup-sfu-cpp)
 ##  Project Description:
 
-###  This project is a C + + version based on the JS version of SFU in mediasoup V3, webrtc M84
+###  This project is a C + + version based on the JS version of SFU in mediasoup V3, webrtc M77
 
 ###  It supports the same complete demo function as the JS version, but this project directly integrates the worker process code into the demo, which can be called directly at the code level;
 
@@ -55,7 +56,7 @@ Release /bin directory
 ./genxcode.sh
 ```
 
-##  3、 Compiling under Linux
+##  3、 Compiling under Linux gcc >= 8.4.0
 
 ```
 ./builddeps.sh
@@ -75,7 +76,7 @@ Release /bin directory
 
 ###  The IP address in the configuration file needs to be configured with the intranet address and extranet address of the corresponding server
 
-"IP": "192.168.1.192"
+"IP": "192.168.1.192"  
 "Announcedip": "192.168.1.192" / / public network address
 
 

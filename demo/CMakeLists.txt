@@ -175,8 +175,8 @@ IF (WIN32)
   target_link_libraries(${PROJECT_NAME}
       worker
       libwebrtc
-      ${PROJECT_LIB_DIR}/oatpp.lib
       ${PROJECT_LIB_DIR}/oatpp-websocket.lib
+      ${PROJECT_LIB_DIR}/oatpp.lib
       ${PROJECT_LIB_DIR}/oatpp-openssl.lib
       ${PROJECT_LIB_DIR}/netstring.lib
       ${PROJECT_LIB_DIR}/uv_a.lib
@@ -208,8 +208,8 @@ ELSE ()
 target_link_libraries(${PROJECT_NAME}
     worker
     libwebrtc
-    ${PROJECT_LIB_DIR}/liboatpp.a
     ${PROJECT_LIB_DIR}/liboatpp-websocket.a
+    ${PROJECT_LIB_DIR}/liboatpp.a
     ${PROJECT_LIB_DIR}/liboatpp-openssl.a
     ${PROJECT_LIB_DIR}/libnetstring.a
     ${PROJECT_LIB_DIR}/libuv_a.a

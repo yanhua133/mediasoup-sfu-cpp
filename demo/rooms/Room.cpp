@@ -457,7 +457,10 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         // Add peerId into appData to later get the associated Peer during
         // the "loudest" event of the audioLevelObserver.
         //appData = { ...appData, peerId: peer->id };
-        appData["peerId"] = peer->getPeerId();
+        //appData["peerId"] = peer->getPeerId();
+        //fix produce json appData: {} bug
+        const json addAppData = {{"peerId", peer->getPeerId()}};
+        appData.merge_patch(addAppData);
         ProducerOptions options;// = {
         options.kind = kind;
         options.rtpParameters = rtpParameters;

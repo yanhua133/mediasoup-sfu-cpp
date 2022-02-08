@@ -1,5 +1,5 @@
 ## 项目说明：
-### 本项目是基于mediasoup v3 版本 webrtc m84版本 的sfu的js版本修改成的c++版本.
+### 本项目是基于mediasoup v3 版本 webrtc m77版本 的sfu的js版本修改成的c++版本.
 ### 支持和js版本一样的完整demo功能，但是本项目是直接把worker进程代码集成 到了demo可以直接代码级别的调用;
 ### 支持VC2019，xcode，CLion的开发环境，可以直接断点调试workder代码;
 ### 本项目支持所有跨平台系统 WIN，Linux，Mac，嵌入式arm等系统，国产麒麟系统，支持嵌入式系统编译;
@@ -36,7 +36,7 @@ release/bin 目录下
 ./genxcode.sh
 ```
 
-## 三、Linux下编译
+## 三、Linux下编译 gcc >= 8.4.0
 ```
 ./builddeps.sh 
 ./build.sh
