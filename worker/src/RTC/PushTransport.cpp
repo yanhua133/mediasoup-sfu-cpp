@@ -193,17 +193,7 @@ namespace RTC
 
 			return;
 		}
-		if (m_videoStream == NULL) {
-			addVideoStream(AV_CODEC_ID_H264, 1920, 1080);
-
-			if (avformat_write_header(m_context, NULL) < 0) {
-				if (cb)
-				{
-					(*cb)(false);
-
-					delete cb;
-				}
-
+		
 		const uint8_t* data = packet->GetData();
 		size_t len          = packet->GetSize();
 
@@ -326,10 +316,14 @@ namespace RTC
 		if (ret < 0) {
 			MS_THROW_ERROR("error openning avio");
 		}
+
+		ret = avformat_write_header(m_context, &enc_opt);
+		if (ret < 0) {
+			MS_THROW_ERROR("error writting header");
+		}
 	}
 
 	void PushTransport::disconnect() {
-
 		connected = false;
 	}
 
@@ -401,5 +395,14 @@ namespace RTC
 		ret = avfilter_graph_config(m_audioGraph, NULL);
 		if (ret < 0)
 			MS_THROW_ERROR("error configing the avfilter graph");
+
+		m_audioFormat = av_buffersink_get_format(m_audioFilterOut);
+		m_audioChannelLayout = av_buffersink_get_channel_layout(m_audioFilterOut);
+
+		av_buffersink_set_frame_size(m_audioFilterOut, 0);
+
+
+		ret = av_buffersrc_add_frame_flags(m_audioFilterIn, frame, AV_BUFFERSRC_FLAG_PUSH);
+		if (ret < 0) {
 	}
 } // namespace RTC

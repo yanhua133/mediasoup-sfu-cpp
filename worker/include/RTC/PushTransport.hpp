@@ -76,7 +76,8 @@ namespace RTC
 		AVFormatContext* m_context{ nullptr };
 		AVFilterGraph* m_audioGraph{ nullptr };
 		AVFilterContext* m_audioFilterIn{ nullptr }, * m_audioFilterOut{ nullptr };
-		int m_audioSampleRate{ 48000 };
+		int m_audioSampleRate{ 48000 }, m_audioFormat{ 0 };
+		uint64_t m_audioChannelLayout{ 4 };
 	};
 } // namespace RTC
 
