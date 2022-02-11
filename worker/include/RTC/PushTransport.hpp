@@ -10,7 +10,7 @@ extern "C" {
 
 extern "C" {
 #include "libavformat/avformat.h"
-#include "libavfilter/avfilter.h"
+#include "libavutil/audio_fifo.h"
 }
 
 #define RTMP_PROTO_NAME "rtmp"
@@ -61,8 +61,11 @@ namespace RTC
 		void OnRtcpDataReceived(RTC::TransportTuple* tuple, const uint8_t* data, size_t len);
 		void OnSctpDataReceived(RTC::TransportTuple* tuple, const uint8_t* data, size_t len);
 
-		void connect();
-		void disconnect();
+		void Connect();
+		void Disconnect();
+		void InitIncomingParameters();
+		void InitOutgoingParameters();
+		AVCodecID ChooseAudioCodecId(std::string name);
 		void init_audio_filter();
 
 	private:
@@ -73,11 +76,15 @@ namespace RTC
 		struct sockaddr_storage remoteAddrStorage;
 		bool connectCalled{ false }; // Whether connect() was succesfully called.
 		bool connected{ false };
-		AVFormatContext* m_context{ nullptr };
-		AVFilterGraph* m_audioGraph{ nullptr };
-		AVFilterContext* m_audioFilterIn{ nullptr }, * m_audioFilterOut{ nullptr };
+		//AVFilterGraph * m_audioGraph{nullptr};
+		//AVFilterContext* m_audioFilterIn{ nullptr }, * m_audioFilterOut{ nullptr };
 		int m_audioSampleRate{ 48000 }, m_audioFormat{ 0 };
 		uint64_t m_audioChannelLayout{ 4 };
+
+		AVFormatContext* m_context{ nullptr };
+		std::string m_audioDecoderName{ "opus" };
+		AVCodecContext* m_audioDecodeContext{ nullptr }, *m_audioEncodeContext{ nullptr };
+		AVAudioFifo* m_audioFifo{ nullptr };
 	};
 } // namespace RTC
 

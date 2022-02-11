@@ -12,8 +12,63 @@ extern "C" {
 #include "libavutil/opt.h"
 #include "libavfilter/buffersink.h"
 #include "libavfilter/buffersrc.h"
+#include "libavcodec/bytestream.h"
 }
 
+static int ff_alloc_extradata(AVCodecParameters* par, int size)
+{
+	av_freep(&par->extradata);
+	par->extradata_size = 0;
+
+	if (size < 0 || size >= INT32_MAX - AV_INPUT_BUFFER_PADDING_SIZE)
+		return AVERROR(EINVAL);
+
+	par->extradata = (uint8_t *)av_malloc(size + AV_INPUT_BUFFER_PADDING_SIZE);
+	if (!par->extradata)
+		return AVERROR(ENOMEM);
+
+	memset(par->extradata + size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
+	par->extradata_size = size;
+
+	return 0;
+}
+
+static int opus_write_extradata(AVCodecParameters* codecpar)
+{
+	uint8_t* bs;
+	int ret;
+
+	/* This function writes an extradata with a channel mapping family of 0.
+	 * This mapping family only supports mono and stereo layouts. And RFC7587
+	 * specifies that the number of channels in the SDP must be 2.
+	 */
+	if (codecpar->channels > 2) {
+		return AVERROR_INVALIDDATA;
+	}
+
+	ret = ff_alloc_extradata(codecpar, 19);
+	if (ret < 0)
+		return ret;
+
+	bs = (uint8_t*)codecpar->extradata;
+
+	/* Opus magic */
+	bytestream_put_buffer(&bs, "OpusHead", 8);
+	/* Version */
+	bytestream_put_byte(&bs, 0x1);
+	/* Channel count */
+	bytestream_put_byte(&bs, codecpar->channels);
+	/* Pre skip */
+	bytestream_put_le16(&bs, 0);
+	/* Input sample rate */
+	bytestream_put_le32(&bs, 48000);
+	/* Output gain */
+	bytestream_put_le16(&bs, 0x0);
+	/* Mapping family */
+	bytestream_put_byte(&bs, 0x0);
+
+	return 0;
+}
 
 namespace RTC
 {
@@ -130,11 +185,11 @@ namespace RTC
 
 				try
 				{
-					connect();
+					Connect();
 				}
 				catch (const MediaSoupError& error)
 				{
-					disconnect();
+					Disconnect();
 					throw;
 				}
 
@@ -278,131 +333,129 @@ namespace RTC
 		MS_TRACE();
 	}
 
-	void PushTransport::connect() {
-		if (connected)
-			return;
+	void PushTransport::Disconnect() {
+		connected = false;
 
+		avio_closep(&m_context->pb);
+		avformat_free_context(m_context);
+		m_context = nullptr;
+	}
+
+	void PushTransport::InitIncomingParameters() {
+		auto acodec = avcodec_find_decoder_by_name(m_audioDecoderName.c_str());
+		if (!acodec) {
+			MS_THROW_ERROR("error finding the audio decoder");
+		}
+
+		if(m_audioDecodeContext)
+			avcodec_free_context(&m_audioDecodeContext);
+
+		m_audioDecodeContext = avcodec_alloc_context3(acodec);
+		if (!m_audioDecodeContext) {
+			MS_THROW_ERROR("could not allocate a decoding context"); 
+		}
+
+		AVCodecParameters para;
+		para.codec_type = AVMEDIA_TYPE_AUDIO;
+		para.codec_id = ChooseAudioCodecId(m_audioDecoderName);
+		para.channels = 1;
+		para.channel_layout = 4; // maybe need fix
+		para.sample_rate = m_audioSampleRate;
+		para.format = AV_SAMPLE_FMT_FLTP;
+
+		if (m_audioDecoderName == "opus")
+			opus_write_extradata(&para);
+
+		int ret = avcodec_parameters_to_context(m_audioDecodeContext, &para);
+		if(ret < 0) {
+			avcodec_free_context(&m_audioDecodeContext);
+			m_audioDecodeContext = nullptr;
+			MS_THROW_ERROR("error for avcodec_parameters_to_context");
+		}
+
+		ret = avcodec_open2(m_audioDecodeContext, acodec, NULL);
+		if (ret < 0) {
+			avcodec_free_context(&m_audioDecodeContext);
+			m_audioDecodeContext = nullptr;
+			MS_THROW_ERROR("could not open decoder");
+		}
+	}
+
+	void PushTransport::InitOutgoingParameters() {
 		avformat_alloc_output_context2(&m_context, NULL, m_formatName.c_str(), m_url.c_str());
 		if (!m_context) {
 			MS_THROW_ERROR("error allocating the avformat context");
 		}
 
-
 		AVStream* st = avformat_new_stream(m_context, NULL);
 
 		st->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;
 
-		AVCodec* codec = avcodec_find_encoder_by_name(RTMP_AUDIO_CODEC);
-		if (!codec) {
+		AVCodec* acodec = avcodec_find_encoder_by_name(RTMP_AUDIO_CODEC);
+		if (!acodec) {
 			MS_THROW_TYPE_ERROR("missing audio encoder");
 		}
-
-		AVCodecContext* enc_ctx = avcodec_alloc_context3(codec);
-		if (!enc_ctx) {
+		
+		m_audioEncodeContext = avcodec_alloc_context3(acodec);
+		if (!m_audioEncodeContext) {
 			MS_THROW_ERROR("error allocating the audio encoding context");
 		}
-		enc_ctx->codec_type = st->codecpar->codec_type;
+		m_audioEncodeContext->codec_type = st->codecpar->codec_type;
+		m_audioEncodeContext->channels = m_audioDecodeContext->channels;
+		m_audioEncodeContext->channel_layout = m_audioDecodeContext->channel_layout;
+		m_audioEncodeContext->sample_rate = m_audioDecodeContext->sample_rate;
+		m_audioEncodeContext->sample_fmt = m_audioDecodeContext->sample_fmt;
+		m_audioEncodeContext->bit_rate = m_audioDecodeContext->bit_rate;
+		// for official ffmpeg aac encoder
+		m_audioEncodeContext->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
 
 		if (m_context->oformat->flags & AVFMT_GLOBALHEADER)
-			enc_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+			m_audioEncodeContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
-		AVDictionary* enc_opt = NULL;
+		int ret = avcodec_open2(m_audioEncodeContext, acodec, NULL);
+		if (ret < 0) {
+			avcodec_free_context(&m_audioEncodeContext);
+			m_audioEncodeContext = nullptr;
+			MS_THROW_ERROR("could not open encoder");
+		}
 
-		// for official ffmpeg aac encoder
-		if(RTMP_AUDIO_CODEC == "aac")
-			av_dict_set(&enc_opt, "strict", "-2", 0);
+		ret = avcodec_parameters_from_context(st->codecpar, m_audioEncodeContext);
+		if (ret < 0) {
+			MS_THROW_ERROR("error for avcodec_parameters_to_context");
+		}
+
+		st->time_base.den = m_audioDecodeContext->sample_rate;
+		st->time_base.num = 1;
 
 		int ret = avio_open2(&m_context->pb, m_url.c_str(), AVIO_FLAG_WRITE, NULL, NULL);
 		if (ret < 0) {
 			MS_THROW_ERROR("error openning avio");
 		}
+	}
 
-		ret = avformat_write_header(m_context, &enc_opt);
+	AVCodecID PushTransport::ChooseAudioCodecId(std::string name) {
+		if (name == "opus")
+			return AV_CODEC_ID_OPUS;
+		else
+			return AV_CODEC_ID_NONE;
+	}
+
+	void PushTransport::Connect() {
+		if (connected)
+			return;
+
+		InitIncomingParameters();
+
+		InitOutgoingParameters();
+
+		m_audioFifo = av_audio_fifo_alloc(m_audioEncodeContext->sample_fmt, m_audioEncodeContext->channels, 1);
+		if (!m_audioFifo) {
+			MS_THROW_ERROR("could not allocate fifo");
+		}
+
+		int ret = avformat_write_header(m_context, nullptr);
 		if (ret < 0) {
 			MS_THROW_ERROR("error writting header");
 		}
-	}
-
-	void PushTransport::disconnect() {
-		connected = false;
-	}
-
-	void PushTransport::init_audio_filter() {
-		m_audioGraph = avfilter_graph_alloc();
-		if(!m_audioGraph)
-			MS_THROW_ERROR("error allocating the audio avfilter graph");
-		char val[1];
-		val[0] = 0;
-		av_opt_set(m_audioGraph, "aresample_swr_opts", val, 0);
-
-		AVFilterInOut* inputs, * outputs;
-		int ret = avfilter_graph_parse2(m_audioGraph, "anull", &inputs, &outputs);
-		if (ret < 0)
-			MS_THROW_ERROR("error parsing the audio avfilter graph");
-
-		
-		const AVFilter* abuffer_filt = avfilter_get_by_name("abuffer");
-		AVBPrint args;
-		av_bprint_init(&args, 0, AV_BPRINT_SIZE_AUTOMATIC);
-		av_bprintf(&args, "time_base=%d/%d:sample_rate=%d:sample_fmt=%s",
-			1, m_audioSampleRate, m_audioSampleRate,
-			av_get_sample_fmt_name(RTMP_AUDIO_FRAME_FORMAT));
-		av_bprintf(&args, ":channel_layout=0x%llx", RTMP_AUDIO_CHANNEL_LAYOUT);
-
-		ret = avfilter_graph_create_filter(&m_audioFilterIn, abuffer_filt,
-			"graph_0_in_0_1", args.str, NULL, m_audioGraph);
-		if (ret < 0)
-			MS_THROW_ERROR("error creating the audio input filter");
-
-		ret = avfilter_link(m_audioFilterIn, 0, inputs->filter_ctx, inputs->pad_idx);
-		if (ret < 0)
-			MS_THROW_ERROR("error linking the audio input filter");
-
-		avfilter_inout_free(&inputs);
-
-		ret = avfilter_graph_create_filter(&m_audioFilterOut,
-			avfilter_get_by_name("abuffersink"), "out_0_1", NULL, NULL, m_audioGraph);
-		if (ret < 0)
-			MS_THROW_ERROR("error creating the audio output filter");
-
-		ret = av_opt_set_int(m_audioFilterOut, "all_channel_counts", 1, AV_OPT_SEARCH_CHILDREN);
-		if (ret < 0)
-			MS_THROW_ERROR("error setting the audio output filter option");
-
-		av_bprint_init(&args, 0, AV_BPRINT_SIZE_UNLIMITED);
-		av_bprintf(&args, "sample_fmts=%s:sample_rates=96000|88200|64000|48000|44100|32000|24000|22050|16000|12000|11025|8000|7350:", RTMP_AUDIO_FRAME_FORMAT_NAME);
-		if (!av_bprint_is_complete(&args))
-			MS_THROW_ERROR("error setting av_bprint");
-
-		AVFilterContext* format;
-
-		ret = avfilter_graph_create_filter(&format,
-			avfilter_get_by_name("aformat"),
-			"format_out_0_1", args.str, NULL, m_audioGraph);
-		if (ret < 0)
-			MS_THROW_ERROR("error creating output format filter");
-
-		ret = avfilter_link(outputs->filter_ctx, outputs->pad_idx, format, 0);
-		if (ret < 0)
-			MS_THROW_ERROR("error linking the audio output format filter");
-
-		ret = avfilter_link(format, 0, m_audioFilterOut, 0);
-		if (ret < 0)
-			MS_THROW_ERROR("error linking the audio output filter");
-
-		avfilter_inout_free(&outputs);
-
-		ret = avfilter_graph_config(m_audioGraph, NULL);
-		if (ret < 0)
-			MS_THROW_ERROR("error configing the avfilter graph");
-
-		m_audioFormat = av_buffersink_get_format(m_audioFilterOut);
-		m_audioChannelLayout = av_buffersink_get_channel_layout(m_audioFilterOut);
-
-		av_buffersink_set_frame_size(m_audioFilterOut, 0);
-
-
-		ret = av_buffersrc_add_frame_flags(m_audioFilterIn, frame, AV_BUFFERSRC_FLAG_PUSH);
-		if (ret < 0) {
 	}
 } // namespace RTC
