@@ -528,16 +528,12 @@ namespace RTC
 		m_packet = av_packet_alloc();
 		if (!m_packet)
 			return -1;
-		av_packet_free(&m_packet);
 
-		size_t buf_len = packet->GetPayloadLength();
-		uint8_t* buf = (uint8_t*)malloc(buf_len);
-		memcpy(buf, packet->GetPayload(), buf_len);
-		int ret = av_packet_from_data(m_packet, buf, buf_len);
-		if (ret < 0)
-			return -1;
+		m_packet->size = packet->GetPayloadLength();
+		m_packet->data = (uint8_t*)malloc(m_packet->size);
+		memcpy(m_packet->data, packet->GetPayload(), m_packet->size);
 
-		ret = avcodec_send_packet(m_audioDecodeCtx, m_packet);
+		int ret = avcodec_send_packet(m_audioDecodeCtx, m_packet);
 		if (ret < 0)
 			return -1;
 
