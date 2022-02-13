@@ -292,7 +292,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         };
         handleRequest(peer, req_for_connect, acc, rej);
 
-        json req_for_create1 = {
+       /* json req_for_create1 = {
              {"method" , "createPlainTransport"},
              {"data"   , {{"peerId", peer->getPeerId()}}}
         };
@@ -322,7 +322,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
                 {"port", 10088},
             }}
         };
-        handleRequest(peer, req_for_connect2, acc, rej);
+        handleRequest(peer, req_for_connect2, acc, rej);*/
         //break;
     }else if(method ==  "createWebRtcTransport"){
         // NOTE: Don"t require that the Peer is joined here, so the client can
@@ -710,13 +710,13 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         //joinedPeers.insert(this->_broadcasters.begin(), this->_broadcasters.end());
         
         // Optimization: Create a server-side Consumer for each Peer.
-        /*
+        
         auto pushTransport = m_pushPeer->data.transports[peer->getPushTransportId()];
         if (pushTransport != nullptr) {
             createPushConsumer(m_pushPeer, pushTransport, peer, producer);
-        }*/
+        }
 
-        auto pushTransport = m_pushPeer->data.transports[peer->getPushTransportId()];
+       /* auto pushTransport = m_pushPeer->data.transports[peer->getPushTransportId()];
         if (pushTransport != nullptr) {
             if (producer->kind() == "video") {
                 auto pushTransport1 = m_pushPeer->data.transports[tid1];
@@ -726,7 +726,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
                 auto pushTransport2 = m_pushPeer->data.transports[tid2];
                 createPushConsumer(m_pushPeer, pushTransport2, peer, producer);
             }
-        }
+        }*/
         for (auto  &kv : joinedPeers)
         {
             auto otherPeer = kv.second;
@@ -1604,9 +1604,9 @@ void Room::createPushConsumer(std::shared_ptr<Peer>& consumerPeer, std::shared_p
         ConsumerOptions options;
         options.producerId = producer->id();
         options.rtpCapabilities = consumerPeer->data.rtpCapabilities;
+        MS_lOGD("consumerPeer->data.rtpCapabilities=%s", consumerPeer->data.rtpCapabilities.dump(4).c_str());
         options.paused = true;
         consumer = transport->consume(options);
-        MS_lOGD("consumerPeer->data.rtpCapabilities=%s", consumerPeer->data.rtpCapabilities.dump(4).c_str());
         json jrtpParameters = consumer->rtpParameters();
         MS_lOGD("consumer->rtpParameters()=%s", jrtpParameters.dump(4).c_str());
     }

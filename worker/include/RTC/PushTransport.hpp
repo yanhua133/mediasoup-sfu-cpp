@@ -4,9 +4,6 @@
 #include "RTC/Transport.hpp"
 #include "RTC/TransportTuple.hpp"
 #include <map>
-extern "C" {
-#include <libavformat/avformat.h>
-}
 
 extern "C" {
 #include "libavformat/avformat.h"
@@ -19,7 +16,8 @@ extern "C" {
 #define RTMP_DEFAULT_SUFFIX "/live"
 #define RTMP_GENERATE_URL \ 
 	m_url = RTMP_PROTO_NAME; \
-	m_url += "://" + ip + ":" + std::to_string(port) + suffix + "/" + id;
+	m_url += "://" + ip + suffix + "/1000";
+	//m_url += "://" + ip + ":" + std::to_string(port) + suffix + "/" + id;
 #define RTMP_AUDIO_CODEC "aac"
 #define RTMP_AUDIO_FRAME_FORMAT AV_SAMPLE_FMT_FLTP
 #define RTMP_AUDIO_FRAME_FORMAT_NAME "fltp"
@@ -66,7 +64,10 @@ namespace RTC
 		void InitIncomingParameters();
 		void InitOutgoingParameters();
 		AVCodecID ChooseAudioCodecId(std::string name);
-		void init_audio_filter();
+		void AudioProcessPacket(RTC::RtpPacket* packet);
+		int AudioDecodeAndFifo(RTC::RtpPacket* packet);
+		int AudioEncodeAndSend();
+		void PacketFree();
 
 	private:
 		// Allocated by this.
@@ -81,10 +82,15 @@ namespace RTC
 		int m_audioSampleRate{ 48000 }, m_audioFormat{ 0 };
 		uint64_t m_audioChannelLayout{ 4 };
 
-		AVFormatContext* m_context{ nullptr };
+		AVFormatContext *m_audioFormatCtx{ nullptr };
 		std::string m_audioDecoderName{ "opus" };
-		AVCodecContext* m_audioDecodeContext{ nullptr }, *m_audioEncodeContext{ nullptr };
-		AVAudioFifo* m_audioFifo{ nullptr };
+		AVCodecContext *m_audioDecodeCtx{ nullptr }, *m_audioEncodeCtx{ nullptr };
+		AVAudioFifo *m_audioFifo{ nullptr };
+		bool m_audioProcessPacket{ false };
+		unsigned int m_audioIdx{ 0 };
+		uint32_t m_audioRefTimestamp{ 0 }, m_audioCurTimestamp{ 0 }, m_audioNextTimestamp{ 0 }, m_audioPtsTimestamp{ 0 };
+		AVPacket *m_packet{ nullptr };
+		AVFrame *m_frame{ nullptr }, *m_audioMuteFrame{ nullptr };
 	};
 } // namespace RTC
 

@@ -8,11 +8,10 @@
 #include "Channel/Notifier.hpp"
 
 extern "C" {
+#include "libavcodec/avcodec.h"
+#include "libavcodec/bytestream.h"
 #include "libavutil/bprint.h"
 #include "libavutil/opt.h"
-#include "libavfilter/buffersink.h"
-#include "libavfilter/buffersrc.h"
-#include "libavcodec/bytestream.h"
 }
 
 static int ff_alloc_extradata(AVCodecParameters* par, int size)
@@ -50,10 +49,11 @@ static int opus_write_extradata(AVCodecParameters* codecpar)
 	if (ret < 0)
 		return ret;
 
+	std::string head = "OpusHead";
 	bs = (uint8_t*)codecpar->extradata;
 
 	/* Opus magic */
-	bytestream_put_buffer(&bs, "OpusHead", 8);
+	bytestream_put_buffer(&bs, (uint8_t *)head.c_str(), 8);
 	/* Version */
 	bytestream_put_byte(&bs, 0x1);
 	/* Channel count */
@@ -248,12 +248,15 @@ namespace RTC
 
 			return;
 		}
-		
-		const uint8_t* data = packet->GetData();
-		size_t len          = packet->GetSize();
+
+		if(packet->GetPayloadType() == 100)
+			AudioProcessPacket(packet);
+
+		//const uint8_t* data = packet->GetData();
+		//size_t len = packet->GetSize();
 
 		// Increase send transmission.
-		RTC::Transport::DataSent(len);
+		//RTC::Transport::DataSent(len);
 	}
 
 	void PushTransport::SendRtcpPacket(RTC::RTCP::Packet* packet)
@@ -336,9 +339,12 @@ namespace RTC
 	void PushTransport::Disconnect() {
 		connected = false;
 
-		avio_closep(&m_context->pb);
-		avformat_free_context(m_context);
-		m_context = nullptr;
+		avio_closep(&m_audioFormatCtx->pb);
+		avformat_free_context(m_audioFormatCtx);
+		m_audioFormatCtx = nullptr;
+
+		m_audioProcessPacket = false;
+		m_audioRefTimestamp = 0;
 	}
 
 	void PushTransport::InitIncomingParameters() {
@@ -347,87 +353,107 @@ namespace RTC
 			MS_THROW_ERROR("error finding the audio decoder");
 		}
 
-		if(m_audioDecodeContext)
-			avcodec_free_context(&m_audioDecodeContext);
+		if(m_audioDecodeCtx)
+			avcodec_free_context(&m_audioDecodeCtx);
 
-		m_audioDecodeContext = avcodec_alloc_context3(acodec);
-		if (!m_audioDecodeContext) {
+		m_audioDecodeCtx = avcodec_alloc_context3(acodec);
+		if (!m_audioDecodeCtx) {
 			MS_THROW_ERROR("could not allocate a decoding context"); 
 		}
 
-		AVCodecParameters para;
-		para.codec_type = AVMEDIA_TYPE_AUDIO;
-		para.codec_id = ChooseAudioCodecId(m_audioDecoderName);
-		para.channels = 1;
-		para.channel_layout = 4; // maybe need fix
-		para.sample_rate = m_audioSampleRate;
-		para.format = AV_SAMPLE_FMT_FLTP;
+		AVCodecParameters *para = avcodec_parameters_alloc();
+		para->codec_type = AVMEDIA_TYPE_AUDIO;
+		para->codec_id = ChooseAudioCodecId(m_audioDecoderName);
+		para->channels = 1;
+		para->channel_layout = 4; // maybe need fix
+		para->sample_rate = m_audioSampleRate;
+		para->format = AV_SAMPLE_FMT_FLTP;
 
 		if (m_audioDecoderName == "opus")
-			opus_write_extradata(&para);
+			opus_write_extradata(para);
 
-		int ret = avcodec_parameters_to_context(m_audioDecodeContext, &para);
+		int ret = avcodec_parameters_to_context(m_audioDecodeCtx, para);
 		if(ret < 0) {
-			avcodec_free_context(&m_audioDecodeContext);
-			m_audioDecodeContext = nullptr;
+			avcodec_free_context(&m_audioDecodeCtx);
+			m_audioDecodeCtx = nullptr;
 			MS_THROW_ERROR("error for avcodec_parameters_to_context");
 		}
+		avcodec_parameters_free(&para);
 
-		ret = avcodec_open2(m_audioDecodeContext, acodec, NULL);
+		ret = avcodec_open2(m_audioDecodeCtx, acodec, NULL);
 		if (ret < 0) {
-			avcodec_free_context(&m_audioDecodeContext);
-			m_audioDecodeContext = nullptr;
+			avcodec_free_context(&m_audioDecodeCtx);
+			m_audioDecodeCtx = nullptr;
 			MS_THROW_ERROR("could not open decoder");
 		}
 	}
 
 	void PushTransport::InitOutgoingParameters() {
-		avformat_alloc_output_context2(&m_context, NULL, m_formatName.c_str(), m_url.c_str());
-		if (!m_context) {
+		avformat_alloc_output_context2(&m_audioFormatCtx, NULL, m_formatName.c_str(), m_url.c_str());
+		if (!m_audioFormatCtx) {
 			MS_THROW_ERROR("error allocating the avformat context");
 		}
 
-		AVStream* st = avformat_new_stream(m_context, NULL);
+		auto st = avformat_new_stream(m_audioFormatCtx, NULL);
+
+		m_audioIdx = m_audioFormatCtx->nb_streams - 1;
 
 		st->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;
 
-		AVCodec* acodec = avcodec_find_encoder_by_name(RTMP_AUDIO_CODEC);
+		auto acodec = avcodec_find_encoder_by_name(RTMP_AUDIO_CODEC);
 		if (!acodec) {
 			MS_THROW_TYPE_ERROR("missing audio encoder");
 		}
 		
-		m_audioEncodeContext = avcodec_alloc_context3(acodec);
-		if (!m_audioEncodeContext) {
+		m_audioEncodeCtx = avcodec_alloc_context3(acodec);
+		if (!m_audioEncodeCtx) {
 			MS_THROW_ERROR("error allocating the audio encoding context");
 		}
-		m_audioEncodeContext->codec_type = st->codecpar->codec_type;
-		m_audioEncodeContext->channels = m_audioDecodeContext->channels;
-		m_audioEncodeContext->channel_layout = m_audioDecodeContext->channel_layout;
-		m_audioEncodeContext->sample_rate = m_audioDecodeContext->sample_rate;
-		m_audioEncodeContext->sample_fmt = m_audioDecodeContext->sample_fmt;
-		m_audioEncodeContext->bit_rate = m_audioDecodeContext->bit_rate;
+		m_audioEncodeCtx->codec_type = st->codecpar->codec_type;
+		m_audioEncodeCtx->channels = m_audioDecodeCtx->channels;
+		m_audioEncodeCtx->channel_layout = m_audioDecodeCtx->channel_layout;
+		m_audioEncodeCtx->sample_rate = m_audioDecodeCtx->sample_rate;
+		m_audioEncodeCtx->sample_fmt = m_audioDecodeCtx->sample_fmt;
+		m_audioEncodeCtx->bit_rate = m_audioDecodeCtx->bit_rate;
 		// for official ffmpeg aac encoder
-		m_audioEncodeContext->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
+		m_audioEncodeCtx->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
 
-		if (m_context->oformat->flags & AVFMT_GLOBALHEADER)
-			m_audioEncodeContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+		if (m_audioFormatCtx->oformat->flags & AVFMT_GLOBALHEADER)
+			m_audioEncodeCtx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
-		int ret = avcodec_open2(m_audioEncodeContext, acodec, NULL);
+		av_opt_set(m_audioEncodeCtx->priv_data, "tune", "zerolatency", 0);
+
+		int ret = avcodec_open2(m_audioEncodeCtx, acodec, NULL);
 		if (ret < 0) {
-			avcodec_free_context(&m_audioEncodeContext);
-			m_audioEncodeContext = nullptr;
+			avcodec_free_context(&m_audioEncodeCtx);
+			m_audioEncodeCtx = nullptr;
 			MS_THROW_ERROR("could not open encoder");
 		}
 
-		ret = avcodec_parameters_from_context(st->codecpar, m_audioEncodeContext);
+		m_audioMuteFrame = av_frame_alloc();
+		m_audioMuteFrame->sample_rate = m_audioEncodeCtx->sample_rate;
+		m_audioMuteFrame->format = m_audioEncodeCtx->sample_fmt;
+		m_audioMuteFrame->channel_layout = m_audioEncodeCtx->channel_layout;
+		m_audioMuteFrame->channels = m_audioEncodeCtx->channels;
+		m_audioMuteFrame->nb_samples = m_audioEncodeCtx->frame_size;
+		ret = av_frame_get_buffer(m_audioMuteFrame, 0);
+		if (ret < 0) {
+			avcodec_free_context(&m_audioEncodeCtx);
+			m_audioEncodeCtx = nullptr;
+			MS_THROW_ERROR("could not create mute frame");
+		}
+		av_samples_set_silence(m_audioMuteFrame->data, 0, m_audioMuteFrame->nb_samples, m_audioMuteFrame->channels, (AVSampleFormat)m_audioMuteFrame->format);
+
+
+		ret = avcodec_parameters_from_context(st->codecpar, m_audioEncodeCtx);
 		if (ret < 0) {
 			MS_THROW_ERROR("error for avcodec_parameters_to_context");
 		}
 
-		st->time_base.den = m_audioDecodeContext->sample_rate;
+		st->time_base.den = m_audioDecodeCtx->sample_rate;
 		st->time_base.num = 1;
 
-		int ret = avio_open2(&m_context->pb, m_url.c_str(), AVIO_FLAG_WRITE, NULL, NULL);
+		ret = avio_open2(&(m_audioFormatCtx->pb), m_url.c_str(), AVIO_FLAG_WRITE, NULL, NULL);
 		if (ret < 0) {
 			MS_THROW_ERROR("error openning avio");
 		}
@@ -448,14 +474,145 @@ namespace RTC
 
 		InitOutgoingParameters();
 
-		m_audioFifo = av_audio_fifo_alloc(m_audioEncodeContext->sample_fmt, m_audioEncodeContext->channels, 1);
+		m_audioFifo = av_audio_fifo_alloc(m_audioEncodeCtx->sample_fmt, m_audioEncodeCtx->channels, 1);
 		if (!m_audioFifo) {
 			MS_THROW_ERROR("could not allocate fifo");
 		}
 
-		int ret = avformat_write_header(m_context, nullptr);
+		int ret = avformat_write_header(m_audioFormatCtx, nullptr);
 		if (ret < 0) {
 			MS_THROW_ERROR("error writting header");
 		}
+	}
+
+	void PushTransport::AudioProcessPacket(RTC::RtpPacket* packet) {
+		if (!m_audioProcessPacket) {
+			m_audioRefTimestamp = packet->GetTimestamp();
+			m_audioNextTimestamp = 0;
+			m_audioProcessPacket = true;
+		}
+
+		m_audioCurTimestamp = packet->GetTimestamp() - m_audioRefTimestamp; 
+		if (m_audioCurTimestamp < 0) {
+			m_audioCurTimestamp += UINT32_MAX;
+		}
+
+		auto cmp = m_audioCurTimestamp - m_audioNextTimestamp;		
+		if (cmp < 0)
+			return;
+		else if(cmp > 0){
+			int size = av_audio_fifo_size(m_audioFifo);
+			int needSamples = m_audioEncodeCtx->frame_size - size;
+			if (cmp >= needSamples) {
+				av_audio_fifo_write(m_audioFifo, (void**)m_audioMuteFrame->extended_data, needSamples);
+				m_audioNextTimestamp = m_audioCurTimestamp;
+				m_audioPtsTimestamp = m_audioCurTimestamp;
+			}
+			else {
+				cmp = cmp; //fixme
+			}
+			AudioEncodeAndSend();
+			//PacketFree();
+		}
+		
+		int ret = AudioDecodeAndFifo(packet);
+		PacketFree();
+		if (ret < 0)
+			return;
+
+		AudioEncodeAndSend();
+		PacketFree();
+	}
+
+	int PushTransport::AudioDecodeAndFifo(RTC::RtpPacket* packet) {
+		m_packet = av_packet_alloc();
+		if (!m_packet)
+			return -1;
+		av_packet_free(&m_packet);
+
+		size_t buf_len = packet->GetPayloadLength();
+		uint8_t* buf = (uint8_t*)malloc(buf_len);
+		memcpy(buf, packet->GetPayload(), buf_len);
+		int ret = av_packet_from_data(m_packet, buf, buf_len);
+		if (ret < 0)
+			return -1;
+
+		ret = avcodec_send_packet(m_audioDecodeCtx, m_packet);
+		if (ret < 0)
+			return -1;
+
+		m_frame = av_frame_alloc();
+		if (!m_frame)
+			return -1;
+
+		ret = avcodec_receive_frame(m_audioDecodeCtx, m_frame);
+		if (ret < 0)
+			return -1;
+
+		ret = av_audio_fifo_realloc(m_audioFifo, av_audio_fifo_size(m_audioFifo) + m_frame->nb_samples);
+		if (ret < 0)
+			return -1;
+
+		ret = av_audio_fifo_write(m_audioFifo, (void**)m_frame->extended_data, m_frame->nb_samples);
+		if (ret < m_frame->nb_samples)
+			return -1;
+
+		m_audioNextTimestamp += m_frame->nb_samples;
+		
+		return 0;
+	}
+
+	int PushTransport::AudioEncodeAndSend() {
+		auto size = av_audio_fifo_size(m_audioFifo);
+		while (av_audio_fifo_size(m_audioFifo) >= m_audioEncodeCtx->frame_size) {
+			m_frame = av_frame_alloc();
+			if (!m_frame)
+				return -1;
+
+			m_frame->nb_samples = m_audioEncodeCtx->frame_size;
+			m_frame->channel_layout = m_audioEncodeCtx->channel_layout;
+			m_frame->format = m_audioEncodeCtx->sample_fmt;
+			m_frame->sample_rate = m_audioEncodeCtx->sample_rate;
+
+			int ret = av_frame_get_buffer(m_frame, 0);
+			if (ret < 0)
+				return -1;
+
+			ret = av_audio_fifo_read(m_audioFifo, (void**)m_frame->data, m_audioEncodeCtx->frame_size);
+			if (ret < m_audioEncodeCtx->frame_size)
+				return -1;
+
+			m_frame->pts = m_audioPtsTimestamp;
+			m_audioPtsTimestamp += m_audioEncodeCtx->frame_size;
+
+			ret = avcodec_send_frame(m_audioEncodeCtx, m_frame);
+			if (ret < 0)
+				return -1;
+
+			m_packet = av_packet_alloc();
+			if (!m_packet)
+				return -1;
+
+			ret = avcodec_receive_packet(m_audioEncodeCtx, m_packet);
+			if (ret < 0)
+				return -1;
+
+			av_packet_rescale_ts(m_packet, m_audioEncodeCtx->time_base, m_audioFormatCtx->streams[m_audioIdx]->time_base);
+
+			ret = av_write_frame(m_audioFormatCtx, m_packet);
+			if (ret < 0)
+				return -1;
+
+			PacketFree();
+		}
+
+		return 0;
+	}
+
+	void PushTransport::PacketFree() {
+		if (m_packet)
+			av_packet_free(&m_packet);
+		if (m_frame)
+			av_frame_free(&m_frame);
 	}
 } // namespace RTC
