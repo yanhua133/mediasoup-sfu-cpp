@@ -505,14 +505,16 @@ namespace RTC
 			int needSamples = m_audioEncodeCtx->frame_size - size;
 			if (cmp >= needSamples) {
 				av_audio_fifo_write(m_audioFifo, (void**)m_audioMuteFrame->extended_data, needSamples);
+				AudioEncodeAndSend();
+				PacketFree();
 				m_audioNextTimestamp = m_audioCurTimestamp;
 				m_audioPtsTimestamp = m_audioCurTimestamp;
 			}
 			else {
-				cmp = cmp; //fixme
+				av_audio_fifo_write(m_audioFifo, (void**)m_audioMuteFrame->extended_data, cmp);
+				m_audioNextTimestamp = m_audioCurTimestamp;
 			}
-			AudioEncodeAndSend();
-			//PacketFree();
+			
 		}
 		
 		int ret = AudioDecodeAndFifo(packet);
