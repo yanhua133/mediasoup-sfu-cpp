@@ -517,12 +517,9 @@ namespace RTC
 			
 		}
 		
-		int ret = AudioDecodeAndFifo(packet);
-		PacketFree();
-		if (ret < 0)
-			return;
-
-		AudioEncodeAndSend();
+		if (AudioDecodeAndFifo(packet) >= 0) {
+			AudioEncodeAndSend();
+		}
 		PacketFree();
 	}
 
