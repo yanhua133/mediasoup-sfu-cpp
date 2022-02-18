@@ -249,8 +249,10 @@ namespace RTC
 			return;
 		}
 
-		if(packet->GetPayloadType() == 100)
+		if (packet->GetPayloadType() == 100)
 			AudioProcessPacket(packet);
+		else
+			VideoProcessPacket(packet);
 
 		//const uint8_t* data = packet->GetData();
 		//size_t len = packet->GetSize();
@@ -339,29 +341,68 @@ namespace RTC
 	void PushTransport::Disconnect() {
 		connected = false;
 
-		avio_closep(&m_audioFormatCtx->pb);
-		avformat_free_context(m_audioFormatCtx);
-		m_audioFormatCtx = nullptr;
+		avio_closep(&m_formatCtx->pb);
+		avformat_free_context(m_formatCtx);
+		m_formatCtx = nullptr;
 
 		m_audioProcessPacket = false;
 		m_audioRefTimestamp = 0;
 	}
 
 	void PushTransport::InitIncomingParameters() {
-		auto acodec = avcodec_find_decoder_by_name(m_audioDecoderName.c_str());
-		if (!acodec) {
+		InitVideoStream();
+		InitAudioStream();
+	}
+
+	void PushTransport::InitVideoStream() {
+		auto codec = avcodec_find_decoder_by_name(m_videoDecoderName.c_str());
+		if (!codec) {
+			MS_THROW_ERROR("error finding the video decoder");
+		}
+
+		if (m_videoDecodeCtx)
+			avcodec_free_context(&m_videoDecodeCtx);
+
+		m_videoDecodeCtx = avcodec_alloc_context3(codec);
+		if (!m_videoDecodeCtx) {
+			MS_THROW_ERROR("could not allocate a decoding context");
+		}
+
+		AVCodecParameters* para = avcodec_parameters_alloc();
+		para->codec_type = AVMEDIA_TYPE_VIDEO;
+		para->codec_id = ChooseVideoCodecId(m_videoDecoderName);
+
+		int ret = avcodec_parameters_to_context(m_videoDecodeCtx, para);
+		if (ret < 0) {
+			avcodec_free_context(&m_videoDecodeCtx);
+			m_videoDecodeCtx = nullptr;
+			MS_THROW_ERROR("error for avcodec_parameters_to_context");
+		}
+		avcodec_parameters_free(&para);
+
+		ret = avcodec_open2(m_videoDecodeCtx, codec, NULL);
+		if (ret < 0) {
+			avcodec_free_context(&m_videoDecodeCtx);
+			m_videoDecodeCtx = nullptr;
+			MS_THROW_ERROR("could not open decoder");
+		}
+	}
+
+	void PushTransport::InitAudioStream() {
+		auto codec = avcodec_find_decoder_by_name(m_audioDecoderName.c_str());
+		if (!codec) {
 			MS_THROW_ERROR("error finding the audio decoder");
 		}
 
-		if(m_audioDecodeCtx)
+		if (m_audioDecodeCtx)
 			avcodec_free_context(&m_audioDecodeCtx);
 
-		m_audioDecodeCtx = avcodec_alloc_context3(acodec);
+		m_audioDecodeCtx = avcodec_alloc_context3(codec);
 		if (!m_audioDecodeCtx) {
-			MS_THROW_ERROR("could not allocate a decoding context"); 
+			MS_THROW_ERROR("could not allocate a decoding context");
 		}
 
-		AVCodecParameters *para = avcodec_parameters_alloc();
+		AVCodecParameters* para = avcodec_parameters_alloc();
 		para->codec_type = AVMEDIA_TYPE_AUDIO;
 		para->codec_id = ChooseAudioCodecId(m_audioDecoderName);
 		para->channels = 1;
@@ -373,14 +414,14 @@ namespace RTC
 			opus_write_extradata(para);
 
 		int ret = avcodec_parameters_to_context(m_audioDecodeCtx, para);
-		if(ret < 0) {
+		if (ret < 0) {
 			avcodec_free_context(&m_audioDecodeCtx);
 			m_audioDecodeCtx = nullptr;
 			MS_THROW_ERROR("error for avcodec_parameters_to_context");
 		}
 		avcodec_parameters_free(&para);
 
-		ret = avcodec_open2(m_audioDecodeCtx, acodec, NULL);
+		ret = avcodec_open2(m_audioDecodeCtx, codec, NULL);
 		if (ret < 0) {
 			avcodec_free_context(&m_audioDecodeCtx);
 			m_audioDecodeCtx = nullptr;
@@ -389,14 +430,14 @@ namespace RTC
 	}
 
 	void PushTransport::InitOutgoingParameters() {
-		avformat_alloc_output_context2(&m_audioFormatCtx, NULL, m_formatName.c_str(), m_url.c_str());
-		if (!m_audioFormatCtx) {
+		avformat_alloc_output_context2(&m_formatCtx, NULL, m_formatName.c_str(), m_url.c_str());
+		if (!m_formatCtx) {
 			MS_THROW_ERROR("error allocating the avformat context");
 		}
 
-		auto st = avformat_new_stream(m_audioFormatCtx, NULL);
+		auto st = avformat_new_stream(m_formatCtx, NULL);
 
-		m_audioIdx = m_audioFormatCtx->nb_streams - 1;
+		m_audioIdx = m_formatCtx->nb_streams - 1;
 
 		st->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;
 
@@ -418,7 +459,7 @@ namespace RTC
 		// for official ffmpeg aac encoder
 		m_audioEncodeCtx->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
 
-		if (m_audioFormatCtx->oformat->flags & AVFMT_GLOBALHEADER)
+		if (m_formatCtx->oformat->flags & AVFMT_GLOBALHEADER)
 			m_audioEncodeCtx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
 		av_opt_set(m_audioEncodeCtx->priv_data, "tune", "zerolatency", 0);
@@ -453,10 +494,17 @@ namespace RTC
 		st->time_base.den = m_audioDecodeCtx->sample_rate;
 		st->time_base.num = 1;
 
-		ret = avio_open2(&(m_audioFormatCtx->pb), m_url.c_str(), AVIO_FLAG_WRITE, NULL, NULL);
+		ret = avio_open2(&(m_formatCtx->pb), m_url.c_str(), AVIO_FLAG_WRITE, NULL, NULL);
 		if (ret < 0) {
 			MS_THROW_ERROR("error openning avio");
 		}
+	}
+
+	AVCodecID PushTransport::ChooseVideoCodecId(std::string name) {
+		if (name == "h264")
+			return AV_CODEC_ID_H264;
+		else
+			return AV_CODEC_ID_NONE;
 	}
 
 	AVCodecID PushTransport::ChooseAudioCodecId(std::string name) {
@@ -479,7 +527,7 @@ namespace RTC
 			MS_THROW_ERROR("could not allocate fifo");
 		}
 
-		int ret = avformat_write_header(m_audioFormatCtx, nullptr);
+		int ret = avformat_write_header(m_formatCtx, nullptr);
 		if (ret < 0) {
 			MS_THROW_ERROR("error writting header");
 		}
@@ -521,6 +569,13 @@ namespace RTC
 			AudioEncodeAndSend();
 		}
 		PacketFree();
+	}
+
+	void PushTransport::VideoProcessPacket(RTC::RtpPacket* packet) {		
+		uint8_t *payload = packet->GetPayload();
+		size_t payloadLength = packet->GetPayloadLength();
+		uint32_t payloadTs = packet->GetTimestamp();
+		
 	}
 
 	int PushTransport::AudioDecodeAndFifo(RTC::RtpPacket* packet) {
@@ -592,9 +647,9 @@ namespace RTC
 			if (ret < 0)
 				return -1;
 
-			av_packet_rescale_ts(m_packet, m_audioEncodeCtx->time_base, m_audioFormatCtx->streams[m_audioIdx]->time_base);
+			av_packet_rescale_ts(m_packet, m_audioEncodeCtx->time_base, m_formatCtx->streams[m_audioIdx]->time_base);
 
-			ret = av_write_frame(m_audioFormatCtx, m_packet);
+			ret = av_write_frame(m_formatCtx, m_packet);
 			if (ret < 0)
 				return -1;
 
@@ -609,5 +664,50 @@ namespace RTC
 			av_packet_free(&m_packet);
 		if (m_frame)
 			av_frame_free(&m_frame);
+	}
+
+	PushTransport::PayloadType PushTransport::ProbePayload(uint8_t* data, size_t len) {		
+		if (len <= 1)
+			return PAYLOAD_TYPE_DISCARD;
+
+		int rtpType = data[0] & 0x1F;
+		switch (rtpType)
+		{
+		case 24: // stap-a
+			ParsePayloadStapA(data, len);
+			return PAYLOAD_TYPE_SPS;
+		case 28: // fu-a
+			return PAYLOAD_TYPE_KEY;
+		default:
+			return PAYLOAD_TYPE_DISCARD;
+		}
+	}
+
+	PushTransport::PayloadType PushTransport::ParsePayloadStapA(uint8_t* data, size_t len) {
+		uint8_t *src = data + 1;
+		size_t srcLen = len - 1;
+		uint8_t *tgt = nullptr;
+		size_t tgtLen = 0;
+
+		while (true) {
+			if (srcLen < 2) break;
+			srcLen -= 2;
+
+			int sLen = (src[0] << 8) + src[1];
+			if (sLen > srcLen) break;
+
+			tgtLen += 4 + sLen;
+
+			if (tgt)
+				tgt = (uint8_t*)realloc(tgt, tgtLen);
+			else
+				tgt = (uint8_t*)malloc(tgtLen);
+
+		}
+
+		if (fp)
+			free(fp);
+
+		return PAYLOAD_TYPE_DISCARD;
 	}
 } // namespace RTC
