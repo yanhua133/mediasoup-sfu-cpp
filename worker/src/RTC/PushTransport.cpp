@@ -8,6 +8,7 @@
 #include "Channel/Notifier.hpp"
 
 extern "C" {
+#include "libavformat/avformat.h"
 #include "libavcodec/avcodec.h"
 #include "libavcodec/bytestream.h"
 #include "libavutil/bprint.h"
@@ -572,10 +573,13 @@ namespace RTC
 	}
 
 	void PushTransport::VideoProcessPacket(RTC::RtpPacket* packet) {		
-		uint8_t *payload = packet->GetPayload();
-		size_t payloadLength = packet->GetPayloadLength();
-		uint32_t payloadTs = packet->GetTimestamp();
-		
+		ProbePayload(packet);
+
+		if (m_videoSendData) {
+			VideoSend();
+			PacketFree();
+			m_videoSendData = false;
+		}
 	}
 
 	int PushTransport::AudioDecodeAndFifo(RTC::RtpPacket* packet) {
@@ -648,6 +652,7 @@ namespace RTC
 				return -1;
 
 			av_packet_rescale_ts(m_packet, m_audioEncodeCtx->time_base, m_formatCtx->streams[m_audioIdx]->time_base);
+			m_packet->stream_index = m_audioIdx;
 
 			ret = av_write_frame(m_formatCtx, m_packet);
 			if (ret < 0)
@@ -666,48 +671,162 @@ namespace RTC
 			av_frame_free(&m_frame);
 	}
 
-	PushTransport::PayloadType PushTransport::ProbePayload(uint8_t* data, size_t len) {		
-		if (len <= 1)
-			return PAYLOAD_TYPE_DISCARD;
+	void PushTransport::ProbePayload(RTC::RtpPacket* packet) {
+		if (packet->GetPayloadLength() <= 1) return;
 
+		const uint8_t* data = packet->GetPayload();
 		int rtpType = data[0] & 0x1F;
 		switch (rtpType)
 		{
-		case 24: // stap-a
-			ParsePayloadStapA(data, len);
-			return PAYLOAD_TYPE_SPS;
-		case 28: // fu-a
-			return PAYLOAD_TYPE_KEY;
+		case 24: // STAP-A
+			ProcessPayloadStapA(packet);
+			return;
+		case 28: // FU-A
+			ProcessPayloadFuA(packet);
+			return;
 		default:
-			return PAYLOAD_TYPE_DISCARD;
+			return;
 		}
 	}
 
-	PushTransport::PayloadType PushTransport::ParsePayloadStapA(uint8_t* data, size_t len) {
-		uint8_t *src = data + 1;
-		size_t srcLen = len - 1;
+	void PushTransport::ProcessPayloadStapA(RTC::RtpPacket* packet) {
+		uint8_t *src = packet->GetPayload() + 1;
+		size_t srcLen = packet->GetPayloadLength() - 1;
 		uint8_t *tgt = nullptr;
 		size_t tgtLen = 0;
+		int sLen, tLen, error;
 
 		while (true) {
-			if (srcLen < 2) break;
+			if (srcLen == 0) {
+				error = 0;
+				break;
+			}
+			else if (srcLen <= 2) {
+				error = 1;
+				break;
+			}
+		
+			sLen = (src[0] << 8) + src[1];
 			srcLen -= 2;
+			src += 2;
 
-			int sLen = (src[0] << 8) + src[1];
-			if (sLen > srcLen) break;
-
-			tgtLen += 4 + sLen;
+			if (sLen > srcLen) {
+				error = 1;
+				break;
+			}
+			tLen = tgtLen;
+			tgtLen += sLen + 4;
 
 			if (tgt)
 				tgt = (uint8_t*)realloc(tgt, tgtLen);
 			else
 				tgt = (uint8_t*)malloc(tgtLen);
 
+			tgt[tLen + 0] = 0x00;
+			tgt[tLen + 1] = 0x00;
+			tgt[tLen + 2] = 0x00;
+			tgt[tLen + 3] = 0x01;
+			memcpy(tgt + tLen + 4, src, sLen);
+
+			src += sLen;
 		}
 
-		if (fp)
-			free(fp);
+		if (error == 0 && tgtLen > 0) {
+			if (m_videoSpsPacket)
+				free(m_videoSpsPacket);
+			m_videoSpsPacket = tgt;
+			m_videoSpsPacketLen = tgtLen;
+			m_videoUpdateSps = true;
+		}
+		else {
+			free(tgt);
+		}
+	}
 
-		return PAYLOAD_TYPE_DISCARD;
+	void PushTransport::ProcessPayloadFuA(RTC::RtpPacket* packet) {
+		size_t srcLen = packet->GetPayloadLength();
+		if (srcLen <= 2) return;
+
+		uint8_t* src = packet->GetPayload();
+		int h1 = src[0] & 0xE0;
+		int h2 = src[1] & 0x1F;
+		int header = h1 + h2;
+		int start = src[1] & 0x80;
+		int end = src[1] & 0x40;
+
+		if (!m_videoSpsPacket) return;
+		else if (m_videoUpdateSps) {
+			if (header != 0x65) { 
+				// I-frame maybe same as IDR?
+				return;
+			}
+		}
+
+		if (start == 1) {
+			free(m_videoCurPacket);
+			m_videoCurPacketTs = packet->GetTimestamp();
+			m_videoCurSeqNumber = packet->GetSequenceNumber();
+			m_videoCurPacketLen = packet->GetPayloadLength() + 3; // (sc)4 + (hearder)1 + data(len - 2)
+			m_videoCurPacket = (uint8_t*)malloc(m_videoCurPacketLen);
+			m_videoCurPacket[0] = 0x00;
+			m_videoCurPacket[1] = 0x00;
+			m_videoCurPacket[2] = 0x00;
+			m_videoCurPacket[3] = 0x01;
+			m_videoCurPacket[4] = (uint8_t)header;
+			memcpy(m_videoCurPacket + 5, src + 2, m_videoCurPacketLen - 5);
+		}
+		else {
+			uint16_t sn = packet->GetSequenceNumber();
+			if (sn != m_videoCurSeqNumber + 1) return;
+			m_videoCurSeqNumber = sn;
+						
+			size_t len = m_videoCurPacketLen;
+			m_videoCurPacketLen += srcLen - 2;
+			m_videoCurPacket = (uint8_t*)realloc(m_videoCurPacket, m_videoCurPacketLen);
+			memcpy(m_videoCurPacket + len, src + 2, srcLen - 2);
+
+			if (end == 1)
+				m_videoSendData = true;
+		}		
+	}
+
+	int PushTransport::VideoSend() {
+		int ret;
+		m_packet = av_packet_alloc();
+		if (!m_packet)
+			return -1;
+
+		
+		if (m_videoUpdateSps) {
+			m_packet->size = m_videoSpsPacketLen + m_videoCurPacketLen;
+			m_packet->data = (uint8_t*)malloc(m_packet->size);
+			memcpy(m_packet->data, m_videoSpsPacket, m_videoSpsPacketLen);
+			memcpy(m_packet->data + m_videoSpsPacketLen, m_videoCurPacket, m_videoCurPacketLen);
+			free(m_videoCurPacket);
+			m_videoCurPacketLen = 0;
+		}
+		else {
+			m_packet->size = m_videoCurPacketLen;
+			m_packet->data = m_videoCurPacket;
+		}
+
+		if (m_videoUpdateSps) {
+			ret = TryDecodeFrame();
+			if (ret < 0) return -1;
+			m_videoUpdateSps = false;
+		}
+		
+		av_packet_rescale_ts(m_packet, m_videoDecodeCtx->time_base, m_formatCtx->streams[m_videoIdx]->time_base);
+		m_packet->stream_index = m_videoIdx;
+
+		ret = av_write_frame(m_formatCtx, m_packet);
+		if (ret < 0)
+			return -1;
+
+		return 0;
+	}
+
+	int PushTransport::TryDecodeFrame() {
+		return 0;
 	}
 } // namespace RTC

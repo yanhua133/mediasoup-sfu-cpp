@@ -27,14 +27,6 @@ namespace RTC
 {
 	class PushTransport : public RTC::Transport
 	{
-	private:
-		enum PayloadType {
-			PAYLOAD_TYPE_SPS,
-			PAYLOAD_TYPE_KEY,
-			PAYLOAD_TYPE_OTHER,
-			PAYLOAD_TYPE_DISCARD
-		};
-
 	public:
 		PushTransport(const std::string& id, RTC::Transport::Listener* listener, json& data);
 		~PushTransport() override;
@@ -80,9 +72,11 @@ namespace RTC
 		int AudioDecodeAndFifo(RTC::RtpPacket* packet);
 		int AudioEncodeAndSend();
 		void PacketFree();
-		PayloadType ProbePayload(uint8_t* data, size_t len);
-		PayloadType ParsePayloadStapA(uint8_t* data, size_t len);
-
+		void ProbePayload(RTC::RtpPacket* packet);
+		void ProcessPayloadStapA(RTC::RtpPacket* packet);
+		void ProcessPayloadFuA(RTC::RtpPacket* packet);
+		int VideoSend();
+		int TryDecodeFrame();
 		
 	private:
 		// Allocated by this.
@@ -103,12 +97,15 @@ namespace RTC
 		AVCodecContext* m_videoDecodeCtx{ nullptr }, * m_videoEncodeCtx{ nullptr };
 		AVAudioFifo *m_audioFifo{ nullptr };
 		bool m_audioProcessPacket{ false };
-		unsigned int m_audioIdx{ 0 };
+		unsigned int m_videoIdx{ 0 }, m_audioIdx{ 0 };
 		uint32_t m_audioRefTimestamp{ 0 }, m_audioCurTimestamp{ 0 }, m_audioNextTimestamp{ 0 }, m_audioPtsTimestamp{ 0 };
 		AVPacket *m_packet{ nullptr };
 		AVFrame *m_frame{ nullptr }, *m_audioMuteFrame{ nullptr };
 		uint8_t *m_videoCurPacket{ nullptr }, * m_videoSpsPacket{ nullptr };
 		size_t m_videoCurPacketLen{ 0 }, m_videoSpsPacketLen{ 0 };
+		uint32_t m_videoRefTimestamp{ 0 }, m_videoCurPacketTs{ 0 };
+		uint16_t m_videoCurSeqNumber{ 0 };
+		bool m_videoUpdateSps{ false }, m_videoSendData{ false };
 	};
 } // namespace RTC
 
