@@ -277,7 +277,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         std::function<void(json data)> acc = [](json data) {};
         std::function<void(int errorCode, std::string errorReason)> rej = [](int errorCode, std::string errorReason) {};
 
-        json req_for_create = {
+        /*json req_for_create = {
              {"method" , "createPushTransport"},
              {"data"   , {{"peerId", peer->getPeerId()}}}
         };
@@ -290,9 +290,9 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
                 {"protoType", "rtmp"},
             }}
         };
-        handleRequest(peer, req_for_connect, acc, rej);
+        handleRequest(peer, req_for_connect, acc, rej);*/
 
-       /* json req_for_create1 = {
+        json req_for_create1 = {
              {"method" , "createPlainTransport"},
              {"data"   , {{"peerId", peer->getPeerId()}}}
         };
@@ -308,7 +308,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         };
         handleRequest(peer, req_for_connect1, acc, rej);
 
-        json req_for_create2 = {
+        /*json req_for_create2 = {
              {"method" , "createPlainTransport"},
              {"data"   , {{"peerId", peer->getPeerId()}}}
         };
@@ -589,7 +589,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
     else if (method == "connectPlainTransport") {
         auto data = request["data"];
         MS_lOGD("connectPlainTransport request.data=%s", data.dump().c_str());
-        data["ip"] = "192.168.31.208";
+        data["ip"] = "192.168.0.178";
         //data["port"] = 10086;
 
         string peerId = data["peerId"];
@@ -711,12 +711,12 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         
         // Optimization: Create a server-side Consumer for each Peer.
         
-        auto pushTransport = m_pushPeer->data.transports[peer->getPushTransportId()];
+       /* auto pushTransport = m_pushPeer->data.transports[peer->getPushTransportId()];
         if (pushTransport != nullptr) {
             createPushConsumer(m_pushPeer, pushTransport, peer, producer);
-        }
+        }*/
 
-       /* auto pushTransport = m_pushPeer->data.transports[peer->getPushTransportId()];
+       auto pushTransport = m_pushPeer->data.transports[peer->getPushTransportId()];
         if (pushTransport != nullptr) {
             if (producer->kind() == "video") {
                 auto pushTransport1 = m_pushPeer->data.transports[tid1];
@@ -726,7 +726,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
                 auto pushTransport2 = m_pushPeer->data.transports[tid2];
                 createPushConsumer(m_pushPeer, pushTransport2, peer, producer);
             }
-        }*/
+        }
         for (auto  &kv : joinedPeers)
         {
             auto otherPeer = kv.second;

@@ -90,6 +90,7 @@ namespace RTC
 		//AVFilterContext* m_audioFilterIn{ nullptr }, * m_audioFilterOut{ nullptr };
 		int m_audioSampleRate{ 48000 }, m_audioFormat{ 0 };
 		uint64_t m_audioChannelLayout{ 4 };
+		int m_videoRateClock{ 90000 };
 
 		AVFormatContext *m_formatCtx{ nullptr };
 		std::string m_videoDecoderName{ "h264" }, m_audioDecoderName{ "opus" };

@@ -380,6 +380,8 @@ namespace RTC
 			MS_THROW_ERROR("error for avcodec_parameters_to_context");
 		}
 		avcodec_parameters_free(&para);
+		m_videoDecodeCtx->time_base.den = m_videoRateClock;
+		m_videoDecodeCtx->time_base.num = 1;
 
 		ret = avcodec_open2(m_videoDecodeCtx, codec, NULL);
 		if (ret < 0) {
@@ -436,7 +438,24 @@ namespace RTC
 			MS_THROW_ERROR("error allocating the avformat context");
 		}
 
-		auto st = avformat_new_stream(m_formatCtx, NULL);
+		AVStream *st = avformat_new_stream(m_formatCtx, NULL);
+
+	/*	m_videoIdx = m_formatCtx->nb_streams - 1;
+
+		st->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
+
+		int ret = avcodec_parameters_from_context(st->codecpar, m_videoDecodeCtx);
+		if (ret < 0) {
+			MS_THROW_ERROR("error for avcodec_parameters_to_context");
+		}
+
+		st->time_base.den = m_videoRateClock;
+		st->time_base.num = 1;
+		st->codecpar->width = 640;
+		st->codecpar->height = 480;
+
+
+		st = avformat_new_stream(m_formatCtx, NULL);*/
 
 		m_audioIdx = m_formatCtx->nb_streams - 1;
 
@@ -462,8 +481,6 @@ namespace RTC
 
 		if (m_formatCtx->oformat->flags & AVFMT_GLOBALHEADER)
 			m_audioEncodeCtx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-
-		av_opt_set(m_audioEncodeCtx->priv_data, "tune", "zerolatency", 0);
 
 		int ret = avcodec_open2(m_audioEncodeCtx, acodec, NULL);
 		if (ret < 0) {
@@ -729,6 +746,7 @@ namespace RTC
 			memcpy(tgt + tLen + 4, src, sLen);
 
 			src += sLen;
+			srcLen -= sLen;
 		}
 
 		if (error == 0 && tgtLen > 0) {
@@ -762,8 +780,10 @@ namespace RTC
 			}
 		}
 
-		if (start == 1) {
-			free(m_videoCurPacket);
+		if (start != 0) {
+			if (m_videoCurPacket) 
+				free(m_videoCurPacket);
+
 			m_videoCurPacketTs = packet->GetTimestamp();
 			m_videoCurSeqNumber = packet->GetSequenceNumber();
 			m_videoCurPacketLen = packet->GetPayloadLength() + 3; // (sc)4 + (hearder)1 + data(len - 2)
@@ -778,6 +798,7 @@ namespace RTC
 		else {
 			uint16_t sn = packet->GetSequenceNumber();
 			if (sn != m_videoCurSeqNumber + 1) return;
+			if (m_videoCurPacketTs != packet->GetTimestamp()) return;
 			m_videoCurSeqNumber = sn;
 						
 			size_t len = m_videoCurPacketLen;
@@ -785,8 +806,11 @@ namespace RTC
 			m_videoCurPacket = (uint8_t*)realloc(m_videoCurPacket, m_videoCurPacketLen);
 			memcpy(m_videoCurPacket + len, src + 2, srcLen - 2);
 
-			if (end == 1)
+			if (end != 0) {
 				m_videoSendData = true;
+				if (m_videoRefTimestamp == 0)
+					m_videoRefTimestamp = m_videoCurPacketTs;
+			}
 		}		
 	}
 
@@ -802,13 +826,16 @@ namespace RTC
 			m_packet->data = (uint8_t*)malloc(m_packet->size);
 			memcpy(m_packet->data, m_videoSpsPacket, m_videoSpsPacketLen);
 			memcpy(m_packet->data + m_videoSpsPacketLen, m_videoCurPacket, m_videoCurPacketLen);
-			free(m_videoCurPacket);
-			m_videoCurPacketLen = 0;
 		}
 		else {
 			m_packet->size = m_videoCurPacketLen;
 			m_packet->data = m_videoCurPacket;
 		}
+		m_packet->pts = m_videoCurPacketTs - m_videoRefTimestamp;
+		if (m_packet->pts < 0) {
+			m_packet->pts += UINT32_MAX;
+		}
+		m_packet->dts = m_packet->pts;
 
 		if (m_videoUpdateSps) {
 			ret = TryDecodeFrame();
@@ -820,6 +847,11 @@ namespace RTC
 		m_packet->stream_index = m_videoIdx;
 
 		ret = av_write_frame(m_formatCtx, m_packet);
+		if (m_videoCurPacket) {
+			free(m_videoCurPacket);
+			m_videoCurPacketLen = 0;
+			m_videoCurPacket = nullptr;
+		}
 		if (ret < 0)
 			return -1;
 
