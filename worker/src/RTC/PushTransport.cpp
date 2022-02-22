@@ -442,7 +442,7 @@ namespace RTC
 
 		AVStream *st = avformat_new_stream(m_formatCtx, NULL);
 
-		/*m_videoIdx = m_formatCtx->nb_streams - 1;
+		m_videoIdx = m_formatCtx->nb_streams - 1;
 
 		st->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
 
@@ -454,7 +454,7 @@ namespace RTC
 		st->time_base.den = m_videoRateClock;
 		st->time_base.num = 1;
 
-		st = avformat_new_stream(m_formatCtx, NULL);*/
+		st = avformat_new_stream(m_formatCtx, NULL);
 
 		m_audioIdx = m_formatCtx->nb_streams - 1;
 
@@ -481,7 +481,7 @@ namespace RTC
 		if (m_formatCtx->oformat->flags & AVFMT_GLOBALHEADER)
 			m_audioEncodeCtx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
-		int ret = avcodec_open2(m_audioEncodeCtx, acodec, NULL);
+		ret = avcodec_open2(m_audioEncodeCtx, acodec, NULL);
 		if (ret < 0) {
 			avcodec_free_context(&m_audioEncodeCtx);
 			m_audioEncodeCtx = nullptr;
@@ -544,10 +544,10 @@ namespace RTC
 			MS_THROW_ERROR("could not allocate fifo");
 		}
 
-		int ret = avformat_write_header(m_formatCtx, nullptr);
+		/*int ret = avformat_write_header(m_formatCtx, nullptr);
 		if (ret < 0) {
 			MS_THROW_ERROR("error writting header");
-		}
+		}*/
 	}
 
 	void PushTransport::AudioProcessPacket(RTC::RtpPacket* packet) {
@@ -706,6 +706,7 @@ namespace RTC
 	}
 
 	void PushTransport::ProcessPayloadStapA(RTC::RtpPacket* packet) {
+		if (m_videoSpsPacket) return;//for test;
 		uint8_t *src = packet->GetPayload() + 1;
 		size_t srcLen = packet->GetPayloadLength() - 1;
 		uint8_t *tgt = nullptr;
@@ -846,27 +847,31 @@ namespace RTC
 			memcpy(m_videoDecodeCtx->extradata, m_videoSpsPacket + 1, m_videoDecodeCtx->extradata_size - 1);
 
 			avcodec_parameters_from_context(m_formatCtx->streams[m_videoIdx]->codecpar, m_videoDecodeCtx);
-			m_formatCtx->streams[m_videoIdx]->r_frame_rate.num = 20;
-			m_formatCtx->streams[m_videoIdx]->r_frame_rate.den = 1;
+			/*m_formatCtx->streams[m_videoIdx]->r_frame_rate.num = 30;
+			m_formatCtx->streams[m_videoIdx]->r_frame_rate.den = 1;*/
 
-			/*int ret = avformat_write_header(m_formatCtx, nullptr);
+			int ret = avformat_write_header(m_formatCtx, nullptr);
 			if (ret < 0) 
-				return -1;*/
+				return -1;
 
 			m_videoUpdateSps = false;
 		}
 		
-		av_packet_rescale_ts(m_packet, m_videoDecodeCtx->time_base, m_formatCtx->streams[m_videoIdx]->time_base);
+		AVRational tb;
+		tb.den = 90000;
+		tb.num = 1;
+		av_packet_rescale_ts(m_packet, tb, m_formatCtx->streams[m_videoIdx]->time_base);
 		m_packet->stream_index = m_videoIdx;
+		printf("=====================================>%d\n", m_packet->pts);
 
-		/*ret = av_write_frame(m_formatCtx, m_packet);
+		ret = av_write_frame(m_formatCtx, m_packet);
 		if (m_videoCurPacket) {
 			free(m_videoCurPacket);
 			m_videoCurPacketLen = 0;
 			m_videoCurPacket = nullptr;
 		}
 		if (ret < 0)
-			return -1;*/
+			return -1;
 
 		return 0;
 	}
@@ -875,8 +880,6 @@ namespace RTC
 		int ret = avcodec_send_packet(m_videoDecodeCtx, m_packet);
 		if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
 			return -1;
-		if (ret >= 0)
-			m_packet->size = 0;
 		AVFrame* frame = av_frame_alloc();
 		ret = avcodec_receive_frame(m_videoDecodeCtx, frame);
 		av_frame_free(&frame);
