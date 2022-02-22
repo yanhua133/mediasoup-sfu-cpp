@@ -383,6 +383,8 @@ namespace RTC
 		m_videoDecodeCtx->time_base.den = m_videoRateClock;
 		m_videoDecodeCtx->time_base.num = 1;
 
+		m_videoDecodeCtx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;		
+
 		ret = avcodec_open2(m_videoDecodeCtx, codec, NULL);
 		if (ret < 0) {
 			avcodec_free_context(&m_videoDecodeCtx);
@@ -440,7 +442,7 @@ namespace RTC
 
 		AVStream *st = avformat_new_stream(m_formatCtx, NULL);
 
-	/*	m_videoIdx = m_formatCtx->nb_streams - 1;
+		/*m_videoIdx = m_formatCtx->nb_streams - 1;
 
 		st->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
 
@@ -451,9 +453,6 @@ namespace RTC
 
 		st->time_base.den = m_videoRateClock;
 		st->time_base.num = 1;
-		st->codecpar->width = 640;
-		st->codecpar->height = 480;
-
 
 		st = avformat_new_stream(m_formatCtx, NULL);*/
 
@@ -840,25 +839,50 @@ namespace RTC
 		if (m_videoUpdateSps) {
 			ret = TryDecodeFrame();
 			if (ret < 0) return -1;
+
+			m_videoDecodeCtx->extradata_size = m_videoSpsPacketLen;
+			m_videoDecodeCtx->extradata = (uint8_t*)malloc(m_videoDecodeCtx->extradata_size);
+			memset(m_videoDecodeCtx->extradata, 0, m_videoDecodeCtx->extradata_size);
+			memcpy(m_videoDecodeCtx->extradata, m_videoSpsPacket + 1, m_videoDecodeCtx->extradata_size - 1);
+
+			avcodec_parameters_from_context(m_formatCtx->streams[m_videoIdx]->codecpar, m_videoDecodeCtx);
+			m_formatCtx->streams[m_videoIdx]->r_frame_rate.num = 20;
+			m_formatCtx->streams[m_videoIdx]->r_frame_rate.den = 1;
+
+			/*int ret = avformat_write_header(m_formatCtx, nullptr);
+			if (ret < 0) 
+				return -1;*/
+
 			m_videoUpdateSps = false;
 		}
 		
 		av_packet_rescale_ts(m_packet, m_videoDecodeCtx->time_base, m_formatCtx->streams[m_videoIdx]->time_base);
 		m_packet->stream_index = m_videoIdx;
 
-		ret = av_write_frame(m_formatCtx, m_packet);
+		/*ret = av_write_frame(m_formatCtx, m_packet);
 		if (m_videoCurPacket) {
 			free(m_videoCurPacket);
 			m_videoCurPacketLen = 0;
 			m_videoCurPacket = nullptr;
 		}
 		if (ret < 0)
-			return -1;
+			return -1;*/
 
 		return 0;
 	}
 
 	int PushTransport::TryDecodeFrame() {
-		return 0;
+		int ret = avcodec_send_packet(m_videoDecodeCtx, m_packet);
+		if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
+			return -1;
+		if (ret >= 0)
+			m_packet->size = 0;
+		AVFrame* frame = av_frame_alloc();
+		ret = avcodec_receive_frame(m_videoDecodeCtx, frame);
+		av_frame_free(&frame);
+		if (ret >= 0)
+			return 0;
+		if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+			return -1;
 	}
 } // namespace RTC
