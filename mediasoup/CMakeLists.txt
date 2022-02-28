@@ -100,12 +100,14 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 )
 message(STATUS "CMAKE_CURRENT_SOURCE_DIR : " ${CMAKE_CURRENT_SOURCE_DIR})
 message(STATUS "PROJECT_INCLUDE_DIR : " ${PROJECT_INCLUDE_DIR})
+
 target_include_directories(${PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/common
   ${CMAKE_CURRENT_SOURCE_DIR}/util
   ${CMAKE_CURRENT_SOURCE_DIR}/uv
   ${CMAKE_CURRENT_SOURCE_DIR}/../deps/json/single_include/nlohmann
   ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libwebrtc/deps/abseil-cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libsdptransform
   ${PROJECT_INCLUDE_DIR}
 )
 
