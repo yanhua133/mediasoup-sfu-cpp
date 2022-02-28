@@ -11,7 +11,6 @@
 #include "PlainTransport.hpp"
 #include "PipeTransport.hpp"
 #include "DirectTransport.hpp"
-#include "PushTransport.hpp"
 #include "Producer.hpp"
 #include "Consumer.hpp"
 #include "DataProducer.hpp"
@@ -844,58 +843,6 @@ public:
 
 		return transport;
 	}
-
-	std::shared_ptr<PushTransport>  createPushTransport(
-		PushTransportOptions& options
-	)
-	{
-		MS_lOGD("createPushTransport()");
-		json internal = this->_internal;
-		internal["transportId"] = uuidv4();
-		const json reqData;
-		json appData = options.appData;
-
-		json data =
-			this->_channel->request("router.createPushTransport", internal, reqData);
-		TransportParams params;
-		params.internal = internal;
-		params.data = data;
-		params.channel = this->_channel;
-		params.payloadChannel = this->_payloadChannel;
-		params.appData = appData;
-		params.getRouterRtpCapabilities = this->getRouterRtpCapabilitiesFunc;
-		params.getProducerById = this->getProducerByIdFunc;
-		params.getDataProducerById = this->getDataProducerByIdFunc;
-
-		std::shared_ptr<PushTransport> transport = std::make_shared<PushTransport>(params);
-		transport->handleWorkerNotifications();
-
-		this->_transports[transport->id()] = transport;
-		//transport.on('@close', () => this->_transports.delete(transport.id));
-		transport->on("@close", [self = shared_from_this(), transport]()
-		{
-			self->_transports.erase(transport->id());
-
-		});
-
-		//transport.on('@newproducer', (producer: Producer) => this->_producers.set(producer.id, producer));
-		transport->on("@newproducer", [self = shared_from_this()](std::shared_ptr<Producer>& producer)
-		{
-			self->_producers[producer->id()] = producer;
-		});
-		//transport.on('@producerclose', (producer: Producer) => this->_producers.delete(producer.id));
-		transport->on("@producerclose", [self = shared_from_this()](std::shared_ptr<Producer>& producer)
-		{
-			self->_producers.erase(producer->id());
-		});
-
-		// Emit observer event.
-		this->_observer->safeEmit("newtransport", transport);
-
-		return transport;
-	}
-
-
 
 	/**
 	 * Pipes the given Producer or DataProducer into another Router in same host.
