@@ -44,10 +44,27 @@ namespace RTC
 
 		auto jsonIpIt = jsonListenIpIt->find("ip");
 
+
+
 		if (jsonIpIt == jsonListenIpIt->end())
 			MS_THROW_TYPE_ERROR("missing listenIp.ip");
 		else if (!jsonIpIt->is_string())
 			MS_THROW_TYPE_ERROR("wrong listenIp.ip (not an string)");
+
+
+		auto ip = jsonIpIt->get<std::string>();
+		if(ip.empty()) {
+			const char* envIpPtr = std::getenv("MEDIASOUP_LISTEN_IP");
+			if(envIpPtr == NULL) {
+				ip = std::string("0.0.0.0");
+			} else {
+				ip = std::string(envIpPtr);
+			}
+		}
+
+		this->listenIp.ip.assign(ip);
+
+
 
 		this->listenIp.ip.assign(jsonIpIt->get<std::string>());
 
@@ -56,13 +73,23 @@ namespace RTC
 
 		auto jsonAnnouncedIpIt = jsonListenIpIt->find("announcedIp");
 
-		if (jsonAnnouncedIpIt != jsonListenIpIt->end())
-		{
-			if (!jsonAnnouncedIpIt->is_string())
-				MS_THROW_TYPE_ERROR("wrong listenIp.announcedIp (not an string");
-
-			this->listenIp.announcedIp.assign(jsonAnnouncedIpIt->get<std::string>());
+		if (jsonAnnouncedIpIt != jsonListenIpIt->end()) {
+			MS_THROW_TYPE_ERROR("listenIp.announcedIp (not found");
 		}
+		if (!jsonAnnouncedIpIt->is_string()) {
+			MS_THROW_TYPE_ERROR("listenIp.announcedIp (not an string");
+		}
+
+		auto announcedIp = jsonAnnouncedIpIt->get<std::string>();
+		if(announcedIp.empty()) {
+			const char* envAnnouncedIpPtr = std::getenv("MEDIASOUP_ANNOUNCED_IP");
+			if(envAnnouncedIpPtr == NULL) {
+				MS_THROW_TYPE_ERROR("listenIp.announcedIp is empty in config.json and MEDIASOUP_ANNOUNCED_IP not set in env");
+			}
+			announcedIp = std::string(envAnnouncedIpPtr);
+		}
+
+		this->listenIp.announcedIp.assign(announcedIp);
 
 		auto jsonRtcpMuxIt = data.find("rtcpMux");
 
