@@ -164,7 +164,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   ${LIB_WEBRTC_INCLUDE_DIR}
   ${MEDIASOUP_INCLUDE_DIR}
   ${PROTOO_INCLUDE_DIR}
-	
+  ${CMAKE_CURRENT_SOURCE_DIR}/../deps/json/single_include/nlohmann
+  ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libwebrtc/deps/abseil-cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libsdptransform
 )
 LINK_DIRECTORIES(
 	${PROJECT_LIB_DIR}

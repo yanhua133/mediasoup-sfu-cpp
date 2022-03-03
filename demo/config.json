@@ -112,7 +112,7 @@
 			[
 				{
 					"ip"          : "0.0.0.0",
-					"announcedIp" : "192.168.1.192"
+					"announcedIp" : "104.40.213.112"
 				}
 			],
 			"initialAvailableOutgoingBitrate" : 1000000,
@@ -124,8 +124,8 @@
 		{
 			"listenIp" :
 			{
-				"ip"          : "192.168.1.192",
-				"announcedIp" : "192.168.1.192"
+				"ip"          : "0.0.0.0",
+				"announcedIp" : "104.40.213.112"
 			},
 			"maxSctpMessageSize" : 262144
 		}
@@ -134,12 +134,12 @@
 	{
 		"minPort" : 20000,
 		"maxPort" : 29999,
-		"ip" : "127.0.0.1",
+		"ip" : "0.0.0.0",
 		"signalPort" : 11111
 	},
 	"rtmp" :
 	{
-		"listenIp" : "192.168.1.192",
+		"listenIp" : "0.0.0.0",
 		"listenPort" : 1935,
 		"suffix" : "/live"
 	}
