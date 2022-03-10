@@ -58,10 +58,10 @@ release/bin 目录下
 目前客户端代码还没整理好暂未开源后续会陆续开源
 测试客户端下载地址
 win下载地址：   
-<http://121.36.0.230:8012/latest/sft-demo-client-1.0.1.win.zip>
+http://121.36.0.230:8012/latest/sft-demo-client-1.0.1.win.zip
 
 mac下载地址：   
-<http://121.36.0.230:8012/latest/sft-demo-client-1.0.1.mac.zip>
+http://121.36.0.230:8012/latest/sft-demo-client-1.0.1.mac.zip
 
 会议号输入任意数字比如   
 会议号：123456  
