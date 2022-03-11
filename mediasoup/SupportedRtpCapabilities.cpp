@@ -312,8 +312,8 @@ const RtpCapabilities supportedRtpCapabilities =
 			}
 		},
         {
-			"audio",		// kind
-			"audio/VP8",	    // mimeType
+			"video",		// kind
+			"video/VP8",	    // mimeType
 			0,				// preferredPayloadType
 			90000,			// clockRate
 			1,				// channels
@@ -344,8 +344,8 @@ const RtpCapabilities supportedRtpCapabilities =
 			}
 		},
         {
-			"audio",		// kind
-			"audio/VP9",	    // mimeType
+			"video",		// kind
+			"video/VP9",	    // mimeType
 			0,				// preferredPayloadType
 			90000,			// clockRate
 			1,				// channels
