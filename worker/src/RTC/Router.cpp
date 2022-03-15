@@ -11,6 +11,7 @@
 #include "RTC/PlainTransport.hpp"
 #include "RTC/WebRtcTransport.hpp"
 #include "RTC/PushTransport.hpp"
+#include "RTC/PullTransport.hpp"
 
 namespace RTC
 {
@@ -282,6 +283,29 @@ namespace RTC
 
 				// Insert into the map.
 				this->mapTransports[transportId] = pushTransport;
+
+				MS_DEBUG_DEV("PushTransport created [transportId:%s]", transportId.c_str());
+
+				json data = json::object();
+
+				//pushTransport->FillJson(data);
+
+				request->Accept(data);
+
+				break;
+			}
+
+			case Channel::Request::MethodId::ROUTER_CREATE_PULL_TRANSPORT:
+			{
+				std::string transportId;
+
+				// This may throw
+				SetNewTransportIdFromInternal(request->internal, transportId);
+
+				auto* pullTransport = new RTC::PullTransport(transportId, this, request->data);
+
+				// Insert into the map.
+				this->mapTransports[transportId] = pullTransport;
 
 				MS_DEBUG_DEV("PushTransport created [transportId:%s]", transportId.c_str());
 

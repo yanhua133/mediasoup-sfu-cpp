@@ -48,7 +48,7 @@
 #include "../Transfmt.hpp"
 #include "AudioLevelObserver.hpp"
 
-class Room {
+class Room: public std::enable_shared_from_this<Room> {
 public:
     //Config
     std::shared_ptr<Config> m_pConfig;

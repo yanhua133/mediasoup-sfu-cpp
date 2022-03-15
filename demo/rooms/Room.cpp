@@ -128,6 +128,8 @@ void Room::addHistoryMessage(const oatpp::Object<MessageDto>& message) {
 }
 static string tid1 = "";
 static string tid2 = "";
+static string pullPeerId = "";
+static string pullTransportId = "";
 void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::function<void(json data)> const & accept, std::function<void(int errorCode, std::string errorReason)> const & reject){
     std::string method = request["method"];
     //print current thread
@@ -323,6 +325,23 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
             }}
         };
         handleRequest(peer, req_for_connect2, acc, rej);*/
+
+        json req_for_create3 = {
+             {"method" , "createPllTransport"},
+             {"data"   , {{"displayName", "puller"}}}
+        };
+        handleRequest(peer, req_for_create3, acc, rej);
+
+        json req_for_connect4 = {
+            {"method" , "connectPullTransport"},
+            {"data"   , {
+                {"peerId", pullPeerId},
+                {"transportId", pullTransportId},
+                {"protoType", "rtmp"},
+                {"stream", "10000"},
+            }}
+        };
+        handleRequest(peer, req_for_connect4, acc, rej);
         //break;
     }else if(method ==  "createWebRtcTransport"){
         // NOTE: Don"t require that the Peer is joined here, so the client can
@@ -549,6 +568,88 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
             auto producer = kv.second;
             createPushConsumer(m_pushPeer, transport, srcPeer, producer);
         }
+
+        accept(json({}));
+    }
+    else if (method == "createPullTransport") {
+        auto data = request["data"];
+        string displayName = data["displayName"];
+        MS_lOGD("createPullTransport request.data=%s", data.dump().c_str());
+
+        auto pullPeer = std::make_shared<Peer>(nullptr, shared_from_this(), uuidv4(), "ffmpeg puller");
+        
+        pullPeer->setNickname(displayName);
+        
+        pullPeer->data.joined = true;
+        pullPeer->data.displayName = displayName;
+        pullPeer->data.device = "ffmpeg";
+        pullPeer->data.rtpCapabilities = m_mediasoupRouter->getRouterRtpCapabilities();
+        addPeer(pullPeer);
+
+        for (auto& otherPeer : this->getJoinedPeers(peer))
+        {
+            if (!otherPeer)
+            {
+                continue;
+            }
+            otherPeer->notifyAsync(
+                "newPeer",
+                {
+                    {"id"          , peer->getPeerId()},
+                    {"displayName" , peer->data.displayName},
+                    {"device"      , peer->data.device}
+                });
+            json jsonmsg = {
+                {"id"          , peer->getPeerId()},
+                {"displayName" , peer->data.displayName},
+                {"device"      , peer->data.device}
+            };
+            MS_lOGD("[Room] on peer join otherPeer peerId=%s notifyAsync=%s", otherPeer->getPeerId().c_str(), jsonmsg.dump(4).c_str());
+        }
+
+        json jpullTransportOptions;
+        jpullTransportOptions["appData"] = {};
+
+        PullTransportOptions pullTransportOptions = jpullTransportOptions;
+
+        auto transport = this->m_mediasoupRouter->createPullTransport(pullTransportOptions);
+
+        transport->on("trace", [peer, transport](TransportTraceEventData& trace) //(trace) =>
+            {
+                MS_lOGD(
+                    "transport trace event [transportId:%s, trace.type:%s, trace]",
+                    transport->id().c_str(), trace.type.c_str());
+            });
+
+        pullPeer->data.transports[transport->id()] = transport;
+        accept(json({pullPeer->getPeerId(), transport->id() }));
+
+        pullPeerId = pullPeer->getPeerId();
+        pullTransportId = transport->id();
+    }
+    else if (method == "connectPullTransport") {
+        auto data = request["data"];
+        MS_lOGD("connectPushTransport request.data=%s", data.dump().c_str());
+        string type = data["protoType"];
+        data["ip"] = m_pConfig->rtmp["ip"].get<string>();
+        data["port"] = m_pConfig->rtmp["port"].get<int>();
+        data["suffix"] = m_pConfig->rtmp["suffix"].get<string>();
+
+        string peerId = data["peerId"];
+        auto pullPeer = this->getPeerById(peerId);
+
+        if (pullPeer == nullptr) {
+            reject(403, "invalid peer id");
+            return;
+        }
+
+        auto transportId = data["transportId"].get<string>();
+
+        auto transport = m_pushPeer->data.transports[transportId];
+        if (!transport)
+            MS_THROW_lOG("transport with id transportId=%s not found", transportId.c_str());
+
+        transport->connect(data);
 
         accept(json({}));
     }

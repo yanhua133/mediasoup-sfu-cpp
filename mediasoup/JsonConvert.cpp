@@ -10,6 +10,8 @@
 #include "PlainTransport.hpp"
 #include "PipeTransport.hpp"
 #include "PushTransport.hpp"
+#include "PullTransport.hpp"
+
 
 using json = nlohmann::json;
 namespace mediasoup
@@ -760,7 +762,19 @@ void from_json(const json& j, PipeTransportOptions& st){
             {"appData", st.appData}
         };
     }
+
     void from_json(const json& j, PushTransportOptions& st) {
+        if (j.contains("appData"))
+            j.at("appData").get_to(st.appData);
+    }
+
+    void to_json(json& j, const PullTransportOptions& st) {
+        j = json{
+            {"appData", st.appData}
+        };
+    }
+
+    void from_json(const json& j, PullTransportOptions& st) {
         if (j.contains("appData"))
             j.at("appData").get_to(st.appData);
     }
