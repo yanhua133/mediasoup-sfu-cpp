@@ -1,5 +1,6 @@
 #define MS_CLASS "RTC::PullTransport"
 // #define MS_LOG_DEV_LEVEL 3
+#define FFMPEG_TIMEOUT_SEC 5
 
 #include "RTC/PullTransport.hpp"
 #include "Logger.hpp"
@@ -538,20 +539,100 @@ namespace RTC
 			return AV_CODEC_ID_NONE;
 	}
 
+	static int interrupt_callback(void* p) {
+		time_t *t = (time_t*)p;
+		if (*t > 0) {
+			if (time(NULL) - *t > FFMPEG_TIMEOUT_SEC) {
+				return 1;
+			}
+		}
+
+		return 0;
+	}
+
+	void PullTransport::ThreadError(int id) {
+
+	}
+
 	void PullTransport::Connect() {
 		if (connected)
 			return;
 
-		
+		if (m_pThread)
+			MS_THROW_ERROR("pull thread error");
 
-		InitIncomingParameters();
+		time_t input_time = time(NULL);
+		m_formatCtx = avformat_alloc_context();
+		m_formatCtx = avformat_alloc_context();
+		m_formatCtx->interrupt_callback.callback = interrupt_callback;
+		m_formatCtx->interrupt_callback.opaque = &input_time;
+
+		int ret = avformat_open_input(&m_formatCtx, this->m_url.c_str(), NULL, NULL);
+		if (ret < 0)
+		{
+			ThreadError(1);
+			return;
+		}
+
+		ret = avformat_find_stream_info(m_formatCtx, NULL);
+		if (ret < 0)
+		{
+			ThreadError(2);
+			return;
+		}
+
+		AVPacket* pkt = av_packet_alloc();
+		while (1) {
+			ret = av_read_frame(m_formatCtx, pkt);
+			if (ret < 0) {
+				ThreadError(3);
+				break;
+			}
+		}
+
+		auto pullThread = [this]() {
+			time_t input_time = time(NULL);
+			m_formatCtx = avformat_alloc_context();
+			m_formatCtx = avformat_alloc_context();
+			m_formatCtx->interrupt_callback.callback = interrupt_callback;
+			m_formatCtx->interrupt_callback.opaque = &input_time;
+
+			int ret = avformat_open_input(&m_formatCtx, this->m_url.c_str(), NULL, NULL);
+			if (ret < 0)
+			{
+				ThreadError(1);
+				return;
+			}
+
+			ret = avformat_find_stream_info(m_formatCtx, NULL);
+			if (ret < 0)
+			{
+				ThreadError(2);
+				return;
+			}
+
+			AVPacket* pkt = av_packet_alloc();
+			while (1) {
+				ret = av_read_frame(m_formatCtx, pkt);
+				if (ret < 0) {
+					ThreadError(3);
+					break;
+				}
+			}
+			
+		};
+
+		m_pThread = new std::thread(pullThread);
+
+
+		/*InitIncomingParameters();
 
 		InitOutgoingParameters();
 
 		m_audioFifo = av_audio_fifo_alloc(m_audioEncodeCtx->sample_fmt, m_audioEncodeCtx->channels, 1);
 		if (!m_audioFifo) {
 			MS_THROW_ERROR("could not allocate fifo");
-		}
+		}*/
 
 		/*int ret = avformat_write_header(m_formatCtx, nullptr);
 		if (ret < 0) {

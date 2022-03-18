@@ -279,7 +279,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         std::function<void(json data)> acc = [](json data) {};
         std::function<void(int errorCode, std::string errorReason)> rej = [](int errorCode, std::string errorReason) {};
 
-        json req_for_create = {
+   /*     json req_for_create = {
              {"method" , "createPushTransport"},
              {"data"   , {{"peerId", peer->getPeerId()}}}
         };
@@ -292,7 +292,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
                 {"protoType", "rtmp"},
             }}
         };
-        handleRequest(peer, req_for_connect, acc, rej);
+        handleRequest(peer, req_for_connect, acc, rej);*/
 
         /*json req_for_create1 = {
              {"method" , "createPlainTransport"},
@@ -327,7 +327,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         handleRequest(peer, req_for_connect2, acc, rej);*/
 
         json req_for_create3 = {
-             {"method" , "createPllTransport"},
+             {"method" , "createPullTransport"},
              {"data"   , {{"displayName", "puller"}}}
         };
         handleRequest(peer, req_for_create3, acc, rej);
@@ -573,7 +573,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
     }
     else if (method == "createPullTransport") {
         auto data = request["data"];
-        string displayName = data["displayName"];
+        string displayName = data["displayName"].get<string>();
         MS_lOGD("createPullTransport request.data=%s", data.dump().c_str());
 
         auto pullPeer = std::make_shared<Peer>(nullptr, shared_from_this(), uuidv4(), "ffmpeg puller");
@@ -586,7 +586,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         pullPeer->data.rtpCapabilities = m_mediasoupRouter->getRouterRtpCapabilities();
         addPeer(pullPeer);
 
-        for (auto& otherPeer : this->getJoinedPeers(peer))
+        for (auto& otherPeer : this->getJoinedPeers(pullPeer))
         {
             if (!otherPeer)
             {
@@ -595,14 +595,14 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
             otherPeer->notifyAsync(
                 "newPeer",
                 {
-                    {"id"          , peer->getPeerId()},
-                    {"displayName" , peer->data.displayName},
-                    {"device"      , peer->data.device}
+                    {"id"          , pullPeer->getPeerId()},
+                    {"displayName" , pullPeer->data.displayName},
+                    {"device"      , pullPeer->data.device}
                 });
             json jsonmsg = {
-                {"id"          , peer->getPeerId()},
-                {"displayName" , peer->data.displayName},
-                {"device"      , peer->data.device}
+                {"id"          , pullPeer->getPeerId()},
+                {"displayName" , pullPeer->data.displayName},
+                {"device"      , pullPeer->data.device}
             };
             MS_lOGD("[Room] on peer join otherPeer peerId=%s notifyAsync=%s", otherPeer->getPeerId().c_str(), jsonmsg.dump(4).c_str());
         }
@@ -645,7 +645,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
 
         auto transportId = data["transportId"].get<string>();
 
-        auto transport = m_pushPeer->data.transports[transportId];
+        auto transport = pullPeer->data.transports[transportId];
         if (!transport)
             MS_THROW_lOG("transport with id transportId=%s not found", transportId.c_str());
 

@@ -24,6 +24,7 @@ namespace Channel
 		{ "router.createPipeTransport",                  Request::MethodId::ROUTER_CREATE_PIPE_TRANSPORT                     },
 		{ "router.createDirectTransport",                Request::MethodId::ROUTER_CREATE_DIRECT_TRANSPORT                   },
 		{ "router.createPushTransport",                  Request::MethodId::ROUTER_CREATE_PUSH_TRANSPORT                     },
+		{ "router.createPullTransport",                  Request::MethodId::ROUTER_CREATE_PULL_TRANSPORT                     },
 		{ "router.createAudioLevelObserver",             Request::MethodId::ROUTER_CREATE_AUDIO_LEVEL_OBSERVER               },
 		{ "transport.close",                             Request::MethodId::TRANSPORT_CLOSE                                  },
 		{ "transport.dump",                              Request::MethodId::TRANSPORT_DUMP                                   },

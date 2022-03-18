@@ -4,6 +4,7 @@
 #include "RTC/Transport.hpp"
 #include "RTC/TransportTuple.hpp"
 #include <map>
+#include <thread>
 
 extern "C" {
 #include "libavformat/avformat.h"
@@ -61,6 +62,9 @@ namespace RTC
 
 		void Connect();
 		void Disconnect();
+
+		void ThreadError(int id);
+
 		void InitIncomingParameters();
 		void InitVideoStream();
 		void InitAudioStream();
@@ -81,6 +85,7 @@ namespace RTC
 	private:
 		// Allocated by this.
 		std::string m_url, m_formatName;
+		std::thread* m_pThread{ nullptr };
 		// Others.
 		bool comedia{ false };
 		struct sockaddr_storage remoteAddrStorage;
