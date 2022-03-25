@@ -342,6 +342,60 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
             }}
         };
         handleRequest(peer, req_for_connect4, acc, rej);
+
+        json codecs = json::array();
+        json req_for_producer = {
+            {"method" , "produce"},
+            {"data"   , {
+                {"peerId", pullPeerId},
+                {"transportId", pullTransportId},
+                {"kind", "video"},
+                {"rtpParameters", {
+                    {"codecs", {
+                        {
+                            {"mimeType","video/h264"},
+                            {"payloadType",101},
+                            {"clockRate", 90000},
+                            {"parameters", {
+                                {"packetization-mode",1},
+                                {"profile-level-id","42e01f"},
+                                {"level-asymmetry-allowed",1},
+                                {"x-google-start-bitrate",1000},
+                            }},
+                        },
+                    }},
+                    {"encodings", {
+                        {
+                            {"ssrc",2222},
+                        },
+                    }},
+                }},
+            }}
+        };
+        /*json req_for_producer = {
+            {"method" , "produce"},
+            {"data"   , {
+                {"peerId", pullPeerId},
+                {"transportId", pullTransportId},
+                {"kind", "audio"},
+                {"rtpParameters", {
+                    {"codecs", {
+                        {
+                            {"mimeType","audio/opus"},
+                            {"payloadType",100},
+                            {"clockRate", 48000},
+                            {"channels", 2},
+                        },
+                    }},
+                    {"encodings", {
+                        {
+                            {"ssrc",1111},
+                        },
+                    }},
+                }},
+            }}
+        };*/
+        handleRequest(peer, req_for_producer, acc, rej);
         //break;
     }else if(method ==  "createWebRtcTransport"){
         // NOTE: Don"t require that the Peer is joined here, so the client can
@@ -608,7 +662,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         }
 
         json jpullTransportOptions;
-        jpullTransportOptions["appData"] = {};
+        jpullTransportOptions["appData"] = {{"consuming", false}};
 
         PullTransportOptions pullTransportOptions = jpullTransportOptions;
 
@@ -731,6 +785,17 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
             return ;
         }
         auto data = request["data"];
+        auto peerId = data["peerId"];
+        if (!peerId.empty()) {
+            // redirect peer
+            auto newPeer = this->getPeerById(peerId);
+            if (newPeer)
+                peer = newPeer;
+            else {
+                MS_THROW_lOG("peer with id peerId=%s not found", peerId.dump().c_str());
+                return;
+            }
+        }
         auto & transportId = data["transportId"];
         auto & kind = data["kind"];
         auto & rtpParameters = data["rtpParameters"];

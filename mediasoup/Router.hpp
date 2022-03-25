@@ -854,7 +854,6 @@ public:
 		json internal = this->_internal;
 		internal["transportId"] = uuidv4();
 		const json reqData;
-		json appData = options.appData;
 
 		json data =
 			this->_channel->request("router.createPushTransport", internal, reqData);
@@ -863,7 +862,7 @@ public:
 		params.data = data;
 		params.channel = this->_channel;
 		params.payloadChannel = this->_payloadChannel;
-		params.appData = appData;
+		params.appData = options.appData;
 		params.getRouterRtpCapabilities = this->getRouterRtpCapabilitiesFunc;
 		params.getProducerById = this->getProducerByIdFunc;
 		params.getDataProducerById = this->getDataProducerByIdFunc;
@@ -904,8 +903,9 @@ public:
 		MS_lOGD("createPullTransport()");
 		json internal = this->_internal;
 		internal["transportId"] = uuidv4();
-		const json reqData;
-		json appData = options.appData;
+		const json reqData = {
+			{"comedia",true }
+		};
 
 		json data =
 			this->_channel->request("router.createPullTransport", internal, reqData);
@@ -914,7 +914,7 @@ public:
 		params.data = data;
 		params.channel = this->_channel;
 		params.payloadChannel = this->_payloadChannel;
-		params.appData = appData;
+		params.appData = options.appData;
 		params.getRouterRtpCapabilities = this->getRouterRtpCapabilitiesFunc;
 		params.getProducerById = this->getProducerByIdFunc;
 		params.getDataProducerById = this->getDataProducerByIdFunc;

@@ -65,6 +65,7 @@ namespace RTC
 				{
 					// Single NAL unit packet.
 					// IDR (instantaneous decoding picture).
+					case 5:
 					case 7:
 					{
 						payloadDescriptor->isKeyFrame = true;
@@ -86,7 +87,7 @@ namespace RTC
 							auto naluSize  = Utils::Byte::Get2Bytes(data, offset);
 							uint8_t subnal = *(data + offset + sizeof(naluSize)) & 0x1F;
 
-							if (subnal == 7)
+							if (subnal == 7 || subnal == 5)
 							{
 								payloadDescriptor->isKeyFrame = true;
 

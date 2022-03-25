@@ -159,10 +159,10 @@ void to_json(json& j, const RtpCodecParameters& st) {
         {
             j.erase("rtcpFeedback");
         }
-        if(st.parameters.size() ==0)
-        {
-            j.erase("parameters");
-        }
+        //if(st.parameters.size() ==0)
+        //{
+        //    j.erase("parameters");
+        //}
 
      
 }
@@ -311,12 +311,16 @@ void from_json(const json& j, RtcpParameters& st) {
 
 void to_json(json& j, const RtpParameters& st) {
        j = json{
-           {"mid", st.mid},
+           //{"mid", st.mid},
            {"codecs", st.codecs},
            {"headerExtensions", st.headerExtensions},
            {"encodings", st.encodings},
            {"rtcp", st.rtcp}
        };
+       if (st.mid != "")
+       {
+           j["mid"] = st.mid;
+       }
 }
 
 void from_json(const json& j, RtpParameters& st) {

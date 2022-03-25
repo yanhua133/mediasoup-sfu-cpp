@@ -26,7 +26,7 @@ extern "C" {
 
 namespace RTC
 {
-	class PullTransport : public RTC::Transport
+	class PullTransport : public RTC::Transport, public RTC::UdpSocket::Listener
 	{
 	public:
 		PullTransport(const std::string& id, RTC::Transport::Listener* listener, json& data);
@@ -81,13 +81,26 @@ namespace RTC
 		void ProcessPayloadFuA(RTC::RtpPacket* packet);
 		int VideoSend();
 		int TryDecodeFrame();
-		
+
+		/* Pure virtual methods inherited from RTC::UdpSocket::Listener. */
+	public:
+		void OnUdpSocketPacketReceived(
+			RTC::UdpSocket* socket, const uint8_t* data, size_t len, const struct sockaddr* remoteAddr) override;
+
 	private:
-		// Allocated by this.
+		// Allocated by this
+		RTC::UdpSocket* udpSocket{ nullptr };
+		RTC::UdpSocket* rtcpUdpSocket{ nullptr };
+
+		RTC::TransportTuple* tuple{ nullptr };
+		RTC::TransportTuple* rtcpTuple{ nullptr };
+
+		bool rtcpMux{ true };
+		bool comedia{ false };
+
 		std::string m_url, m_formatName;
 		std::thread* m_pThread{ nullptr };
 		// Others.
-		bool comedia{ false };
 		struct sockaddr_storage remoteAddrStorage;
 		bool connectCalled{ false }; // Whether connect() was succesfully called.
 		bool connected{ false };

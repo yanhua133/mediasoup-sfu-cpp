@@ -1,6 +1,7 @@
 #define MS_CLASS "RTC::PullTransport"
 // #define MS_LOG_DEV_LEVEL 3
 #define FFMPEG_TIMEOUT_SEC 5
+#define LISTEN_IP "0.0.0.0"
 
 #include "RTC/PullTransport.hpp"
 #include "Logger.hpp"
@@ -82,6 +83,16 @@ namespace RTC
 	{
 		MS_TRACE();
 
+		auto jsonRtcpMuxIt = data.find("rtcpMux");
+
+		if (jsonRtcpMuxIt != data.end())
+		{
+			if (!jsonRtcpMuxIt->is_boolean())
+				MS_THROW_TYPE_ERROR("wrong rtcpMux (not a boolean)");
+
+			this->rtcpMux = jsonRtcpMuxIt->get<bool>();
+		}
+
 		auto jsonComediaIt = data.find("comedia");
 
 		if (jsonComediaIt != data.end())
@@ -91,11 +102,47 @@ namespace RTC
 
 			this->comedia = jsonComediaIt->get<bool>();
 		}
+
+		std::string ip = LISTEN_IP;
+
+		try
+		{
+			// This may throw.
+			this->udpSocket = new RTC::UdpSocket(this, ip);
+
+			if (!this->rtcpMux)
+			{
+				// This may throw.
+				this->rtcpUdpSocket = new RTC::UdpSocket(this, ip);
+			}
+		}
+		catch (const MediaSoupError& error)
+		{
+			delete this->udpSocket;
+			this->udpSocket = nullptr;
+
+			delete this->rtcpUdpSocket;
+			this->rtcpUdpSocket = nullptr;
+
+			throw;
+		}
 	}
 
 	PullTransport::~PullTransport()
 	{
 		MS_TRACE();
+
+		delete this->udpSocket;
+		this->udpSocket = nullptr;
+
+		delete this->rtcpUdpSocket;
+		this->rtcpUdpSocket = nullptr;
+
+		delete this->tuple;
+		this->tuple = nullptr;
+
+		delete this->rtcpTuple;
+		this->rtcpTuple = nullptr;
 
 		this->connected = false;
 	}
@@ -194,7 +241,7 @@ namespace RTC
 
 				try
 				{
-					Connect();
+					//Connect();
 				}
 				catch (const MediaSoupError& error)
 				{
@@ -245,29 +292,6 @@ namespace RTC
 	  RTC::Consumer* /*consumer*/, RTC::RtpPacket* packet, RTC::Transport::onSendCallback* cb)
 	{
 		MS_TRACE();
-
-		if (!IsConnected())
-		{
-			if (cb)
-			{
-				(*cb)(false);
-
-				delete cb;
-			}
-
-			return;
-		}
-
-		if (packet->GetPayloadType() == 100)
-			AudioProcessPacket(packet);
-		else
-			VideoProcessPacket(packet);
-
-		//const uint8_t* data = packet->GetData();
-		//size_t len = packet->GetSize();
-
-		// Increase send transmission.
-		//RTC::Transport::DataSent(len);
 	}
 
 	void PullTransport::SendRtcpPacket(RTC::RTCP::Packet* packet)
@@ -318,11 +342,6 @@ namespace RTC
 		{
 			OnRtpDataReceived(tuple, data, len);
 		}
-		// Check if it's SCTP.
-		else if (RTC::SctpAssociation::IsSctp(data, len))
-		{
-			OnSctpDataReceived(tuple, data, len);
-		}
 		else
 		{
 			MS_WARN_DEV("ignoring received packet of unknown type");
@@ -333,6 +352,76 @@ namespace RTC
 	  RTC::TransportTuple* tuple, const uint8_t* data, size_t len)
 	{
 		MS_TRACE();
+
+		RTC::RtpPacket* packet = RTC::RtpPacket::Parse(data, len);
+
+		if (!packet)
+		{
+			MS_WARN_TAG(rtp, "received data is not a valid RTP packet");
+
+			return;
+		}
+
+		// If we don't have a RTP tuple yet, check whether comedia mode is set.
+		if (!this->tuple)
+		{
+			if (!this->comedia)
+			{
+				MS_DEBUG_TAG(rtp, "ignoring RTP packet while not connected");
+
+				// Remove this SSRC.
+				RecvStreamClosed(packet->GetSsrc());
+
+				delete packet;
+
+				return;
+			}
+
+			MS_DEBUG_TAG(rtp, "setting RTP tuple (comedia mode enabled)");
+
+			auto wasConnected = IsConnected();
+
+			this->tuple = new RTC::TransportTuple(tuple);
+
+
+			// If not yet connected do it now.
+			if (!wasConnected)
+			{
+				// Notify the Node PlainTransport.
+				json data = json::object();
+
+				this->tuple->FillJson(data["tuple"]);
+
+				Channel::Notifier::Emit(this->id, "tuple", data);
+
+				RTC::Transport::Connected();
+			}
+		}
+		// Otherwise, if RTP tuple is set, verify that it matches the origin
+		// of the packet.
+		else if (!this->tuple->Compare(tuple))
+		{
+			MS_DEBUG_TAG(rtp, "ignoring RTP packet from unknown IP:port");
+
+			// Remove this SSRC.
+			RecvStreamClosed(packet->GetSsrc());
+
+			delete packet;
+
+			return;
+		}
+		
+		/*uint8_t * p = packet->GetPayload();
+		if (p[0] == 0x18) {
+			size_t plen = (p[1] << 8) + p[2] + 5;
+			packet->ShiftPayload(0, plen, false);
+			size_t newlen = packet->GetSize();
+			delete packet;
+			packet = RTC::RtpPacket::Parse(data, newlen);
+		}*/
+
+		// Pass the packet to the parent transport.
+		RTC::Transport::ReceiveRtpPacket(packet);
 	}
 
 	inline void PullTransport::OnRtcpDataReceived(
@@ -345,6 +434,16 @@ namespace RTC
 	  RTC::TransportTuple* tuple, const uint8_t* data, size_t len)
 	{
 		MS_TRACE();
+	}
+
+	inline void PullTransport::OnUdpSocketPacketReceived(
+		RTC::UdpSocket* socket, const uint8_t* data, size_t len, const struct sockaddr* remoteAddr)
+	{
+		MS_TRACE();
+
+		RTC::TransportTuple tuple(socket, remoteAddr);
+
+		OnPacketReceived(&tuple, data, len);
 	}
 
 	void PullTransport::Disconnect() {
