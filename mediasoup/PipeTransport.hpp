@@ -331,15 +331,15 @@ public:
 		
 		this->_consumers[consumer->id()] = consumer;
 	//consumer.on('@close', () => this->_consumers.delete(consumer.id));
-        consumer->on("@close",[self = Transport::downcasted_shared_from_this<PipeTransport>(), consumer]( )
+        consumer->on("@close",[self = Transport::downcasted_shared_from_this<PipeTransport>(), id = consumer->id()]( )
         {
-            self->_consumers.erase(consumer->id());
+            self->_consumers.erase(id);
 
         });
 		//consumer.on('@producerclose', () => this->_consumers.delete(consumer.id));
-        consumer->on("@producerclose",[self = Transport::downcasted_shared_from_this<PipeTransport>(), consumer](  )
+        consumer->on("@producerclose",[self = Transport::downcasted_shared_from_this<PipeTransport>(), id = consumer->id()](  )
         {
-            self->_consumers.erase(consumer->id());
+            self->_consumers.erase(id);
         });
 		// Emit observer event.
 		this->_observer->safeEmit("newconsumer", consumer);
