@@ -16,12 +16,15 @@ extern "C" {
 #define RTMP_DEFAULT_SUFFIX "/live"
 #define RTMP_GENERATE_URL \ 
 	m_url = RTMP_PROTO_NAME; \
-	m_url += "://" + ip + suffix + "/1000";
+	m_url += "://" + ip + suffix + "/10000";
 	//m_url += "://" + ip + ":" + std::to_string(port) + suffix + "/" + id;
 #define RTMP_AUDIO_CODEC "aac"
 #define RTMP_AUDIO_FRAME_FORMAT AV_SAMPLE_FMT_FLTP
 #define RTMP_AUDIO_FRAME_FORMAT_NAME "fltp"
 #define RTMP_AUDIO_CHANNEL_LAYOUT 4
+#define VIDEO_PAYLOAD_TYPE 101
+#define AUDIO_PAYLOAD_TYPE 100
+
 
 namespace RTC
 {
@@ -106,7 +109,7 @@ namespace RTC
 		size_t m_videoCurPacketLen{ 0 }, m_videoSpsPacketLen{ 0 };
 		uint32_t m_videoRefTimestamp{ 0 }, m_videoCurPacketTs{ 0 };
 		uint16_t m_videoCurSeqNumber{ 0 };
-		bool m_videoUpdateSps{ false }, m_videoSendData{ false };
+		bool m_videoUpdateSps{ false }, m_videoSendData{ false }, m_videoSync{ false };
 	};
 } // namespace RTC
 

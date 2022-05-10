@@ -250,7 +250,7 @@ namespace RTC
 			return;
 		}
 
-		if (packet->GetPayloadType() == 100)
+		if (packet->GetPayloadType() == AUDIO_PAYLOAD_TYPE)
 			AudioProcessPacket(packet);
 		else
 			VideoProcessPacket(packet);
@@ -670,11 +670,12 @@ namespace RTC
 			av_packet_rescale_ts(m_packet, m_audioEncodeCtx->time_base, m_formatCtx->streams[m_audioIdx]->time_base);
 			m_packet->stream_index = m_audioIdx;
 
-			ret = av_write_frame(m_formatCtx, m_packet);
-			if (ret < 0)
-				return -1;
-
-			PacketFree();
+			if (m_videoSync) {
+				ret = av_write_frame(m_formatCtx, m_packet);
+				PacketFree();
+				if (ret < 0)
+					return -1;
+			}
 		}
 
 		return 0;
@@ -692,6 +693,7 @@ namespace RTC
 
 		const uint8_t* data = packet->GetPayload();
 		int rtpType = data[0] & 0x1F;
+
 		switch (rtpType)
 		{
 		case 24: // STAP-A
@@ -706,7 +708,7 @@ namespace RTC
 	}
 
 	void PushTransport::ProcessPayloadStapA(RTC::RtpPacket* packet) {
-		if (m_videoSpsPacket) return;//for test;
+		//if (m_videoSpsPacket) return;//for test;
 		uint8_t *src = packet->GetPayload() + 1;
 		size_t srcLen = packet->GetPayloadLength() - 1;
 		uint8_t *tgt = nullptr;
@@ -744,6 +746,11 @@ namespace RTC
 			tgt[tLen + 2] = 0x00;
 			tgt[tLen + 3] = 0x01;
 			memcpy(tgt + tLen + 4, src, sLen);
+
+			/*if (src[0] == 0x68) {
+				error = 0;
+				break;
+			}*/
 
 			src += sLen;
 			srcLen -= sLen;
@@ -813,7 +820,7 @@ namespace RTC
 			}
 		}		
 	}
-
+	
 	int PushTransport::VideoSend() {
 		int ret;
 		m_packet = av_packet_alloc();
@@ -850,10 +857,14 @@ namespace RTC
 			/*m_formatCtx->streams[m_videoIdx]->r_frame_rate.num = 30;
 			m_formatCtx->streams[m_videoIdx]->r_frame_rate.den = 1;*/
 
-			int ret = avformat_write_header(m_formatCtx, nullptr);
-			if (ret < 0) 
-				return -1;
+			if (!m_videoSync) {
 
+				int ret = avformat_write_header(m_formatCtx, nullptr);
+				if (ret < 0) 
+					return -1;
+			}
+
+			m_videoSync = true;
 			m_videoUpdateSps = false;
 		}
 		
@@ -862,7 +873,7 @@ namespace RTC
 		tb.num = 1;
 		av_packet_rescale_ts(m_packet, tb, m_formatCtx->streams[m_videoIdx]->time_base);
 		m_packet->stream_index = m_videoIdx;
-		printf("=====================================>%d\n", m_packet->pts);
+		//printf("=====================================>%d\n", m_packet->pts);
 
 		ret = av_write_frame(m_formatCtx, m_packet);
 		if (m_videoCurPacket) {
