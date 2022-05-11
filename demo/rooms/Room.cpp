@@ -279,20 +279,6 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         std::function<void(json data)> acc = [](json data) {};
         std::function<void(int errorCode, std::string errorReason)> rej = [](int errorCode, std::string errorReason) {};
 
-   /*     json req_for_create = {
-             {"method" , "createPushTransport"},
-             {"data"   , {{"peerId", peer->getPeerId()}}}
-        };
-        handleRequest(peer, req_for_create, acc, rej);
-
-        json req_for_connect = {
-            {"method" , "connectPushTransport"},
-            {"data"   , {
-                {"peerId", peer->getPeerId()},
-                {"protoType", "rtmp"},
-            }}
-        };
-        handleRequest(peer, req_for_connect, acc, rej);*/
 
         /*json req_for_create1 = {
              {"method" , "createPlainTransport"},
@@ -331,6 +317,22 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
              {"data"   , {{"displayName", "puller"}}}
         };
         handleRequest(peer, req_for_create3, acc, rej);
+
+
+        json req_for_create = {
+             {"method" , "createPushTransport"},
+             {"data"   , {{"peerId", pullPeerId}}}
+        };
+        handleRequest(peer, req_for_create, acc, rej);
+
+        json req_for_connect = {
+            {"method" , "connectPushTransport"},
+            {"data"   , {
+                {"peerId", pullPeerId},
+                {"protoType", "rtmp"},
+            }}
+        };
+        handleRequest(peer, req_for_connect, acc, rej);
 
         json req_for_connect4 = {
             {"method" , "connectPullTransport"},
@@ -524,6 +526,9 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         
         //break;
     }else if(method ==  "connectWebRtcTransport"){
+
+        reject(403, "invalid peer id");
+        return;
         auto data = request["data"];
         auto transportId = data["transportId"];
         auto dtlsParameters = data["dtlsParameters"];
@@ -552,8 +557,7 @@ void Room::handleRequest(std::shared_ptr<Peer> &peer, json &request, std::functi
         
         auto iceParameters =  transport->restartIce();
         
-        accept(iceParameters);
-        
+        accept(iceParameters);     
 
     }
     else if (method == "createPushTransport") {

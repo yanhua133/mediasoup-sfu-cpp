@@ -16,62 +16,62 @@ extern "C" {
 #include "libavutil/bprint.h"
 #include "libavutil/opt.h"
 }
-
-static int ff_alloc_extradata(AVCodecParameters* par, int size)
-{
-	av_freep(&par->extradata);
-	par->extradata_size = 0;
-
-	if (size < 0 || size >= INT32_MAX - AV_INPUT_BUFFER_PADDING_SIZE)
-		return AVERROR(EINVAL);
-
-	par->extradata = (uint8_t *)av_malloc(size + AV_INPUT_BUFFER_PADDING_SIZE);
-	if (!par->extradata)
-		return AVERROR(ENOMEM);
-
-	memset(par->extradata + size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
-	par->extradata_size = size;
-
-	return 0;
-}
-
-static int opus_write_extradata(AVCodecParameters* codecpar)
-{
-	uint8_t* bs;
-	int ret;
-
-	/* This function writes an extradata with a channel mapping family of 0.
-	 * This mapping family only supports mono and stereo layouts. And RFC7587
-	 * specifies that the number of channels in the SDP must be 2.
-	 */
-	if (codecpar->channels > 2) {
-		return AVERROR_INVALIDDATA;
-	}
-
-	ret = ff_alloc_extradata(codecpar, 19);
-	if (ret < 0)
-		return ret;
-
-	std::string head = "OpusHead";
-	bs = (uint8_t*)codecpar->extradata;
-
-	/* Opus magic */
-	bytestream_put_buffer(&bs, (uint8_t *)head.c_str(), 8);
-	/* Version */
-	bytestream_put_byte(&bs, 0x1);
-	/* Channel count */
-	bytestream_put_byte(&bs, codecpar->channels);
-	/* Pre skip */
-	bytestream_put_le16(&bs, 0);
-	/* Input sample rate */
-	bytestream_put_le32(&bs, 48000);
-	/* Output gain */
-	bytestream_put_le16(&bs, 0x0);
-	/* Mapping family */
-	bytestream_put_byte(&bs, 0x0);
-
-	return 0;
-}
+//
+//static int ff_alloc_extradata(AVCodecParameters* par, int size)
+//{
+//	av_freep(&par->extradata);
+//	par->extradata_size = 0;
+//
+//	if (size < 0 || size >= INT32_MAX - AV_INPUT_BUFFER_PADDING_SIZE)
+//		return AVERROR(EINVAL);
+//
+//	par->extradata = (uint8_t *)av_malloc(size + AV_INPUT_BUFFER_PADDING_SIZE);
+//	if (!par->extradata)
+//		return AVERROR(ENOMEM);
+//
+//	memset(par->extradata + size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
+//	par->extradata_size = size;
+//
+//	return 0;
+//}
+//
+//static int opus_write_extradata(AVCodecParameters* codecpar)
+//{
+//	uint8_t* bs;
+//	int ret;
+//
+//	/* This function writes an extradata with a channel mapping family of 0.
+//	 * This mapping family only supports mono and stereo layouts. And RFC7587
+//	 * specifies that the number of channels in the SDP must be 2.
+//	 */
+//	if (codecpar->channels > 2) {
+//		return AVERROR_INVALIDDATA;
+//	}
+//
+//	ret = ff_alloc_extradata(codecpar, 19);
+//	if (ret < 0)
+//		return ret;
+//
+//	std::string head = "OpusHead";
+//	bs = (uint8_t*)codecpar->extradata;
+//
+//	/* Opus magic */
+//	bytestream_put_buffer(&bs, (uint8_t *)head.c_str(), 8);
+//	/* Version */
+//	bytestream_put_byte(&bs, 0x1);
+//	/* Channel count */
+//	bytestream_put_byte(&bs, codecpar->channels);
+//	/* Pre skip */
+//	bytestream_put_le16(&bs, 0);
+//	/* Input sample rate */
+//	bytestream_put_le32(&bs, 48000);
+//	/* Output gain */
+//	bytestream_put_le16(&bs, 0x0);
+//	/* Mapping family */
+//	bytestream_put_byte(&bs, 0x0);
+//
+//	return 0;
+//}
 
 namespace RTC
 {
@@ -168,7 +168,7 @@ namespace RTC
 		auto& jsonObject = jsonArray[0];
 
 		// Add type.
-		jsonObject["type"] = "push-rtp-transport";
+		jsonObject["type"] = "pull-rtp-transport";
 
 		// Add comedia.
 		jsonObject["comedia"] = this->comedia;
@@ -182,6 +182,7 @@ namespace RTC
 		{
 			case Channel::Request::MethodId::TRANSPORT_CONNECT:
 			{
+				MS_THROW_ERROR("connect() already called");
 				// Ensure this method is not called twice.
 				if (this->connectCalled)
 					MS_THROW_ERROR("connect() already called");
@@ -231,9 +232,7 @@ namespace RTC
 
 					auto stream = jsonStreamIt->get<std::string>();
 
-					RTMP_GENERATE_URL
-
-					m_formatName = RTMP_PROTO_FORMAT_NAME;
+					RTMP_GENERATE_URL(m_inputUrl, ip.c_str(), port, suffix.c_str(), stream.c_str());
 				} 
 				else {
 					MS_THROW_ERROR("invalid protoType");
@@ -257,7 +256,7 @@ namespace RTC
 
 		/*		if (this->tuple)
 					this->tuple->FillJson(data["tuple"]);*/
-
+				data["123"] = 5;
 				request->Accept(data);
 
 				// Assume we are connected (there is no much more we can do to know it)
@@ -449,12 +448,16 @@ namespace RTC
 	void PullTransport::Disconnect() {
 		connected = false;
 
-		avio_closep(&m_formatCtx->pb);
-		avformat_free_context(m_formatCtx);
-		m_formatCtx = nullptr;
+		avio_closep(&m_inputCtx->pb);
+		avformat_free_context(m_inputCtx);
+		m_inputCtx = nullptr;
 
-		m_audioProcessPacket = false;
-		m_audioRefTimestamp = 0;
+		avio_closep(&m_outputCtx->pb);
+		avformat_free_context(m_outputCtx);
+		m_outputCtx = nullptr;
+
+	/*	m_audioProcessPacket = false;
+		m_audioRefTimestamp = 0;*/
 	}
 
 	void PullTransport::InitIncomingParameters() {
@@ -501,55 +504,55 @@ namespace RTC
 	}
 
 	void PullTransport::InitAudioStream() {
-		auto codec = avcodec_find_decoder_by_name(m_audioDecoderName.c_str());
-		if (!codec) {
-			MS_THROW_ERROR("error finding the audio decoder");
-		}
+		//auto codec = avcodec_find_decoder_by_name(m_audioDecoderName.c_str());
+		//if (!codec) {
+		//	MS_THROW_ERROR("error finding the audio decoder");
+		//}
 
-		if (m_audioDecodeCtx)
-			avcodec_free_context(&m_audioDecodeCtx);
+		//if (m_audioDecodeCtx)
+		//	avcodec_free_context(&m_audioDecodeCtx);
 
-		m_audioDecodeCtx = avcodec_alloc_context3(codec);
-		if (!m_audioDecodeCtx) {
-			MS_THROW_ERROR("could not allocate a decoding context");
-		}
+		//m_audioDecodeCtx = avcodec_alloc_context3(codec);
+		//if (!m_audioDecodeCtx) {
+		//	MS_THROW_ERROR("could not allocate a decoding context");
+		//}
 
-		AVCodecParameters* para = avcodec_parameters_alloc();
-		para->codec_type = AVMEDIA_TYPE_AUDIO;
-		para->codec_id = ChooseAudioCodecId(m_audioDecoderName);
-		para->channels = 1;
-		para->channel_layout = 4; // maybe need fix
-		para->sample_rate = m_audioSampleRate;
-		para->format = AV_SAMPLE_FMT_FLTP;
+		//AVCodecParameters* para = avcodec_parameters_alloc();
+		//para->codec_type = AVMEDIA_TYPE_AUDIO;
+		//para->codec_id = ChooseAudioCodecId(m_audioDecoderName);
+		//para->channels = 1;
+		//para->channel_layout = 4; // maybe need fix
+		//para->sample_rate = m_audioSampleRate;
+		//para->format = AV_SAMPLE_FMT_FLTP;
 
-		if (m_audioDecoderName == "opus")
-			opus_write_extradata(para);
+		//if (m_audioDecoderName == "opus")
+		//	opus_write_extradata(para);
 
-		int ret = avcodec_parameters_to_context(m_audioDecodeCtx, para);
-		if (ret < 0) {
-			avcodec_free_context(&m_audioDecodeCtx);
-			m_audioDecodeCtx = nullptr;
-			MS_THROW_ERROR("error for avcodec_parameters_to_context");
-		}
-		avcodec_parameters_free(&para);
+		//int ret = avcodec_parameters_to_context(m_audioDecodeCtx, para);
+		//if (ret < 0) {
+		//	avcodec_free_context(&m_audioDecodeCtx);
+		//	m_audioDecodeCtx = nullptr;
+		//	MS_THROW_ERROR("error for avcodec_parameters_to_context");
+		//}
+		//avcodec_parameters_free(&para);
 
-		ret = avcodec_open2(m_audioDecodeCtx, codec, NULL);
-		if (ret < 0) {
-			avcodec_free_context(&m_audioDecodeCtx);
-			m_audioDecodeCtx = nullptr;
-			MS_THROW_ERROR("could not open decoder");
-		}
+		//ret = avcodec_open2(m_audioDecodeCtx, codec, NULL);
+		//if (ret < 0) {
+		//	avcodec_free_context(&m_audioDecodeCtx);
+		//	m_audioDecodeCtx = nullptr;
+		//	MS_THROW_ERROR("could not open decoder");
+		//}
 	}
 
 	void PullTransport::InitOutgoingParameters() {
-		avformat_alloc_output_context2(&m_formatCtx, NULL, m_formatName.c_str(), m_url.c_str());
-		if (!m_formatCtx) {
+		avformat_alloc_output_context2(&m_outputCtx, NULL, RTP_PROTO_FORMAT_NAME, m_outputUrl);
+		if (!m_outputCtx) {
 			MS_THROW_ERROR("error allocating the avformat context");
 		}
 
-		AVStream *st = avformat_new_stream(m_formatCtx, NULL);
+		AVStream *st = avformat_new_stream(m_outputCtx, NULL);
 
-		m_videoIdx = m_formatCtx->nb_streams - 1;
+		m_videoIdx = m_outputCtx->nb_streams - 1;
 
 		st->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
 
@@ -561,64 +564,64 @@ namespace RTC
 		st->time_base.den = m_videoRateClock;
 		st->time_base.num = 1;
 
-		st = avformat_new_stream(m_formatCtx, NULL);
+		//st = avformat_new_stream(m_outputCtx, NULL);
 
-		m_audioIdx = m_formatCtx->nb_streams - 1;
+		//m_audioIdx = m_formatCtx->nb_streams - 1;
 
-		st->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;
+		//st->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;
 
-		auto acodec = avcodec_find_encoder_by_name(RTMP_AUDIO_CODEC);
-		if (!acodec) {
-			MS_THROW_TYPE_ERROR("missing audio encoder");
-		}
-		
-		m_audioEncodeCtx = avcodec_alloc_context3(acodec);
-		if (!m_audioEncodeCtx) {
-			MS_THROW_ERROR("error allocating the audio encoding context");
-		}
-		m_audioEncodeCtx->codec_type = st->codecpar->codec_type;
-		m_audioEncodeCtx->channels = m_audioDecodeCtx->channels;
-		m_audioEncodeCtx->channel_layout = m_audioDecodeCtx->channel_layout;
-		m_audioEncodeCtx->sample_rate = m_audioDecodeCtx->sample_rate;
-		m_audioEncodeCtx->sample_fmt = m_audioDecodeCtx->sample_fmt;
-		m_audioEncodeCtx->bit_rate = m_audioDecodeCtx->bit_rate;
-		// for official ffmpeg aac encoder
-		m_audioEncodeCtx->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
+		//auto acodec = avcodec_find_encoder_by_name(RTMP_AUDIO_CODEC);
+		//if (!acodec) {
+		//	MS_THROW_TYPE_ERROR("missing audio encoder");
+		//}
+		//
+		//m_audioEncodeCtx = avcodec_alloc_context3(acodec);
+		//if (!m_audioEncodeCtx) {
+		//	MS_THROW_ERROR("error allocating the audio encoding context");
+		//}
+		//m_audioEncodeCtx->codec_type = st->codecpar->codec_type;
+		//m_audioEncodeCtx->channels = m_audioDecodeCtx->channels;
+		//m_audioEncodeCtx->channel_layout = m_audioDecodeCtx->channel_layout;
+		//m_audioEncodeCtx->sample_rate = m_audioDecodeCtx->sample_rate;
+		//m_audioEncodeCtx->sample_fmt = m_audioDecodeCtx->sample_fmt;
+		//m_audioEncodeCtx->bit_rate = m_audioDecodeCtx->bit_rate;
+		//// for official ffmpeg aac encoder
+		//m_audioEncodeCtx->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
 
-		if (m_formatCtx->oformat->flags & AVFMT_GLOBALHEADER)
-			m_audioEncodeCtx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+		//if (m_formatCtx->oformat->flags & AVFMT_GLOBALHEADER)
+		//	m_audioEncodeCtx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
-		ret = avcodec_open2(m_audioEncodeCtx, acodec, NULL);
-		if (ret < 0) {
-			avcodec_free_context(&m_audioEncodeCtx);
-			m_audioEncodeCtx = nullptr;
-			MS_THROW_ERROR("could not open encoder");
-		}
+		//ret = avcodec_open2(m_audioEncodeCtx, acodec, NULL);
+		//if (ret < 0) {
+		//	avcodec_free_context(&m_audioEncodeCtx);
+		//	m_audioEncodeCtx = nullptr;
+		//	MS_THROW_ERROR("could not open encoder");
+		//}
 
-		m_audioMuteFrame = av_frame_alloc();
-		m_audioMuteFrame->sample_rate = m_audioEncodeCtx->sample_rate;
-		m_audioMuteFrame->format = m_audioEncodeCtx->sample_fmt;
-		m_audioMuteFrame->channel_layout = m_audioEncodeCtx->channel_layout;
-		m_audioMuteFrame->channels = m_audioEncodeCtx->channels;
-		m_audioMuteFrame->nb_samples = m_audioEncodeCtx->frame_size;
-		ret = av_frame_get_buffer(m_audioMuteFrame, 0);
-		if (ret < 0) {
-			avcodec_free_context(&m_audioEncodeCtx);
-			m_audioEncodeCtx = nullptr;
-			MS_THROW_ERROR("could not create mute frame");
-		}
-		av_samples_set_silence(m_audioMuteFrame->data, 0, m_audioMuteFrame->nb_samples, m_audioMuteFrame->channels, (AVSampleFormat)m_audioMuteFrame->format);
+		//m_audioMuteFrame = av_frame_alloc();
+		//m_audioMuteFrame->sample_rate = m_audioEncodeCtx->sample_rate;
+		//m_audioMuteFrame->format = m_audioEncodeCtx->sample_fmt;
+		//m_audioMuteFrame->channel_layout = m_audioEncodeCtx->channel_layout;
+		//m_audioMuteFrame->channels = m_audioEncodeCtx->channels;
+		//m_audioMuteFrame->nb_samples = m_audioEncodeCtx->frame_size;
+		//ret = av_frame_get_buffer(m_audioMuteFrame, 0);
+		//if (ret < 0) {
+		//	avcodec_free_context(&m_audioEncodeCtx);
+		//	m_audioEncodeCtx = nullptr;
+		//	MS_THROW_ERROR("could not create mute frame");
+		//}
+		//av_samples_set_silence(m_audioMuteFrame->data, 0, m_audioMuteFrame->nb_samples, m_audioMuteFrame->channels, (AVSampleFormat)m_audioMuteFrame->format);
 
 
-		ret = avcodec_parameters_from_context(st->codecpar, m_audioEncodeCtx);
-		if (ret < 0) {
-			MS_THROW_ERROR("error for avcodec_parameters_to_context");
-		}
+		//ret = avcodec_parameters_from_context(st->codecpar, m_audioEncodeCtx);
+		//if (ret < 0) {
+		//	MS_THROW_ERROR("error for avcodec_parameters_to_context");
+		//}
 
-		st->time_base.den = m_audioDecodeCtx->sample_rate;
-		st->time_base.num = 1;
+		//st->time_base.den = m_audioDecodeCtx->sample_rate;
+		//st->time_base.num = 1;
 
-		ret = avio_open2(&(m_formatCtx->pb), m_url.c_str(), AVIO_FLAG_WRITE, NULL, NULL);
+		ret = avio_open2(&(m_outputCtx->pb), m_outputUrl, AVIO_FLAG_WRITE, NULL, NULL);
 		if (ret < 0) {
 			MS_THROW_ERROR("error openning avio");
 		}
@@ -660,50 +663,20 @@ namespace RTC
 		if (m_pThread)
 			MS_THROW_ERROR("pull thread error");
 
-		time_t input_time = time(NULL);
-		m_formatCtx = avformat_alloc_context();
-		m_formatCtx = avformat_alloc_context();
-		m_formatCtx->interrupt_callback.callback = interrupt_callback;
-		m_formatCtx->interrupt_callback.opaque = &input_time;
-
-		int ret = avformat_open_input(&m_formatCtx, this->m_url.c_str(), NULL, NULL);
-		if (ret < 0)
-		{
-			ThreadError(1);
-			return;
-		}
-
-		ret = avformat_find_stream_info(m_formatCtx, NULL);
-		if (ret < 0)
-		{
-			ThreadError(2);
-			return;
-		}
-
-		AVPacket* pkt = av_packet_alloc();
-		while (1) {
-			ret = av_read_frame(m_formatCtx, pkt);
-			if (ret < 0) {
-				ThreadError(3);
-				break;
-			}
-		}
-
 		auto pullThread = [this]() {
 			time_t input_time = time(NULL);
-			m_formatCtx = avformat_alloc_context();
-			m_formatCtx = avformat_alloc_context();
-			m_formatCtx->interrupt_callback.callback = interrupt_callback;
-			m_formatCtx->interrupt_callback.opaque = &input_time;
+			m_inputCtx = avformat_alloc_context();
+			m_inputCtx->interrupt_callback.callback = interrupt_callback;
+			m_inputCtx->interrupt_callback.opaque = &input_time;
 
-			int ret = avformat_open_input(&m_formatCtx, this->m_url.c_str(), NULL, NULL);
+			int ret = avformat_open_input(&m_inputCtx, this->m_inputUrl, NULL, NULL);
 			if (ret < 0)
 			{
 				ThreadError(1);
 				return;
 			}
 
-			ret = avformat_find_stream_info(m_formatCtx, NULL);
+			ret = avformat_find_stream_info(m_inputCtx, NULL);
 			if (ret < 0)
 			{
 				ThreadError(2);
@@ -712,7 +685,7 @@ namespace RTC
 
 			AVPacket* pkt = av_packet_alloc();
 			while (1) {
-				ret = av_read_frame(m_formatCtx, pkt);
+				ret = av_read_frame(m_inputCtx, pkt);
 				if (ret < 0) {
 					ThreadError(3);
 					break;
@@ -822,7 +795,7 @@ namespace RTC
 	}
 
 	int PullTransport::AudioEncodeAndSend() {
-		auto size = av_audio_fifo_size(m_audioFifo);
+		/*auto size = av_audio_fifo_size(m_audioFifo);
 		while (av_audio_fifo_size(m_audioFifo) >= m_audioEncodeCtx->frame_size) {
 			m_frame = av_frame_alloc();
 			if (!m_frame)
@@ -864,7 +837,7 @@ namespace RTC
 				return -1;
 
 			PacketFree();
-		}
+		}*/
 
 		return 0;
 	}
@@ -1004,63 +977,63 @@ namespace RTC
 	}
 
 	int PullTransport::VideoSend() {
-		int ret;
-		m_packet = av_packet_alloc();
-		if (!m_packet)
-			return -1;
+		//int ret;
+		//m_packet = av_packet_alloc();
+		//if (!m_packet)
+		//	return -1;
 
-		
-		if (m_videoUpdateSps) {
-			m_packet->size = m_videoSpsPacketLen + m_videoCurPacketLen;
-			m_packet->data = (uint8_t*)malloc(m_packet->size);
-			memcpy(m_packet->data, m_videoSpsPacket, m_videoSpsPacketLen);
-			memcpy(m_packet->data + m_videoSpsPacketLen, m_videoCurPacket, m_videoCurPacketLen);
-		}
-		else {
-			m_packet->size = m_videoCurPacketLen;
-			m_packet->data = m_videoCurPacket;
-		}
-		m_packet->pts = m_videoCurPacketTs - m_videoRefTimestamp;
-		if (m_packet->pts < 0) {
-			m_packet->pts += UINT32_MAX;
-		}
-		m_packet->dts = m_packet->pts;
+		//
+		//if (m_videoUpdateSps) {
+		//	m_packet->size = m_videoSpsPacketLen + m_videoCurPacketLen;
+		//	m_packet->data = (uint8_t*)malloc(m_packet->size);
+		//	memcpy(m_packet->data, m_videoSpsPacket, m_videoSpsPacketLen);
+		//	memcpy(m_packet->data + m_videoSpsPacketLen, m_videoCurPacket, m_videoCurPacketLen);
+		//}
+		//else {
+		//	m_packet->size = m_videoCurPacketLen;
+		//	m_packet->data = m_videoCurPacket;
+		//}
+		//m_packet->pts = m_videoCurPacketTs - m_videoRefTimestamp;
+		//if (m_packet->pts < 0) {
+		//	m_packet->pts += UINT32_MAX;
+		//}
+		//m_packet->dts = m_packet->pts;
 
-		if (m_videoUpdateSps) {
-			ret = TryDecodeFrame();
-			if (ret < 0) return -1;
+		//if (m_videoUpdateSps) {
+		//	ret = TryDecodeFrame();
+		//	if (ret < 0) return -1;
 
-			m_videoDecodeCtx->extradata_size = m_videoSpsPacketLen;
-			m_videoDecodeCtx->extradata = (uint8_t*)malloc(m_videoDecodeCtx->extradata_size);
-			memset(m_videoDecodeCtx->extradata, 0, m_videoDecodeCtx->extradata_size);
-			memcpy(m_videoDecodeCtx->extradata, m_videoSpsPacket + 1, m_videoDecodeCtx->extradata_size - 1);
+		//	m_videoDecodeCtx->extradata_size = m_videoSpsPacketLen;
+		//	m_videoDecodeCtx->extradata = (uint8_t*)malloc(m_videoDecodeCtx->extradata_size);
+		//	memset(m_videoDecodeCtx->extradata, 0, m_videoDecodeCtx->extradata_size);
+		//	memcpy(m_videoDecodeCtx->extradata, m_videoSpsPacket + 1, m_videoDecodeCtx->extradata_size - 1);
 
-			avcodec_parameters_from_context(m_formatCtx->streams[m_videoIdx]->codecpar, m_videoDecodeCtx);
-			/*m_formatCtx->streams[m_videoIdx]->r_frame_rate.num = 30;
-			m_formatCtx->streams[m_videoIdx]->r_frame_rate.den = 1;*/
+		//	avcodec_parameters_from_context(m_formatCtx->streams[m_videoIdx]->codecpar, m_videoDecodeCtx);
+		//	/*m_formatCtx->streams[m_videoIdx]->r_frame_rate.num = 30;
+		//	m_formatCtx->streams[m_videoIdx]->r_frame_rate.den = 1;*/
 
-			int ret = avformat_write_header(m_formatCtx, nullptr);
-			if (ret < 0) 
-				return -1;
+		//	int ret = avformat_write_header(m_formatCtx, nullptr);
+		//	if (ret < 0) 
+		//		return -1;
 
-			m_videoUpdateSps = false;
-		}
-		
-		AVRational tb;
-		tb.den = 90000;
-		tb.num = 1;
-		av_packet_rescale_ts(m_packet, tb, m_formatCtx->streams[m_videoIdx]->time_base);
-		m_packet->stream_index = m_videoIdx;
-		printf("=====================================>%d\n", m_packet->pts);
+		//	m_videoUpdateSps = false;
+		//}
+		//
+		//AVRational tb;
+		//tb.den = 90000;
+		//tb.num = 1;
+		//av_packet_rescale_ts(m_packet, tb, m_formatCtx->streams[m_videoIdx]->time_base);
+		//m_packet->stream_index = m_videoIdx;
+		//printf("=====================================>%d\n", m_packet->pts);
 
-		ret = av_write_frame(m_formatCtx, m_packet);
-		if (m_videoCurPacket) {
-			free(m_videoCurPacket);
-			m_videoCurPacketLen = 0;
-			m_videoCurPacket = nullptr;
-		}
-		if (ret < 0)
-			return -1;
+		//ret = av_write_frame(m_formatCtx, m_packet);
+		//if (m_videoCurPacket) {
+		//	free(m_videoCurPacket);
+		//	m_videoCurPacketLen = 0;
+		//	m_videoCurPacket = nullptr;
+		//}
+		//if (ret < 0)
+		//	return -1;
 
 		return 0;
 	}

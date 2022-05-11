@@ -896,7 +896,7 @@ public:
 	}
 
 
-	std::shared_ptr<PushTransport>  createPullTransport(
+	std::shared_ptr<PullTransport>  createPullTransport(
 		PullTransportOptions& options
 	)
 	{
@@ -909,6 +909,7 @@ public:
 
 		json data =
 			this->_channel->request("router.createPullTransport", internal, reqData);
+
 		TransportParams params;
 		params.internal = internal;
 		params.data = data;
@@ -919,7 +920,7 @@ public:
 		params.getProducerById = this->getProducerByIdFunc;
 		params.getDataProducerById = this->getDataProducerByIdFunc;
 
-		std::shared_ptr<PushTransport> transport = std::make_shared<PushTransport>(params);
+		std::shared_ptr<PullTransport> transport = std::make_shared<PullTransport>(params);
 		transport->handleWorkerNotifications();
 
 		this->_transports[transport->id()] = transport;

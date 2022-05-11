@@ -11,14 +11,20 @@ extern "C" {
 #include "libavutil/audio_fifo.h"
 }
 
+#define URL_LENGTH 256
+#define RTP_PROTO_FORMAT_NAME "tee"
+#define RTP_VIDEO_SSRC 101
+#define RTP_GENERATE_URL(url, vssrc, assrc, ip, vport, aport) \
+	sprintf(url, "[select=v:f=rtp:ssrc=%s:payload_type=%d]rtp://%s:%d?rtcpport=%d", \
+		vssrc, RTP_VIDEO_SSRC, ip, vport, vport)
+
 #define RTMP_PROTO_NAME "rtmp"
 #define RTMP_PROTO_FORMAT_NAME "flv"
 #define RTMP_DEFAULT_PORT 1935
 #define RTMP_DEFAULT_SUFFIX "/live"
-#define RTMP_GENERATE_URL \ 
-	m_url = RTMP_PROTO_NAME; \
-	m_url += "://" + ip + suffix + "/" + stream;
-	//m_url += "://" + ip + ":" + std::to_string(port) + suffix + "/" + id;
+#define RTMP_GENERATE_URL(url, ip, port, suffix, stream) \
+	sprintf(url, "%s://%s:%d%s/%s", RTMP_PROTO_NAME, ip, port, suffix, stream)
+
 #define RTMP_AUDIO_CODEC "aac"
 #define RTMP_AUDIO_FRAME_FORMAT AV_SAMPLE_FMT_FLTP
 #define RTMP_AUDIO_FRAME_FORMAT_NAME "fltp"
@@ -98,8 +104,6 @@ namespace RTC
 		bool rtcpMux{ true };
 		bool comedia{ false };
 
-		std::string m_url, m_formatName;
-		std::thread* m_pThread{ nullptr };
 		// Others.
 		struct sockaddr_storage remoteAddrStorage;
 		bool connectCalled{ false }; // Whether connect() was succesfully called.
@@ -110,7 +114,10 @@ namespace RTC
 		uint64_t m_audioChannelLayout{ 4 };
 		int m_videoRateClock{ 90000 };
 
-		AVFormatContext *m_formatCtx{ nullptr };
+		char m_inputUrl[URL_LENGTH], m_outputUrl[URL_LENGTH];
+		std::string m_videoSsrc, m_audioSsrc;
+		std::thread* m_pThread{ nullptr };
+		AVFormatContext *m_inputCtx{ nullptr }, *m_outputCtx{ nullptr };
 		std::string m_videoDecoderName{ "h264" }, m_audioDecoderName{ "opus" };
 		AVCodecContext *m_audioDecodeCtx{ nullptr }, *m_audioEncodeCtx{ nullptr };
 		AVCodecContext* m_videoDecodeCtx{ nullptr }, * m_videoEncodeCtx{ nullptr };
