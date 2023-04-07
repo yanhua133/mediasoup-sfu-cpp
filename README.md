@@ -89,11 +89,13 @@ Test client download address
 
 Win download address:
 
-http://121.36.0.230:8012/latest/sft-demo-client-1.0.1.win.zip
+[test win client download](http://121.36.0.230:8012/latest/sft-demo-client-1.0.1.win.zip)
+
 
 Mac download address:
 
-http://121.36.0.230:8012/latest/sft-demo-client-1.0.1.mac.zip
+[test mac client download](http://121.36.0.230:8012/latest/sft-demo-client-1.0.1.mac.zip)
+
 
 Enter any number for the conference number, such as
 
